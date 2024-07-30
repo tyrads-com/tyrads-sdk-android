@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.Date
+import java.util.concurrent.TimeUnit
 
 class AcmoUsageStatsController() {
     private val repository = AcmoUsageStatRepository()
@@ -122,8 +123,9 @@ class AcmoUsageStatsController() {
                         "firstTimeStamp" to (value["firstTimeStamp"]?.toLongOrNull() ?: 0L),
                         "lastTimeStamp" to (value["lastTimeStamp"]?.toLongOrNull() ?: 0L),
                         "lastTimeUsed" to (value["lastTimeUsed"]?.toLongOrNull() ?: 0L),
-                        "foregroundTime" to foregroundTime
+                        "foregroundTime" to TimeUnit.MILLISECONDS.toSeconds(foregroundTime)
                     )
+                    Log.d("ppppp", "saveUsageStats: $item")
                     temp.add(item)
                 }
             }

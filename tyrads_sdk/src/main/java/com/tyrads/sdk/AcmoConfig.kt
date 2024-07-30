@@ -1,9 +1,11 @@
 import android.graphics.Color
 
 object AcmoConfig {
-    const val API_VERSION = "1.1"
-    const val SDK_VERSION = "0.3.0"
-    const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/"
+   const val API_VERSION = "1.1";
+   const val BUILD_VERSION = "2";
+   const val SDK_VERSION = "$API_VERSION.$BUILD_VERSION";
+   const val SDK_PLATFORM = "Android";
+   const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
     const val TAG = "TyrAds SDK"
 
     val PRIMARY_COLOR = Color.rgb(0, 36, 51)

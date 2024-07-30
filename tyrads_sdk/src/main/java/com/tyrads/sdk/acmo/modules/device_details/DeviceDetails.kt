@@ -40,7 +40,7 @@ class AcmoDeviceDetailsController() {
             "display" to deviceInfo.display,
             "baseOs" to deviceInfo.version.baseOS,
             "codename" to deviceInfo.version.codename,
-            "sdkVersion" to deviceInfo.version.sdkInt,
+            "sdkVersion" to AcmoConfig.SDK_VERSION,
             "releaseVersion" to deviceInfo.version.release,
             "type" to deviceInfo.type,
             "tags" to deviceInfo.tags,
@@ -49,7 +49,7 @@ class AcmoDeviceDetailsController() {
             "buildSign" to packageInfo.signatures?.joinToString { it.toCharsString() },
             "version" to packageInfo.versionName,
             "package" to packageInfo.packageName,
-            "platform" to "Android",
+            "platform" to AcmoConfig.SDK_PLATFORM,
             "apiVersion" to AcmoConfig.API_VERSION,
 
             "installerPackageName" to (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

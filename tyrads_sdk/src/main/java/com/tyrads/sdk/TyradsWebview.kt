@@ -3,6 +3,8 @@ package com.tyrads.sdk
 import AcmoUsageStatsController
 import AcmoUsageStatsDialog
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.webkit.WebResourceRequest
@@ -28,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowCompat
@@ -61,8 +64,8 @@ class TyradsWebview : ComponentActivity() {
 fun WebViewComposable(modifier: Modifier) {
     val isLoading = remember { mutableStateOf(true) }
 
-     val url =
-         "https://websdk.tyrads.com/?apiKey=${Tyrads.getInstance().apiKey}&apiSecret=${Tyrads.getInstance().apiSecret}&userID=${Tyrads.getInstance().publisherUserID}&newUser=${Tyrads.getInstance().newUser}&platform=Android&hc=${Tyrads.getInstance().loginData.data.publisherApp.headerColor}&mc=${Tyrads.getInstance().loginData.data.publisherApp.mainColor}";
+    val url =
+        "https://websdk.tyrads.com/?apiKey=${Tyrads.getInstance().apiKey}&apiSecret=${Tyrads.getInstance().apiSecret}&userID=${Tyrads.getInstance().publisherUserID}&newUser=${Tyrads.getInstance().newUser}&platform=Android&hc=${Tyrads.getInstance().loginData.data.publisherApp.headerColor}&mc=${Tyrads.getInstance().loginData.data.publisherApp.mainColor}";
 
     val usageStatsController = AcmoUsageStatsController()
     var showDialog by remember { mutableStateOf(true) }
@@ -70,7 +73,7 @@ fun WebViewComposable(modifier: Modifier) {
     val status =
         usageStatsController.checkUsagePermission() ?: false
 
-
+    val activityContext = LocalContext.current as? ComponentActivity // Get the current context
     if (!status && showDialog) {
         Tyrads.getInstance().Dialog {
             AcmoUsageStatsDialog(
@@ -94,7 +97,7 @@ fun WebViewComposable(modifier: Modifier) {
                             super.onPageFinished(view, url)
                             view?.postDelayed({
                                 isLoading.value = false
-                            }, 2000)
+                            }, 0)
                         }
 
                         override fun shouldOverrideUrlLoading(
@@ -105,8 +108,8 @@ fun WebViewComposable(modifier: Modifier) {
                                 when {
                                     url.contains("acmo-cmd") -> {
                                         if (url.contains("close-app")) {
-//                                            Tyrads.getInstance().back()
-//                                            return true
+                                            activityContext?.finish()
+                                            return true
                                         }
                                     }
 
@@ -115,8 +118,10 @@ fun WebViewComposable(modifier: Modifier) {
                                     }
 
                                     else -> {
-//                                        acmoLaunchURLForce(it)
-//                                        return true
+                                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                        context.startActivity(intent)
+                                        return true
+
                                     }
                                 }
                             }
