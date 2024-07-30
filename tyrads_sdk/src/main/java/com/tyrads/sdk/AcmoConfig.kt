@@ -4,7 +4,8 @@ object AcmoConfig {
     const val API_VERSION = "1.1"
     const val SDK_VERSION = "0.3.0"
     const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/"
-    
+    const val TAG = "TyrAds SDK"
+
     val PRIMARY_COLOR = Color.rgb(0, 36, 51)
     val PRIMARY_COLOR_LIGHT = Color.rgb(153, 145, 145)
     val PRIMARY_COLOR_DARK = Color.rgb(0, 0, 0)

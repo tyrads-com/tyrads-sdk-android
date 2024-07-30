@@ -1,6 +1,7 @@
 package com.tyrads.sdk
 
 
+import AcmoConfig
 import AcmoEndpointNames
 import AcmoInitModel
 import AcmoKeyNames
@@ -8,6 +9,7 @@ import AcmoUsageStatsController
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.compose.runtime.Composable
 import com.example.tyrads_sdk_gitlab.acmo.modules.device_details.AcmoDeviceDetailsController
 import com.github.kittinunf.fuel.Fuel
@@ -105,6 +107,10 @@ class Tyrads private constructor() {
      fun showOffers() {
          GlobalScope.launch {
              initializationWait?.join()
+             if(!::loginData.isInitialized){
+                 Log.e(AcmoConfig.TAG, "showOffers: Something wrong with the initialization")
+                 return@launch
+             }
              val intent = Intent(context, TyradsWebview::class.java)
              context.startActivity(intent)
          }
