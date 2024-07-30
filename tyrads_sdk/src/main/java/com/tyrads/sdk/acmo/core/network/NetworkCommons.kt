@@ -37,7 +37,7 @@ class NetworkCommons() {
                     request.header("X-SDK-Platform", "Android")
                     request.header("X-SDK-Version", "v0.1.0")
                     request.header("Content-Type", "application/json")
-                    val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(Tyrads.getInstance().context!!)
+                    val sharedPreferences = Tyrads.getInstance().preferences
 
                     if (!request.url.path.endsWith(AcmoEndpointNames.INITIALIZE)) {
                         request.headers["X-User-ID"] = sharedPreferences.getString(AcmoKeyNames.USER_ID, null) ?: ""
