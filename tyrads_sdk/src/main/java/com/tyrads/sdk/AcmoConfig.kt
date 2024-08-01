@@ -6,7 +6,8 @@ object AcmoConfig {
    const val SDK_VERSION = "$API_VERSION.$BUILD_VERSION";
    const val SDK_PLATFORM = "Android";
    const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
-    
+    const val TAG = "TyrAds SDK"
+
     val PRIMARY_COLOR = Color.rgb(0, 36, 51)
     val PRIMARY_COLOR_LIGHT = Color.rgb(153, 145, 145)
     val PRIMARY_COLOR_DARK = Color.rgb(0, 0, 0)

@@ -125,7 +125,6 @@ class AcmoUsageStatsController() {
                         "lastTimeUsed" to (value["lastTimeUsed"]?.toLongOrNull() ?: 0L),
                         "foregroundTime" to TimeUnit.MILLISECONDS.toSeconds(foregroundTime)
                     )
-                    Log.d("ppppp", "saveUsageStats: $item")
                     temp.add(item)
                 }
             }
