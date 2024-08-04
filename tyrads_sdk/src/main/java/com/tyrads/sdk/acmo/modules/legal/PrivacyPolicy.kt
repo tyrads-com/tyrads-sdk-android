@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.rememberNavController
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.helpers.acmoLaunchURL
 
 @Composable
 fun AcmoPrivacyPolicyPage() {
@@ -210,8 +211,8 @@ fun Info2() {
     ) { offset ->
         annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { annotation ->
             when (annotation.tag) {
-//                "TOS" -> acmoLaunchURLForce(annotation.item)
-//                "PP" -> acmoLaunchURLForce(annotation.item)
+                "TOS" -> acmoLaunchURL(context,  annotation.item)
+               "PP" -> acmoLaunchURL(context,annotation.item)
             }
         }
     }
