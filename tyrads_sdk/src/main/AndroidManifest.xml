@@ -14,7 +14,7 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <application>
         <activity
-            android:name=".TyradsWebview"
+            android:name=".acmo.core.AcmoApp"
             android:exported="false"
             android:label="@string/title_activity_tyrads_webview"
             android:theme="@style/Theme.TyradsSdk" />

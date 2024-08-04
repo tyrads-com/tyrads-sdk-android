@@ -11,11 +11,13 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 import com.example.tyrads_sdk_gitlab.acmo.modules.device_details.AcmoDeviceDetailsController
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
+import com.tyrads.sdk.acmo.core.AcmoApp
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -30,6 +32,7 @@ class Tyrads private constructor() {
     internal lateinit var loginData: AcmoInitModel
     internal var newUser: Boolean = false
     var initializationWait: Job? = null
+    lateinit var navController: NavHostController
 
 
     companion object {
@@ -111,7 +114,7 @@ class Tyrads private constructor() {
                  Log.e(AcmoConfig.TAG, "showOffers: Something wrong with the initialization")
                  return@launch
              }
-             val intent = Intent(context, TyradsWebview::class.java)
+             val intent = Intent(context, AcmoApp::class.java)
              context.startActivity(intent)
          }
     }
