@@ -175,6 +175,7 @@ fun Info() {
 
 @Composable
 fun Info2() {
+    val context = LocalContext.current  // Get the current context
     val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
         providerPackage = "com.google.android.gms",
@@ -232,7 +233,8 @@ fun TwoButtons(
             onClick = acceptOnTap,
             modifier = Modifier
                 .width(160.dp)
-                .height(35.dp)
+                .height(35.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
         ) {
             Text("Accept")
         }
