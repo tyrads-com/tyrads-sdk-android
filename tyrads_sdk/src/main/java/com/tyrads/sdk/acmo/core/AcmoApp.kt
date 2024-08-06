@@ -31,7 +31,7 @@ class AcmoApp : ComponentActivity() {
         setContent {
             TyradsSdkTheme {
                 var initPath = "privacy"
-                if(Tyrads.getInstance().preferences.getBoolean(AcmoKeyNames.PRIVACY_ACCEPTED,false)){
+                if(Tyrads.getInstance().preferences.getBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,false)){
                     initPath = "webview"
                 }
                 Tyrads.getInstance().navController = rememberNavController()

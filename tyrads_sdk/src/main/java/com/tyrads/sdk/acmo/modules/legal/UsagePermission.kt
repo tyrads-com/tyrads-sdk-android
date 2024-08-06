@@ -35,7 +35,7 @@ fun AcmoUsagePermissionsPage() {
                 Spacer(modifier = Modifier.height(70.dp))
                 UsageStatsCard(
                     onGrant = {
-                        Tyrads.getInstance().preferences.edit().putBoolean(AcmoKeyNames.PRIVACY_ACCEPTED, true).apply()
+                        Tyrads.getInstance().preferences.edit().putBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID, true).apply()
                         Tyrads.getInstance().navController.navigate("webview")
                     }
                 )

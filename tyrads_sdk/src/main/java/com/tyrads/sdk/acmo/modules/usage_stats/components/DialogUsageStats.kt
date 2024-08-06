@@ -162,7 +162,7 @@ fun UsageStatsCard(
                 }
             }
             Text(
-                text = "You agree that Tyr SDK collects / transmits / syncs / stores Installed Applications to enable our playtime features, so that we can reward you out for your gameplay",
+                text = "usage access allows an app to track which other apps you are using and how often, as well as your operator, language setting and other details.",
                 modifier = Modifier.padding(top = 8.dp)
             )
         }

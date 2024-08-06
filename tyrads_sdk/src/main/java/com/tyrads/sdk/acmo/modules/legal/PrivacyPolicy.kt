@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -24,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.Font
 import androidx.compose.ui.text.googlefonts.GoogleFont
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,21 +39,33 @@ fun AcmoPrivacyPolicyPage() {
     val scrollState = rememberScrollState()
     val activityContext = LocalContext.current as? ComponentActivity // Get the current context
 
-    Scaffold(    containerColor = Color.White
-) { innerPadding ->
+    val context = LocalContext.current
+    Scaffold(
+        containerColor = Color.White
+    ) { innerPadding ->
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
-                    .verticalScroll(scrollState)
             ) {
-                Spacer(modifier = Modifier.height(16.dp))
                 CloseonTap()
                 Body()
-                Info()
-                Info2()
-                Spacer(modifier = Modifier.height(300.dp))
+                Column(
+                    modifier = Modifier
+                        .height((LocalConfiguration.current.screenHeightDp - 600).dp)
+                        .verticalScroll(scrollState)
+                        .padding(horizontal = 30.dp)
+                ) {
+                    Info()
+                }
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Info2(
+                    )
+                }
             }
             TwoButtons(
                 acceptOnTap = {
@@ -59,7 +73,7 @@ fun AcmoPrivacyPolicyPage() {
 
                 },
                 rejectOntap = {
-                   activityContext?.finish()
+                    activityContext?.finish()
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -77,13 +91,14 @@ fun CloseonTap() {
         modifier = Modifier
             .fillMaxWidth()
             .padding(end = 20.dp, top = 10.dp)
-            ) {
-                IconButton(
-                    onClick = {
-                        activityContext?.finish()
-                    },
-                    modifier = Modifier.align(Alignment.TopEnd)
-                ) {            Icon(
+    ) {
+        IconButton(
+            onClick = {
+                activityContext?.finish()
+            },
+            modifier = Modifier.align(Alignment.TopEnd)
+        ) {
+            Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Close",
                 tint = Color(0xFFC4C4C4)
@@ -94,20 +109,20 @@ fun CloseonTap() {
 
 @Composable
 fun Body() {
-    
-val provider = GoogleFont.Provider(
-    providerAuthority = "com.google.android.gms.fonts",
-    providerPackage = "com.google.android.gms",
-    certificates = R.array.com_google_android_gms_fonts_certs
-)
 
-val lexendFontName = GoogleFont("Lexend")
+    val provider = GoogleFont.Provider(
+        providerAuthority = "com.google.android.gms.fonts",
+        providerPackage = "com.google.android.gms",
+        certificates = R.array.com_google_android_gms_fonts_certs
+    )
 
-val lexendFontFamily = FontFamily(
-    Font(googleFont = lexendFontName, fontProvider = provider),
-    Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Medium),
-    Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Bold)
-)
+    val lexendFontName = GoogleFont("Lexend")
+
+    val lexendFontFamily = FontFamily(
+        Font(googleFont = lexendFontName, fontProvider = provider),
+        Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Medium),
+        Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Bold)
+    )
     Column(
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -149,6 +164,8 @@ val lexendFontFamily = FontFamily(
 
 @Composable
 fun Info() {
+    val context = LocalContext.current  // Get the current context
+
     val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
         providerPackage = "com.google.android.gms",
@@ -161,17 +178,56 @@ fun Info() {
         Font(googleFont = openSansFontName, fontProvider = provider, weight = FontWeight.Medium),
         Font(googleFont = openSansFontName, fontProvider = provider, weight = FontWeight.Bold)
     )
-    Text(
-        text = "You agree that TyrSDK processes the following personal data within the framework of the use of TyrSDK:\n\n" +
-                "Information regarding installed applications, including usage duration and history.\n\n" +
-                "This data will be securely encrypted before transmission to our servers and associated with your Device ID",
-        style = MaterialTheme.typography.bodyMedium.copy(
-            color = Color.Black.copy(alpha = 0.61f),
-            fontFamily = openSansFontFamily,
-        ),
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 25.dp)
+    val annotatedString = buildAnnotatedString {
+        withStyle(
+            style = SpanStyle(
+                fontFamily = openSansFontFamily,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Color(0x9B000000)
+            )
+        ) {
+            append(
+                "We hereby inform you that Tyrads Pte. Ltd. processes the following personal data within the framework of the use of TyrSDK:\n" +
+                        "Installed apps (including the use duration and use history)\n" +
+                        "The data is linked to your device via the device ID (GAID or IDFA) transmitted to our servers in encrypted form. So that app providers can finance our app suggestions, we must send them the device ID for billing purposes.\n\n" +
+                        "The processing of the above data is necessary to be able to recommend apps via system messages, the installation of apps available in TyrSDK that matches your interest and calculate the rewards acquired as a result of your use of the corresponding apps.\n\n" +
+                        "Consent\n\n" +
+                        "By clicking on 'Accept' I give Tyrads Pte. Ltd my consent to process above mentioned personal data and transmit it to other apps so that i can use TyrSDK as explained.\n\n" +
+                        "I am aware that the above data results in an interest profile, which, depending on the type of apps I use, may contain particularly sensitive personal data (such as health data or data on my sexual orientation as well as any other data from special categories defined in Art. 9 para. 1 of the European General Data Protection Regulation (GDPR).\n\n" +
+                        "This data will be processed by Tyrads Pte. Ltd, TyrSDK. For more information "
+            )
+        }
+        withStyle(
+            style = SpanStyle(
+                color = Color.Blue,
+                textDecoration = TextDecoration.Underline
+            )
+        ) {
+            append("https://tyrads.com/tyrsdk-privacy-policy/")
+        }
+        addStringAnnotation(
+            tag = "URL",
+            annotation = "https://tyrads.com/tyrsdk-privacy-policy/",
+            start = length - "https://tyrads.com/tyrsdk-privacy-policy/".length,
+            end = length
+        )
+    }
+
+    ClickableText(
+        text = annotatedString,
+        onClick = { offset ->
+            annotatedString.getStringAnnotations(
+                tag = "URL",
+                start = offset,
+                end = offset
+            ).firstOrNull()?.let {
+                acmoLaunchURL(context, it.item)
+            }
+        }
     )
 }
+
 
 @Composable
 fun Info2() {
@@ -191,13 +247,19 @@ fun Info2() {
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(fontFamily = interFontFamily)) {
             append("I have read and agree to the\n")
-            pushStringAnnotation(tag = "TOS", annotation = "https://tyrads.com/tyrsdk-terms-of-service/")
+            pushStringAnnotation(
+                tag = "TOS",
+                annotation = "https://tyrads.com/tyrsdk-terms-of-service/"
+            )
             withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
                 append("Terms of Service")
             }
             pop()
             append(" and ")
-            pushStringAnnotation(tag = "PP", annotation = "https://tyrads.com/tyrsdk-privacy-policy/")
+            pushStringAnnotation(
+                tag = "PP",
+                annotation = "https://tyrads.com/tyrsdk-privacy-policy/"
+            )
             withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
                 append("Privacy Policy")
             }
@@ -212,8 +274,8 @@ fun Info2() {
     ) { offset ->
         annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { annotation ->
             when (annotation.tag) {
-                "TOS" -> acmoLaunchURL(context,  annotation.item)
-               "PP" -> acmoLaunchURL(context,annotation.item)
+                "TOS" -> acmoLaunchURL(context, annotation.item)
+                "PP" -> acmoLaunchURL(context, annotation.item)
             }
         }
     }
@@ -226,7 +288,7 @@ fun TwoButtons(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(bottom = 10.dp),
+        modifier = modifier.padding(bottom = 38.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Button(
