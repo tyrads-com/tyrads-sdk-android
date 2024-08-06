@@ -79,6 +79,8 @@ dependencies {
     implementation(libs.play.services.home)
     implementation (libs.rootbeer.lib)
     implementation (libs.play.services.ads.identifier)
+    implementation(libs.androidx.navigation.compose)
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

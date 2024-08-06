@@ -18,6 +18,7 @@ preferenceKtx = "1.2.1"
 playServicesHome = "16.0.0"
 playServicesAdsIdentifier = "18.1.0"
 rootbeerLib = "0.1.0"
+navigationCompose = "2.7.7"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -44,6 +45,7 @@ androidx-preference-ktx = { group = "androidx.preference", name = "preference-kt
 play-services-home = { group = "com.google.android.gms", name = "play-services-home", version.ref = "playServicesHome" }
 play-services-ads-identifier = { group = "com.google.android.gms", name = "play-services-ads-identifier", version.ref = "playServicesAdsIdentifier" }
 rootbeer-lib = { module = "com.scottyab:rootbeer-lib", version.ref = "rootbeerLib" }
+androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
