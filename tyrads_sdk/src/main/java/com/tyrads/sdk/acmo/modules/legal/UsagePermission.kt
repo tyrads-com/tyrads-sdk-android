@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.text.font.FontWeight
@@ -18,7 +19,9 @@ import com.tyrads.sdk.acmo.modules.legal.CloseonTap
 
 @Composable
 fun AcmoUsagePermissionsPage() {
-    Scaffold { innerPadding ->
+    Scaffold (
+        containerColor = Color.White
+    ){ innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -52,7 +55,8 @@ fun Body() {
             text = "Allow App To Track Usage Data\nTo Enable Your Earning Potential",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp
+                fontSize = 16.sp,
+                color = Color.Black
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 10.dp)
