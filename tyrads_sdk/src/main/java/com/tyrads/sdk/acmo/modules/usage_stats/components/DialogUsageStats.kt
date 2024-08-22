@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -24,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -101,7 +103,10 @@ fun UsageStatsCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-        shape = RoundedCornerShape(32.dp)
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+
     ) {
         Column(
             modifier = Modifier
@@ -115,7 +120,8 @@ fun UsageStatsCard(
                 Text(
                     text = "Permit Usage Access",
                     style = TextStyle(fontSize = 16.sp),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    color = Color.Black
                 )
                 Box(
                     modifier = Modifier
@@ -163,7 +169,9 @@ fun UsageStatsCard(
             }
             Text(
                 text = "usage access allows an app to track which other apps you are using and how often, as well as your operator, language setting and other details.",
-                modifier = Modifier.padding(top = 8.dp)
+                modifier = Modifier.padding(top = 8.dp),
+                color = Color.Black,
+                fontWeight = FontWeight.Light
             )
         }
     }
