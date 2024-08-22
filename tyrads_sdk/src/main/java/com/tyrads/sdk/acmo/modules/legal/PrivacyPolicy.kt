@@ -77,7 +77,6 @@ fun AcmoPrivacyPolicyPage() {
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = 38.dp)
             )
 
         }
@@ -90,7 +89,7 @@ fun CloseonTap() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 20.dp, top = 10.dp)
+            .padding(end = 20.dp)
     ) {
         IconButton(
             onClick = {
@@ -134,7 +133,9 @@ fun Body() {
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
                 lineHeight = 22.sp,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = Color.Black
+
             )
         )
         Spacer(modifier = Modifier.height(25.dp))
@@ -153,7 +154,9 @@ fun Body() {
                 fontFamily = lexendFontFamily,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.W400,
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = Color.Black
+
 
             ),
             textAlign = TextAlign.Center,
