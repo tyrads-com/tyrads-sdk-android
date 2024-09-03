@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.annotation.Keep
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -20,7 +21,7 @@ import com.tyrads.sdk.acmo.modules.legal.AcmoPrivacyPolicyPage
 import com.tyrads.sdk.acmo.modules.webview.WebViewComposable
 import com.tyrads.sdk.ui.theme.TyradsSdkTheme
 
-
+@Keep
 class AcmoApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
