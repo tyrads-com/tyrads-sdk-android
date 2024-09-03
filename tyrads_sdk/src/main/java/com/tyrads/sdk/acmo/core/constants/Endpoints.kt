@@ -1,3 +1,6 @@
+import androidx.annotation.Keep
+
+@Keep
 object AcmoEndpointNames {
     const val INITIALIZE = "initialize"
     const val OFFERS = "campaigns"

@@ -1,5 +1,7 @@
-// AcmoKeyNames.kt
+import androidx.annotation.Keep
 
+// AcmoKeyNames.kt
+@Keep
 class AcmoKeyNames {
     companion object {
         const val PREFIX = "acmo_tyrads_sdk_"

@@ -4,6 +4,7 @@ package com.tyrads.sdk
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import android.util.Log
+import androidx.annotation.Keep
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,7 +19,7 @@ import com.github.kittinunf.fuel.core.Response
 import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.runBlocking
 
-
+@Keep
 class NetworkCommons() {
     private var isDialogOpen = false
 

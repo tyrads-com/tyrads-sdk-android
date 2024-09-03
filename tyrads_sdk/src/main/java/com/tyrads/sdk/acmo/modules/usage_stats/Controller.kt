@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Process
 import android.provider.Settings
 import android.util.Log
+import androidx.annotation.Keep
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -23,7 +24,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.Date
 import java.util.concurrent.TimeUnit
-
+@Keep
 class AcmoUsageStatsController() {
     private val repository = AcmoUsageStatRepository()
 
