@@ -6,8 +6,9 @@ import android.app.usage.UsageStatsManager
 import android.app.usage.UsageEvents
 import android.os.Build
 import android.util.Log
+import androidx.annotation.Keep
 import androidx.annotation.RequiresApi
-
+@Keep
 object UsageStats {
 
 
