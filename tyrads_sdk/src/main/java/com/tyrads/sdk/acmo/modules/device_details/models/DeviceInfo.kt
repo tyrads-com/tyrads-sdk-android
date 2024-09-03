@@ -1,7 +1,9 @@
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import androidx.annotation.Keep
 
+@Keep
 data class DeviceInfo(
     val board: String,
     val bootloader: String,
@@ -24,7 +26,7 @@ data class DeviceInfo(
     val isLowRamDevice: Boolean,
     val serialNumber: String
 )
-
+@Keep
 data class VersionInfo(
     val baseOS: String? = null,
     val previewSdkInt: Int? = null,

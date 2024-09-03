@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import com.example.tyrads_sdk_gitlab.acmo.modules.device_details.AcmoDeviceDetailsController
@@ -22,7 +23,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
-
+@Keep
 class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null

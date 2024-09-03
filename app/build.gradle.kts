@@ -44,7 +44,7 @@ android {
             )
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -55,6 +55,7 @@ android {
                 "TYRADS_API_SECRET",
                 "\"${localProperties.getProperty("tyrads.api.secret")}\""
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

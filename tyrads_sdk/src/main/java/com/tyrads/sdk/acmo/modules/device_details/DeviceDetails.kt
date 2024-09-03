@@ -15,7 +15,9 @@ import android.content.res.Configuration
 import android.os.Build
 import android.util.Log
 import android.provider.Settings
+import androidx.annotation.Keep
 
+@Keep
 class AcmoDeviceDetailsController() {
 
     suspend fun getDeviceDetails(): Map<String, Any?> = withContext(Dispatchers.IO) {
