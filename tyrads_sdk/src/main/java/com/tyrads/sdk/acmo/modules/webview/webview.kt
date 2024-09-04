@@ -10,12 +10,16 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.annotation.Keep
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,6 +39,26 @@ import kotlinx.coroutines.launch
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewComposable(modifier: Modifier) {
+    val webViewState = rememberWebViewState()
+    val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+
+    DisposableEffect(backDispatcher) {
+        val callback = object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (webViewState.webView?.canGoBack() == true) {
+                    webViewState.webView?.goBack()
+                } else {
+                    isEnabled = false
+                    backDispatcher?.onBackPressed()
+                }
+            }
+        }
+        backDispatcher?.addCallback(callback)
+        onDispose {
+            callback.remove()
+        }
+    }
+
     val isLoading = remember { mutableStateOf(true) }
 
     val url =
@@ -109,6 +133,7 @@ fun WebViewComposable(modifier: Modifier) {
                     settings.cacheMode = WebSettings.LOAD_DEFAULT
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     loadUrl(url)
+                    webViewState.webView = this
                 }
             }
         )
@@ -130,3 +155,10 @@ fun WebViewComposable(modifier: Modifier) {
 
     }
 }
+@Keep
+class WebViewState {
+    var webView: WebView? by mutableStateOf(null)
+}
+
+@Composable
+fun rememberWebViewState() = remember { WebViewState() }
