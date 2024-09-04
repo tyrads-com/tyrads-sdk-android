@@ -1,5 +1,6 @@
 package com.tyrads.sdk.example
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -56,23 +57,33 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
-    val context = LocalContext.current // Get the current context
+    val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
-
-    var userIdInput by remember { mutableStateOf("") }
+    
+    val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
+    
+    var apiKeyInput by remember { mutableStateOf(sharedPreferences.getString("apiKey", "") ?: "") }
+    var apiSecretInput by remember { mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "") }
+    var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "") ?: "") }
 
     fun handleButtonClick() {
         isLoading = true
         CoroutineScope(Dispatchers.Main).launch {
+            // Save values to SharedPreferences
+            sharedPreferences.edit().apply {
+                putString("apiKey", apiKeyInput)
+                putString("apiSecret", apiSecretInput)
+                putString("userId", userIdInput)
+                apply()
+            }
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = BuildConfig.TYRADS_API_KEY,
-                apiSecret = BuildConfig.TYRADS_API_SECRET
+                apiKey = apiKeyInput,
+                apiSecret = apiSecretInput
             )
             Tyrads.getInstance().loginUser(userID = userIdInput)
             Tyrads.getInstance().showOffers()
-            Tyrads.getInstance().initializationWait?.join()
             isLoading = false
         }
     }
@@ -91,6 +102,20 @@ fun Greeting(modifier: Modifier = Modifier) {
                 modifier = modifier
             )
         }
+        Spacer(modifier = Modifier.height(16.dp))
+        TextField(
+            value = apiKeyInput,
+            onValueChange = { apiKeyInput = it },
+            label = { Text("Enter API Key") },
+            modifier = Modifier.padding(16.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        TextField(
+            value = apiSecretInput,
+            onValueChange = { apiSecretInput = it },
+            label = { Text("Enter API Secret") },
+            modifier = Modifier.padding(16.dp)
+        )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = userIdInput,
