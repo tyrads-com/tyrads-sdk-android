@@ -5,6 +5,8 @@ import AcmoUsageStatsDialog
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.net.Uri
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -12,6 +14,8 @@ import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,12 +38,20 @@ import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.activity.compose.rememberLauncherForActivityResult
 
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewComposable(modifier: Modifier) {
     val webViewState = rememberWebViewState()
+    
+    val fileChooserLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        val result = uri?.let { arrayOf(it) }
+        webViewState.filePathCallback?.onReceiveValue(result)
+        webViewState.filePathCallback = null
+    }
+
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
     DisposableEffect(backDispatcher) {
@@ -63,7 +75,6 @@ fun WebViewComposable(modifier: Modifier) {
 
     val url =
         "https://websdk.tyrads.com/?apiKey=${Tyrads.getInstance().apiKey}&apiSecret=${Tyrads.getInstance().apiSecret}&userID=${Tyrads.getInstance().publisherUserID}&newUser=${Tyrads.getInstance().newUser}&platform=Android&hc=${Tyrads.getInstance().loginData.data.publisherApp.headerColor}&mc=${Tyrads.getInstance().loginData.data.publisherApp.mainColor}";
-
     val usageStatsController = AcmoUsageStatsController()
     var showDialog by remember { mutableStateOf(true) }
 
@@ -89,6 +100,17 @@ fun WebViewComposable(modifier: Modifier) {
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
                 WebView(context).apply {
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onShowFileChooser(
+                            webView: WebView,
+                            filePathCallback: ValueCallback<Array<Uri>>,
+                            fileChooserParams: FileChooserParams
+                        ): Boolean {
+                            webViewState.filePathCallback = filePathCallback
+                            fileChooserLauncher.launch("*/*")
+                            return true
+                        }
+                    }
                     webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
@@ -158,7 +180,9 @@ fun WebViewComposable(modifier: Modifier) {
 @Keep
 class WebViewState {
     var webView: WebView? by mutableStateOf(null)
-}
+    var filePathCallback: ValueCallback<Array<Uri>>? by mutableStateOf(null)
 
+}
 @Composable
 fun rememberWebViewState() = remember { WebViewState() }
+
