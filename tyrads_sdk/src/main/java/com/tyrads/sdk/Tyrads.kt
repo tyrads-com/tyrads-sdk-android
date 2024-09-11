@@ -133,11 +133,11 @@ class Tyrads private constructor() {
         GlobalScope.launch {
             log("Preparing to show offers", Log.INFO)
             if (initializationWait?.isCompleted == false) {
-                log("waiting for initialization to complete", Log.DEBUG, true)
+                log("Waiting for user initialization to complete", Log.DEBUG, true)
             }
             initializationWait?.join()
             if (!::loginData.isInitialized) {
-                log("showOffers: Initialization error", Log.ERROR)
+                log("showOffers: User initialization error", Log.ERROR)
                 return@launch
             }
             log("Launching offers", Log.INFO)
