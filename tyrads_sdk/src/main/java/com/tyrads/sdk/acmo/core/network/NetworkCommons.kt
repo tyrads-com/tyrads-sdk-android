@@ -32,6 +32,8 @@ class NetworkCommons() {
         FuelManager.instance.timeoutInMillisecond = 300000 // 5 minutes
         FuelManager.instance.timeoutReadInMillisecond = 300000 // 5 minutes
 
+        Tyrads.getInstance().log("NetworkCommons initialized with base URL: ${AcmoConfig.BASE_URL}")
+
         FuelManager.instance.addRequestInterceptor { next: (Request) -> Request ->
             { request: Request ->
                 runBlocking {
@@ -50,6 +52,7 @@ class NetworkCommons() {
                         sharedPreferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     request.headers["X-SDK-Platform"] = AcmoConfig.SDK_PLATFORM
                     request.headers["X-SDK-Version"] = AcmoConfig.SDK_VERSION
+                    Tyrads.getInstance().log("Request headers set: ${request.headers}")
                 }
                 next(request)
             }
@@ -57,15 +60,18 @@ class NetworkCommons() {
 
         FuelManager.instance.addResponseInterceptor { next: (Request, Response) -> Response ->
             { request: Request, response: Response ->
-                Log.d("NetworkCommons", "Response: $response")
+                Tyrads.getInstance().log("Response received: $response")
                 when (response.statusCode) {
                     in 200..201 -> next(request, response)
-                    else -> throw FuelError.wrap(Exception("Network connect timeout error"))
+                    else -> {
+                        Tyrads.getInstance().log("Network error: ${response.statusCode}")
+                        throw FuelError.wrap(Exception("Network connect timeout error"))
+                    }
                 }
             }
         }
     }
-
-
-
 }
+
+
+

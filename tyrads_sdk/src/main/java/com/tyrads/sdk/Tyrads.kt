@@ -34,6 +34,7 @@ class Tyrads private constructor() {
     internal var newUser: Boolean = false
     var initializationWait: Job? = null
     lateinit var navController: NavHostController
+    internal var debugMode: Boolean = false
 
 
     companion object {
@@ -50,75 +51,100 @@ class Tyrads private constructor() {
         }
     }
 
-    fun init(context: Context, apiKey: String, apiSecret: String) {
+    internal fun log(message: String, level: Int = Log.DEBUG) {
+        if (debugMode) {
+            when (level) {
+                Log.DEBUG -> Log.d(AcmoConfig.TAG, message)
+                Log.INFO -> Log.i(AcmoConfig.TAG, message)
+                Log.WARN -> Log.w(AcmoConfig.TAG, message)
+                Log.ERROR -> Log.e(AcmoConfig.TAG, message)
+                else -> Log.d(AcmoConfig.TAG, message)
+            }
+        }
+    }
+
+    fun init(context: Context, apiKey: String, apiSecret: String, debugMode: Boolean = false) {
         this.context = context
         this.apiKey = apiKey
         this.apiSecret = apiSecret
+        this.debugMode = debugMode
         preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
         preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
         preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
         NetworkCommons()
+
+        log("Warning: debugMode is set to true. This should not be used in production.", Log.WARN)
+        log("Tyrads SDK initialized", Log.INFO)
     }
 
-     fun loginUser(userID: String? = null) {
-         try {
-              initializationWait = GlobalScope.launch {
-                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
+    fun loginUser(userID: String? = null) {
+        try {
+            initializationWait = GlobalScope.launch {
+                log("Starting user login process", Log.INFO)
+                val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
 
+                val advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                val identifierType = "GAID"
+                val deviceDetailsController = AcmoDeviceDetailsController()
+                val deviceDetails = deviceDetailsController.getDeviceDetails()
 
-                 val advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
-                 val identifierType = "GAID"
-                 val deviceDetailsController = AcmoDeviceDetailsController()
-                 val deviceDetails = deviceDetailsController.getDeviceDetails()
+                val fd = mapOf(
+                    "publisherUserId" to userId,
+                    "platform" to "Android",
+                    "identifierType" to identifierType,
+                    "identifier" to advertisingId,
+                    "deviceData" to deviceDetails
+                )
 
-                 val fd = mapOf(
-                     "publisherUserId" to userId,
-                     "platform" to "Android",
-                     "identifierType" to identifierType,
-                     "identifier" to advertisingId,
-                     "deviceData" to deviceDetails
-                 )
+                val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
+                    .body(Gson().toJson(fd))
+                    .response()
 
+                when (result) {
+                    is Result.Success -> {
+                        log("User login successful", Log.INFO)
+                        val jsonString = String(response.data)
+                        loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
+                        publisherUserID = loginData.data.user.publisherUserId
+                        preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
+                        newUser = loginData.data.newRegisteredUser
+                        val usageStatsController = AcmoUsageStatsController()
+                        usageStatsController.saveUsageStats()
+                    }
+                    is Result.Failure -> {
+                        log("User login failed", Log.ERROR)
+                        val error = result.getException()
+                        val errorMessage = String(response.data)
+                        Log.e(AcmoConfig.TAG, "Error: ${error.message}")
+                        Log.e(AcmoConfig.TAG, "Server Message: $errorMessage")
+                    }
 
-                 val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
-                     .body(Gson().toJson(fd))
-                     .response()
+                }
 
-                 when (result) {
-                     is Result.Success -> {
+            }
 
-                         val jsonString = String(response.data)
-                         loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
-                         publisherUserID = loginData.data.user.publisherUserId
-                         preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
-                         newUser = loginData.data.newRegisteredUser
-                         val usageStatsController = AcmoUsageStatsController()
-                         usageStatsController.saveUsageStats()
-                     }
-                     is Result.Failure -> {
-                         // Handle error
-                     }
-
-                 }
-
-             }
-
-         }catch (e: Exception) {
-         }
+        } catch (e: Exception) {
+            log("Exception during login: ${e.message}", Log.ERROR)
+        }
     }
 
 
-     fun showOffers() {
-         GlobalScope.launch {
-             initializationWait?.join()
-             if(!::loginData.isInitialized){
-                 Log.e(AcmoConfig.TAG, "showOffers: Something wrong with the initialization")
-                 return@launch
-             }
-             val intent = Intent(context, AcmoApp::class.java)
-             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-             context.startActivity(intent)
-         }
+    fun showOffers() {
+        GlobalScope.launch {
+            log("Preparing to show offers", Log.INFO)
+            if (initializationWait?.isCompleted == false) {
+                log("Initialization is still in progress", Log.DEBUG)
+            }
+            initializationWait?.join()
+            if (!::loginData.isInitialized) {
+                log("showOffers: Initialization incomplete", Log.ERROR)
+                return@launch
+            }
+            log("Launching offers", Log.INFO)
+            val intent = Intent(context, AcmoApp::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        }
     }
 
 
@@ -126,6 +152,7 @@ class Tyrads private constructor() {
     fun Dialog(content: @Composable () -> Unit) {
         content()
     }
+
 
 
 }

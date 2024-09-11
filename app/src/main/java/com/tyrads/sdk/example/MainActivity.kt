@@ -69,7 +69,6 @@ fun Greeting(modifier: Modifier = Modifier) {
     fun handleButtonClick() {
         isLoading = true
         CoroutineScope(Dispatchers.Main).launch {
-            // Save values to SharedPreferences
             sharedPreferences.edit().apply {
                 putString("apiKey", apiKeyInput)
                 putString("apiSecret", apiSecretInput)
@@ -80,7 +79,8 @@ fun Greeting(modifier: Modifier = Modifier) {
             Tyrads.getInstance().init(
                 context,
                 apiKey = apiKeyInput,
-                apiSecret = apiSecretInput
+                apiSecret = apiSecretInput,
+                debugMode = true
             )
             Tyrads.getInstance().loginUser(userID = userIdInput)
             Tyrads.getInstance().showOffers()
