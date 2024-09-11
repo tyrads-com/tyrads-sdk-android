@@ -51,8 +51,8 @@ class Tyrads private constructor() {
         }
     }
 
-    internal fun log(message: String, level: Int = Log.DEBUG) {
-        if (debugMode) {
+    internal fun log(message: String, level: Int = Log.DEBUG, force: Boolean = false) {
+        if (debugMode || force) {
             when (level) {
                 Log.DEBUG -> Log.d(AcmoConfig.TAG, message)
                 Log.INFO -> Log.i(AcmoConfig.TAG, message)
@@ -112,11 +112,11 @@ class Tyrads private constructor() {
                         usageStatsController.saveUsageStats()
                     }
                     is Result.Failure -> {
-                        log("User login failed", Log.ERROR)
+                        log("User login failed", Log.ERROR, force = true)
                         val error = result.getException()
                         val errorMessage = String(response.data)
-                        Log.e(AcmoConfig.TAG, "Error: ${error.message}")
-                        Log.e(AcmoConfig.TAG, "Server Message: $errorMessage")
+                        log("Error: ${error.message}")
+                        log("Server Message: $errorMessage")
                     }
 
                 }
@@ -133,11 +133,11 @@ class Tyrads private constructor() {
         GlobalScope.launch {
             log("Preparing to show offers", Log.INFO)
             if (initializationWait?.isCompleted == false) {
-                log("Initialization is still in progress", Log.DEBUG)
+                log("waiting for initialization to complete", Log.DEBUG, true)
             }
             initializationWait?.join()
             if (!::loginData.isInitialized) {
-                log("showOffers: Initialization incomplete", Log.ERROR)
+                log("showOffers: Initialization error", Log.ERROR)
                 return@launch
             }
             log("Launching offers", Log.INFO)
