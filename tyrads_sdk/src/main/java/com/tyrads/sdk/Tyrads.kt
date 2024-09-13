@@ -5,6 +5,7 @@ import AcmoConfig
 import AcmoEndpointNames
 import AcmoInitModel
 import AcmoKeyNames
+import AcmoTrackingController
 import AcmoUsageStatsController
 import android.content.Context
 import android.content.Intent
@@ -42,6 +43,9 @@ class Tyrads private constructor() {
     internal var debugMode: Boolean = false
 
     private val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    var tracker = AcmoTrackingController()
+
 
     companion object {
         @Volatile
@@ -131,6 +135,8 @@ class Tyrads private constructor() {
                         newUser = loginData.data.newRegisteredUser
                         val usageStatsController = AcmoUsageStatsController()
                         usageStatsController.saveUsageStats()
+
+                        track(TyradsActivity.initialized);
                     }
 
                     is Result.Failure -> {
@@ -172,6 +178,9 @@ class Tyrads private constructor() {
     }
 
 
+    fun track(activity: String) {
+        tracker.trackUser(activity);
+    }
 
 
 }
