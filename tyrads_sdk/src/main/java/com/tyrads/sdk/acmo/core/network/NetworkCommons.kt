@@ -20,7 +20,7 @@ import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.runBlocking
 
 @Keep
-class NetworkCommons() {
+class NetworkCommons {
     private var isDialogOpen = false
 
     init {
@@ -60,13 +60,14 @@ class NetworkCommons() {
 
         FuelManager.instance.addResponseInterceptor { next: (Request, Response) -> Response ->
             { request: Request, response: Response ->
-                Tyrads.getInstance().log("Response received: $response")
-                when (response.statusCode) {
-                    in 200..201 -> next(request, response)
-                    else -> {
-                        Tyrads.getInstance().log("Network error: ${response.statusCode}")
-                        throw FuelError.wrap(Exception("Network connect timeout error"))
+                try {
+                    when (response.statusCode) {
+                        in 200..299 -> next(request, response)
+                        else -> throw FuelError.wrap(Exception("Network error: ${response.statusCode}"))
                     }
+                } catch (e: Exception) {
+                    Tyrads.getInstance().log("Network error: ${e.message}", Log.ERROR)
+                    throw e
                 }
             }
         }
