@@ -52,7 +52,7 @@ class NetworkCommons {
                         sharedPreferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     request.headers["X-SDK-Platform"] = AcmoConfig.SDK_PLATFORM
                     request.headers["X-SDK-Version"] = AcmoConfig.SDK_VERSION
-                    Tyrads.getInstance().log("Request headers set: ${request.headers}")
+                    Tyrads.getInstance().log("Request headers set: ${request}")
                 }
                 next(request)
             }
@@ -61,6 +61,7 @@ class NetworkCommons {
         FuelManager.instance.addResponseInterceptor { next: (Request, Response) -> Response ->
             { request: Request, response: Response ->
                 try {
+                    Tyrads.getInstance().log("Response: ${response}")
                     when (response.statusCode) {
                         in 200..299 -> next(request, response)
                         else -> throw FuelError.wrap(Exception("Network error: ${response.statusCode}"))
