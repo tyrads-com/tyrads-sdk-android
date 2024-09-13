@@ -19,8 +19,12 @@ import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @Keep
@@ -32,10 +36,12 @@ class Tyrads private constructor() {
     internal lateinit var preferences: SharedPreferences
     internal lateinit var loginData: AcmoInitModel
     internal var newUser: Boolean = false
-    var initializationWait: Job? = null
+    var initWait: Job? = null
+    var loginUserWait: Job? = null
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
+    private val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     companion object {
         @Volatile
@@ -64,22 +70,37 @@ class Tyrads private constructor() {
     }
 
     fun init(context: Context, apiKey: String, apiSecret: String, debugMode: Boolean = false) {
-        this.context = context
-        this.apiKey = apiKey
-        this.apiSecret = apiSecret
+        this.context = context.applicationContext
+        this.apiKey = apiKey.takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException("API key cannot be blank")
+        this.apiSecret = apiSecret.takeIf { it.isNotBlank() }
+            ?: throw IllegalArgumentException("API secret cannot be blank")
         this.debugMode = debugMode
-        preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
-        preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
-        preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
-        NetworkCommons()
+        initWait = tyradScope.launch {
+            preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
+            preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
+            preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
+            NetworkCommons()
 
-        log("Warning: debugMode is set to true. This should not be used in production.", Log.WARN)
-        log("Tyrads SDK initialized", Log.INFO)
+            log(
+                "Warning: debugMode is set to true. This should not be used in production.",
+                Log.WARN
+            )
+            log("Tyrads SDK initialized", Log.INFO)
+        }
     }
 
     fun loginUser(userID: String? = null) {
         try {
-            initializationWait = GlobalScope.launch {
+            loginUserWait = tyradScope.launch {
+                if (initWait?.isCompleted == false) {
+                    log("Waiting for init setup to complete", Log.DEBUG, true)
+                }
+                initWait?.join()
+                if (!::preferences.isInitialized) {
+                    log("loginUser: init setup error", Log.ERROR)
+                    return@launch
+                }
                 log("Starting user login process", Log.INFO)
                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
 
@@ -111,6 +132,7 @@ class Tyrads private constructor() {
                         val usageStatsController = AcmoUsageStatsController()
                         usageStatsController.saveUsageStats()
                     }
+
                     is Result.Failure -> {
                         log("User login failed", Log.ERROR, force = true)
                         val error = result.getException()
@@ -118,24 +140,20 @@ class Tyrads private constructor() {
                         log("Error: ${error.message}")
                         log("Server Message: $errorMessage")
                     }
-
                 }
-
             }
-
         } catch (e: Exception) {
             log("Exception during login: ${e.message}", Log.ERROR)
         }
     }
 
-
     fun showOffers() {
-        GlobalScope.launch {
+        tyradScope.launch {
             log("Preparing to show offers", Log.INFO)
-            if (initializationWait?.isCompleted == false) {
+            if (loginUserWait?.isCompleted == false) {
                 log("Waiting for user initialization to complete", Log.DEBUG, true)
             }
-            initializationWait?.join()
+            loginUserWait?.join()
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
                 return@launch
@@ -152,6 +170,7 @@ class Tyrads private constructor() {
     fun Dialog(content: @Composable () -> Unit) {
         content()
     }
+
 
 
 

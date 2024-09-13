@@ -59,11 +59,15 @@ class MainActivity : ComponentActivity() {
 fun Greeting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
-    
+
     val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
-    
+
     var apiKeyInput by remember { mutableStateOf(sharedPreferences.getString("apiKey", "") ?: "") }
-    var apiSecretInput by remember { mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "") }
+    var apiSecretInput by remember {
+        mutableStateOf(
+            sharedPreferences.getString("apiSecret", "") ?: ""
+        )
+    }
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "") ?: "") }
 
     fun handleButtonClick() {

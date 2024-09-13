@@ -3,8 +3,14 @@ package com.tyrads.sdk.acmo.modules.webview
 import AcmoUsageStatsController
 import AcmoUsageStatsDialog
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.webkit.JavascriptInterface
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
@@ -95,6 +101,7 @@ fun WebViewComposable(modifier: Modifier) {
             )
         }
     }
+
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
@@ -152,10 +159,19 @@ fun WebViewComposable(modifier: Modifier) {
                     settings.allowContentAccess = true
                     settings.allowFileAccess = true
                     settings.databaseEnabled = true
-                    settings.cacheMode = WebSettings.LOAD_DEFAULT
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     loadUrl(url)
                     webViewState.webView = this
+
+                    // Clear cache periodically
+                    val handler = Handler(Looper.getMainLooper())
+                    val runnableCode = object : Runnable {
+                        override fun run() {
+                            clearCache(true)
+                            handler.postDelayed(this, 5 * 60 * 1000) // Run every 5 minutes
+                        }
+                    }
+                    handler.post(runnableCode)
                 }
             }
         )
