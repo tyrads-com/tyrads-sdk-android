@@ -18,12 +18,13 @@ import android.provider.Settings
 import androidx.annotation.Keep
 
 @Keep
-class AcmoDeviceDetailsController() {
+class AcmoDeviceDetailsController {
+    private val deviceInfoLazy by lazy { acmoGetDeviceInfo(Tyrads.getInstance().context) }
 
     suspend fun getDeviceDetails(): Map<String, Any?> = withContext(Dispatchers.IO) {
-        var context = Tyrads.getInstance().context
+        val context = Tyrads.getInstance().context
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        val deviceInfo = acmoGetDeviceInfo(context)
+        val deviceInfo = deviceInfoLazy
         val usageController = AcmoUsageStatsController()
         val androidId =
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
@@ -69,7 +70,7 @@ class AcmoDeviceDetailsController() {
         return@withContext deviceDetails
     }
 
-    fun acmoGetDeviceInfo(context: Context): DeviceInfo {
+    private fun acmoGetDeviceInfo(context: Context): DeviceInfo {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
         val build = mutableMapOf<String, Any>()
@@ -154,6 +155,7 @@ class AcmoDeviceDetailsController() {
             serialNumber = build["serialNumber"] as String
         )
     }
+
 
 
     // New implementation using screen size

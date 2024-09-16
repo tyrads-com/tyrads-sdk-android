@@ -20,7 +20,7 @@ import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.runBlocking
 
 @Keep
-class NetworkCommons() {
+class NetworkCommons {
     private var isDialogOpen = false
 
     init {
@@ -31,6 +31,8 @@ class NetworkCommons() {
         FuelManager.instance.basePath = AcmoConfig.BASE_URL
         FuelManager.instance.timeoutInMillisecond = 300000 // 5 minutes
         FuelManager.instance.timeoutReadInMillisecond = 300000 // 5 minutes
+
+        Tyrads.getInstance().log("NetworkCommons initialized with base URL: ${AcmoConfig.BASE_URL}")
 
         FuelManager.instance.addRequestInterceptor { next: (Request) -> Request ->
             { request: Request ->
@@ -50,6 +52,7 @@ class NetworkCommons() {
                         sharedPreferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     request.headers["X-SDK-Platform"] = AcmoConfig.SDK_PLATFORM
                     request.headers["X-SDK-Version"] = AcmoConfig.SDK_VERSION
+                    Tyrads.getInstance().log("Request headers set: ${request}")
                 }
                 next(request)
             }
@@ -57,15 +60,20 @@ class NetworkCommons() {
 
         FuelManager.instance.addResponseInterceptor { next: (Request, Response) -> Response ->
             { request: Request, response: Response ->
-                Log.d("NetworkCommons", "Response: $response")
-                when (response.statusCode) {
-                    in 200..201 -> next(request, response)
-                    else -> throw FuelError.wrap(Exception("Network connect timeout error"))
+                try {
+                    Tyrads.getInstance().log("Response: ${response}")
+                    when (response.statusCode) {
+                        in 200..299 -> next(request, response)
+                        else -> throw FuelError.wrap(Exception("Network error: ${response.statusCode}"))
+                    }
+                } catch (e: Exception) {
+                    Tyrads.getInstance().log("Network error: ${e.message}", Log.ERROR)
+                    throw e
                 }
             }
         }
     }
-
-
-
 }
+
+
+
