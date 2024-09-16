@@ -59,17 +59,20 @@ class MainActivity : ComponentActivity() {
 fun Greeting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(false) }
-    
+
     val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
-    
+
     var apiKeyInput by remember { mutableStateOf(sharedPreferences.getString("apiKey", "") ?: "") }
-    var apiSecretInput by remember { mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "") }
+    var apiSecretInput by remember {
+        mutableStateOf(
+            sharedPreferences.getString("apiSecret", "") ?: ""
+        )
+    }
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "") ?: "") }
 
     fun handleButtonClick() {
         isLoading = true
         CoroutineScope(Dispatchers.Main).launch {
-            // Save values to SharedPreferences
             sharedPreferences.edit().apply {
                 putString("apiKey", apiKeyInput)
                 putString("apiSecret", apiSecretInput)
@@ -80,7 +83,8 @@ fun Greeting(modifier: Modifier = Modifier) {
             Tyrads.getInstance().init(
                 context,
                 apiKey = apiKeyInput,
-                apiSecret = apiSecretInput
+                apiSecret = apiSecretInput,
+                debugMode = true
             )
             Tyrads.getInstance().loginUser(userID = userIdInput)
             Tyrads.getInstance().showOffers()
