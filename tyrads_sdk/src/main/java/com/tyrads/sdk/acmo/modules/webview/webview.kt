@@ -3,8 +3,16 @@ package com.tyrads.sdk.acmo.modules.webview
 import AcmoUsageStatsController
 import AcmoUsageStatsDialog
 import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
@@ -12,6 +20,8 @@ import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,12 +44,20 @@ import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.activity.compose.rememberLauncherForActivityResult
 
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewComposable(modifier: Modifier) {
     val webViewState = rememberWebViewState()
+    
+    val fileChooserLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        val result = uri?.let { arrayOf(it) }
+        webViewState.filePathCallback?.onReceiveValue(result)
+        webViewState.filePathCallback = null
+    }
+
     val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
     DisposableEffect(backDispatcher) {
@@ -63,7 +81,6 @@ fun WebViewComposable(modifier: Modifier) {
 
     val url =
         "https://websdk.tyrads.com/?apiKey=${Tyrads.getInstance().apiKey}&apiSecret=${Tyrads.getInstance().apiSecret}&userID=${Tyrads.getInstance().publisherUserID}&newUser=${Tyrads.getInstance().newUser}&platform=Android&hc=${Tyrads.getInstance().loginData.data.publisherApp.headerColor}&mc=${Tyrads.getInstance().loginData.data.publisherApp.mainColor}";
-
     val usageStatsController = AcmoUsageStatsController()
     var showDialog by remember { mutableStateOf(true) }
 
@@ -84,11 +101,23 @@ fun WebViewComposable(modifier: Modifier) {
             )
         }
     }
+
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
                 WebView(context).apply {
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onShowFileChooser(
+                            webView: WebView,
+                            filePathCallback: ValueCallback<Array<Uri>>,
+                            fileChooserParams: FileChooserParams
+                        ): Boolean {
+                            webViewState.filePathCallback = filePathCallback
+                            fileChooserLauncher.launch("*/*")
+                            return true
+                        }
+                    }
                     webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
@@ -130,10 +159,19 @@ fun WebViewComposable(modifier: Modifier) {
                     settings.allowContentAccess = true
                     settings.allowFileAccess = true
                     settings.databaseEnabled = true
-                    settings.cacheMode = WebSettings.LOAD_DEFAULT
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     loadUrl(url)
                     webViewState.webView = this
+
+                    // Clear cache periodically
+                    val handler = Handler(Looper.getMainLooper())
+                    val runnableCode = object : Runnable {
+                        override fun run() {
+                            clearCache(true)
+                            handler.postDelayed(this, 5 * 60 * 1000) // Run every 5 minutes
+                        }
+                    }
+                    handler.post(runnableCode)
                 }
             }
         )
@@ -158,7 +196,9 @@ fun WebViewComposable(modifier: Modifier) {
 @Keep
 class WebViewState {
     var webView: WebView? by mutableStateOf(null)
-}
+    var filePathCallback: ValueCallback<Array<Uri>>? by mutableStateOf(null)
 
+}
 @Composable
 fun rememberWebViewState() = remember { WebViewState() }
+
