@@ -79,8 +79,8 @@ fun WebViewComposable(modifier: Modifier) {
 
     val isLoading = remember { mutableStateOf(true) }
 
-    val url =
-        "https://websdk.tyrads.com/?apiKey=${Tyrads.getInstance().apiKey}&apiSecret=${Tyrads.getInstance().apiSecret}&userID=${Tyrads.getInstance().publisherUserID}&newUser=${Tyrads.getInstance().newUser}&platform=Android&hc=${Tyrads.getInstance().loginData.data.publisherApp.headerColor}&mc=${Tyrads.getInstance().loginData.data.publisherApp.mainColor}";
+  //  val url =
+  //      "https://websdk.tyrads.com/?apiKey=${Tyrads.getInstance().apiKey}&apiSecret=${Tyrads.getInstance().apiSecret}&userID=${Tyrads.getInstance().publisherUserID}&newUser=${Tyrads.getInstance().newUser}&platform=Android&hc=${Tyrads.getInstance().loginData.data.publisherApp.headerColor}&mc=${Tyrads.getInstance().loginData.data.publisherApp.mainColor}";
     val usageStatsController = AcmoUsageStatsController()
     var showDialog by remember { mutableStateOf(true) }
 
@@ -160,7 +160,7 @@ fun WebViewComposable(modifier: Modifier) {
                     settings.allowFileAccess = true
                     settings.databaseEnabled = true
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-                    loadUrl(url)
+                    loadUrl(Tyrads.getInstance().url.toString())
                     webViewState.webView = this
 
                     // Clear cache periodically
