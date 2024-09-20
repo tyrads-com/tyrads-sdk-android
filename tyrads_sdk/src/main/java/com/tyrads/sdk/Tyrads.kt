@@ -47,6 +47,7 @@ class Tyrads private constructor() {
     private val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
+    internal var url: String? = null
 
 
     companion object {
@@ -155,7 +156,7 @@ class Tyrads private constructor() {
         }
     }
 
-    fun showOffers() {
+    fun showOffers(route: String? = null, campaignID: Int? = null) {
         tyradScope.launch {
             log("Preparing to show offers", Log.INFO)
             if (loginUserWait?.isCompleted == false) {
@@ -167,12 +168,14 @@ class Tyrads private constructor() {
                 return@launch
             }
             log("Launching offers", Log.INFO)
+            url = "https://websdk.tyrads.com/?apiKey=${apiKey}&apiSecret=${apiSecret}&userID=${publisherUserID}&newUser=${newUser}&platform=Android&hc=${loginData.data.publisherApp.headerColor}&mc=${loginData.data.publisherApp.mainColor}&route=${route}&campaignID=${campaignID}"
+
+
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         }
     }
-
 
     @Composable
     fun Dialog(content: @Composable () -> Unit) {
