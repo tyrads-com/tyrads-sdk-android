@@ -136,8 +136,15 @@ class Tyrads private constructor() {
                         publisherUserID = loginData.data.user.publisherUserId
                         preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
                         newUser = loginData.data.newRegisteredUser
-                        val usageStatsController = AcmoUsageStatsController()
-                        usageStatsController.saveUsageStats()
+
+                        if (preferences.getBoolean(
+                                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+                                false
+                            )
+                        ) {
+                            val usageStatsController = AcmoUsageStatsController()
+                            usageStatsController.saveUsageStats()
+                        }
 
                         track(TyradsActivity.initialized);
                     }
