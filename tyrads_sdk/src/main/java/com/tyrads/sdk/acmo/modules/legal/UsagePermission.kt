@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.CloseonTap
+import kotlinx.coroutines.launch
 
 @Composable
 fun AcmoUsagePermissionsPage() {
@@ -42,6 +43,10 @@ fun AcmoUsagePermissionsPage() {
                             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
                             true
                         ).apply()
+                        Tyrads.getInstance().tyradScope.launch {
+                            val usageStatsController = AcmoUsageStatsController()
+                            usageStatsController.saveUsageStats()
+                        }
 
                         Tyrads.getInstance().navController.navigate("webview") {
                             popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
