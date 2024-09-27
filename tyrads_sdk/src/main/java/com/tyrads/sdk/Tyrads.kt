@@ -42,7 +42,7 @@ class Tyrads private constructor() {
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
-    private val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
     internal var url: String? = null
@@ -134,8 +134,15 @@ class Tyrads private constructor() {
                         publisherUserID = loginData.data.user.publisherUserId
                         preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
                         newUser = loginData.data.newRegisteredUser
-                        val usageStatsController = AcmoUsageStatsController()
-                        usageStatsController.saveUsageStats()
+
+                        if (preferences.getBoolean(
+                                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+                                false
+                            )
+                        ) {
+                            val usageStatsController = AcmoUsageStatsController()
+                            usageStatsController.saveUsageStats()
+                        }
 
                         track(TyradsActivity.initialized);
                     }
