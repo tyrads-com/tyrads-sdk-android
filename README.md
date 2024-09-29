@@ -40,7 +40,7 @@ Add it in your root build.gradle at the end of repositories:
 	dependencyResolutionManagement {
 		repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
 		repositories {
-			mavenCentral()
+			// other repositories ..
 			maven { url 'https://jitpack.io' }
 		}
 	}
@@ -52,7 +52,17 @@ Step 2. Add the dependency
 
 ~~~ gradle
 	dependencies {
+		// existing dependencies ..
 		implementation 'com.github.tyrads-com:tyrads-sdk-android:LATEST_VERSION'// replace LATEST_VERSION with 0.0.1 or the latest stable version
+	}
+~~~
+
+Step 3. Add kotlin plugin (if not already added)
+
+~~~ gradle
+	plugins {
+		//existing plugins ..
+		id 'org.jetbrains.kotlin.android' version '1.9.0'
 	}
 ~~~
 
