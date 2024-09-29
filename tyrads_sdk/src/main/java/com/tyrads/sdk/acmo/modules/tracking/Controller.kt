@@ -1,9 +1,12 @@
 
+import androidx.annotation.Keep
+import androidx.compose.runtime.NoLiveLiterals
 import com.github.kittinunf.fuel.Fuel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
+@Keep
+@NoLiveLiterals
 class AcmoTrackingController {
     var submitting = false
 
