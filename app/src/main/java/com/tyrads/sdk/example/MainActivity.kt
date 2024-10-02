@@ -34,6 +34,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.graphics.Color
+import com.tyrads.sdk.TyradsMediaSourceInfo
+import com.tyrads.sdk.TyradsUserInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -86,6 +88,32 @@ fun Greeting(modifier: Modifier = Modifier) {
                 apiSecret = apiSecretInput,
                 debugMode = true
             )
+//            // Set media source information
+//            val mediaSourceInfo = TyradsMediaSourceInfo(
+//                sub1 = "sub_value_1_acmo",
+//                sub2 = "sub_value_2",
+//                sub3 = "sub_value_3",
+//                sub4 = "sub_value_4",
+//                sub5 = "sub_value_5",
+//                mediaSourceName = "Facebook",
+//                mediaSourceId = "fb_123",
+//                mediaSubSourceId = "subsource_456",
+//                incentivized = true,
+//                mediaAdsetName = "Summer Sale",
+//                mediaAdsetId = "adset_789",
+//                mediaCreativeName = "Beach Banner",
+//                mediaCreativeId = "creative_101",
+//                mediaCampaignName = "Summer Promotion 2023"
+//            )
+//            Tyrads.getInstance().setMediaSourceInfo(mediaSourceInfo)
+//
+//            // Set user information
+//            val userInfo = TyradsUserInfo(
+//                email = "user@example.com",
+//                phoneNumber = "+1234567890",
+//                userGroup = "premium"
+//            )
+//            Tyrads.getInstance().setUserInfo(userInfo)
             Tyrads.getInstance().loginUser(userID = userIdInput)
             Tyrads.getInstance().showOffers()
             isLoading = false
