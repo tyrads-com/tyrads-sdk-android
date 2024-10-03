@@ -42,10 +42,13 @@ class Tyrads private constructor() {
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
-    val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
     internal var url: String? = null
+    private var mediaSourceInfo: TyradsMediaSourceInfo? = null
+    private var userInfo: TyradsUserInfo? = null
 
 
     companion object {
@@ -114,13 +117,36 @@ class Tyrads private constructor() {
                 val deviceDetailsController = AcmoDeviceDetailsController()
                 val deviceDetails = deviceDetailsController.getDeviceDetails()
 
-                val fd = mapOf(
+                val fd = mutableMapOf(
                     "publisherUserId" to userId,
                     "platform" to "Android",
                     "identifierType" to identifierType,
                     "identifier" to advertisingId,
                     "deviceData" to deviceDetails
                 )
+                mediaSourceInfo?.let { info ->
+                    info.sub1?.let { fd["sub1"] = it }
+                    info.sub2?.let { fd["sub2"] = it }
+                    info.sub3?.let { fd["sub3"] = it }
+                    info.sub4?.let { fd["sub4"] = it }
+                    info.sub5?.let { fd["sub5"] = it }
+                    info.mediaSourceName?.let { fd["mediaSourceName"] = it }
+                    info.mediaSourceId?.let { fd["mediaSourceId"] = it }
+                    info.mediaSubSourceId?.let { fd["mediaSubSourceId"] = it }
+                    info.incentivized?.let { fd["incentivized"] = it }
+                    info.mediaAdsetName?.let { fd["mediaAdsetName"] = it }
+                    info.mediaAdsetId?.let { fd["mediaAdsetId"] = it }
+                    info.mediaCreativeName?.let { fd["mediaCreativeName"] = it }
+                    info.mediaCreativeId?.let { fd["mediaCreativeId"] = it }
+                    info.mediaCampaignName?.let { fd["mediaCampaignName"] = it }
+                }
+
+                userInfo?.let { info ->
+                    info.email?.let { fd["email"] = it }
+                    info.phoneNumber?.let { fd["phoneNumber"] = it }
+                    info.userGroup?.let { fd["userGroup"] = it }
+                }
+
 
                 val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                     .body(Gson().toJson(fd))
@@ -160,7 +186,6 @@ class Tyrads private constructor() {
             log("Exception during login: ${e.message}", Log.ERROR)
         }
     }
-
     fun showOffers(route: String? = null, campaignID: Int? = null) {
         tyradScope.launch {
             log("Preparing to show offers", Log.INFO)
@@ -191,6 +216,16 @@ class Tyrads private constructor() {
     fun track(activity: String) {
         tracker.trackUser(activity);
     }
+
+    fun setMediaSourceInfo(mediaSourceInfo: TyradsMediaSourceInfo) {
+        this.mediaSourceInfo = mediaSourceInfo
+    }
+
+
+    fun setUserInfo(userInfo: TyradsUserInfo) {
+        this.userInfo = userInfo
+    }
+
 
 
 }
