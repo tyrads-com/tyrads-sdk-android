@@ -7,6 +7,7 @@ import AcmoInitModel
 import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
+import TyradsActivity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -20,13 +21,13 @@ import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
+import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
+import java.util.UUID
 
 @Keep
 class Tyrads private constructor() {
@@ -111,9 +112,22 @@ class Tyrads private constructor() {
                 }
                 log("Starting user login process", Log.INFO)
                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
+                var advertisingId = ""
+                var identifierType = ""
+                if (isGooglePlayServicesAvailable(context)){
+                    advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                    identifierType = "GAID"
+                }else{
+                    advertisingId = preferences.getString("uuid", null) ?: run {
+                        val newUuid = UUID.randomUUID().toString()
+                        preferences.edit().putString("uuid", newUuid).apply()
+                        newUuid
+                    }
+                    identifierType = "OTHER"
+                }
 
-                val advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
-                val identifierType = "GAID"
+
+
                 val deviceDetailsController = AcmoDeviceDetailsController()
                 val deviceDetails = deviceDetailsController.getDeviceDetails()
 
@@ -225,6 +239,7 @@ class Tyrads private constructor() {
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
     }
+
 
 
 
