@@ -112,12 +112,19 @@ class Tyrads private constructor() {
                 }
                 log("Starting user login process", Log.INFO)
                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
-                var advertisingId = ""
+                var advertisingId : String? = ""
                 var identifierType = ""
-                if (isGooglePlayServicesAvailable(context)){
-                    advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
-                    identifierType = "GAID"
-                }else{
+                try {
+                    if (isGooglePlayServicesAvailable(context)) {
+                        advertisingId =
+                            AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                        identifierType = "GAID"
+                    }
+                } catch (e: Exception) {
+                    log("Error getting advertising id", Log.ERROR)
+                }
+
+                if(advertisingId.isNullOrBlank()){
                     advertisingId = preferences.getString("uuid", null) ?: run {
                         val newUuid = UUID.randomUUID().toString()
                         preferences.edit().putString("uuid", newUuid).apply()
@@ -125,6 +132,7 @@ class Tyrads private constructor() {
                     }
                     identifierType = "OTHER"
                 }
+                
 
 
 
