@@ -45,6 +45,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
+import java.lang.ref.WeakReference
 
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -79,15 +80,13 @@ fun WebViewComposable(modifier: Modifier) {
 
     val isLoading = remember { mutableStateOf(true) }
 
-  //  val url =
-  //      "https://websdk.tyrads.com/?apiKey=${Tyrads.getInstance().apiKey}&apiSecret=${Tyrads.getInstance().apiSecret}&userID=${Tyrads.getInstance().publisherUserID}&newUser=${Tyrads.getInstance().newUser}&platform=Android&hc=${Tyrads.getInstance().loginData.data.publisherApp.headerColor}&mc=${Tyrads.getInstance().loginData.data.publisherApp.mainColor}";
     val usageStatsController = AcmoUsageStatsController()
     var showDialog by remember { mutableStateOf(true) }
 
-    val status =
-        usageStatsController.checkUsagePermission() ?: false
+    val status = usageStatsController.checkUsagePermission() ?: false
 
-    val activityContext = LocalContext.current as? ComponentActivity // Get the current context
+    val activityContext = LocalContext.current as? ComponentActivity
+    val activityReference = WeakReference(activityContext)
     if (!status && showDialog) {
         Tyrads.getInstance().Dialog {
             AcmoUsageStatsDialog(
@@ -103,10 +102,14 @@ fun WebViewComposable(modifier: Modifier) {
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+        var webView: WebView? = null
+        var handler: Handler? = null
+        var runnableCode: Runnable? = null
+
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
-                WebView(context).apply {
+                webView = WebView(context).apply {
                     webChromeClient = object : WebChromeClient() {
                         override fun onShowFileChooser(
                             webView: WebView,
@@ -134,7 +137,7 @@ fun WebViewComposable(modifier: Modifier) {
                                 when {
                                     url.contains("acmo-cmd") -> {
                                         if (url.contains("close-app")) {
-                                            activityContext?.finish()
+                                            activityReference.get()?.finish()
                                             return true
                                         }
                                     }
@@ -163,18 +166,37 @@ fun WebViewComposable(modifier: Modifier) {
                     loadUrl(Tyrads.getInstance().url.toString())
                     webViewState.webView = this
 
-                    // Clear cache periodically
-                    val handler = Handler(Looper.getMainLooper())
-                    val runnableCode = object : Runnable {
+                    // Initialize handler and runnable
+                    handler = Handler(Looper.getMainLooper())
+                    runnableCode = object : Runnable {
                         override fun run() {
                             clearCache(true)
-                            handler.postDelayed(this, 5 * 60 * 1000) // Run every 5 minutes
+                            handler?.postDelayed(this, 5 * 60 * 1000) // Run every 5 minutes
                         }
                     }
-                    handler.post(runnableCode)
+                    handler?.post(runnableCode!!)
                 }
+                webView!!
             }
         )
+
+        // Dispose of the WebView and Handler when the composable is removed from the composition
+        DisposableEffect(Unit) {
+            onDispose {
+                // Stop the handler from running callbacks
+                handler?.removeCallbacks(runnableCode!!)
+                handler = null
+                runnableCode = null
+
+                webView?.let {
+                    it.stopLoading()
+                    it.clearHistory()
+                    it.removeAllViews()
+                    it.destroy()
+                    webView = null
+                }
+            }
+        }
 
         if (isLoading.value) {
             Box(
