@@ -28,6 +28,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
+import android.net.Uri
 
 @Keep
 class Tyrads private constructor() {
@@ -220,8 +221,22 @@ class Tyrads private constructor() {
                 return@launch
             }
             log("Launching offers", Log.INFO)
-            url = "https://websdk.tyrads.com/?apiKey=${apiKey}&apiSecret=${apiSecret}&userID=${publisherUserID}&newUser=${newUser}&platform=Android&hc=${loginData.data.publisherApp.headerColor}&mc=${loginData.data.publisherApp.mainColor}&route=${route}&campaignID=${campaignID}"
-
+            url = Uri.Builder()
+                .scheme("https")
+                .authority("websdk.tyrads.com")
+                .appendQueryParameter("apiKey", apiKey)
+                .appendQueryParameter("apiSecret", apiSecret)
+                .appendQueryParameter("userID", publisherUserID)
+                .appendQueryParameter("newUser", newUser.toString())
+                .appendQueryParameter("platform", "Android")
+                .appendQueryParameter("hc", loginData.data.publisherApp.headerColor)
+                .appendQueryParameter("mc", loginData.data.publisherApp.mainColor)
+                .appendQueryParameter("route", route?.toString())
+                .appendQueryParameter("campaignID", campaignID?.toString())
+                .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
+                .appendQueryParameter("av", AcmoConfig.AV)
+                .build()
+                .toString()
 
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
