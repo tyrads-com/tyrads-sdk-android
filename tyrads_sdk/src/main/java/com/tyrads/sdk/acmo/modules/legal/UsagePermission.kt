@@ -65,7 +65,7 @@ fun AcmoUsagePermissionsPage() {
 fun Body() {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = "Allow App To Track Usage Data\nTo Enable Your Earning Potential",
+            text = "Allow TyrSDK To Track Usage Data\nTo Enable Your Earning Potential",
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
