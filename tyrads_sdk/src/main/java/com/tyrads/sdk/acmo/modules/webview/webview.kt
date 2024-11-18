@@ -162,6 +162,7 @@ fun WebViewComposable(modifier: Modifier) {
                     settings.allowContentAccess = true
                     settings.allowFileAccess = true
                     settings.databaseEnabled = true
+                    settings.textZoom = 100
                     settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                     loadUrl(Tyrads.getInstance().url.toString())
                     webViewState.webView = this
