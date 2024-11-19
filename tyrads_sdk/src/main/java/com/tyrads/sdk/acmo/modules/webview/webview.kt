@@ -124,10 +124,9 @@ fun WebViewComposable(modifier: Modifier) {
                     webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
-                            view?.postDelayed({
-                                isLoading.value = false
-                            }, 0)
+                            isLoading.value = false
                         }
+
 
                         override fun shouldOverrideUrlLoading(
                             view: WebView?,
@@ -157,25 +156,34 @@ fun WebViewComposable(modifier: Modifier) {
                             return false
                         }
                     }
-                    settings.javaScriptEnabled = true
-                    settings.domStorageEnabled = true
-                    settings.allowContentAccess = true
-                    settings.allowFileAccess = true
-                    settings.databaseEnabled = true
-                    settings.textZoom = 100
-                    settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    settings.apply {
+                        cacheMode = WebSettings.LOAD_DEFAULT
+                        useWideViewPort = true
+                        loadWithOverviewMode = true
+                        domStorageEnabled = true
+                        allowContentAccess = true
+                        allowFileAccess = true
+                        javaScriptEnabled = true
+                        databaseEnabled = true
+                        textZoom = 100
+                        mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                    }
+
+                    overScrollMode = android.view.View.OVER_SCROLL_IF_CONTENT_SCROLLS
+
+                    setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                     loadUrl(Tyrads.getInstance().url.toString())
                     webViewState.webView = this
 
                     // Initialize handler and runnable
-                    handler = Handler(Looper.getMainLooper())
-                    runnableCode = object : Runnable {
-                        override fun run() {
-                            clearCache(true)
-                            handler?.postDelayed(this, 5 * 60 * 1000) // Run every 5 minutes
-                        }
-                    }
-                    handler?.post(runnableCode!!)
+                    // handler = Handler(Looper.getMainLooper())
+                    // runnableCode = object : Runnable {
+                    //     override fun run() {
+                    //         clearCache(true)
+                    //         handler?.postDelayed(this, 15 * 60 * 1000) // Run every 5 minutes
+                    //     }
+                    // }
+                    // handler?.post(runnableCode!!)
                 }
                 webView!!
             }
@@ -185,9 +193,9 @@ fun WebViewComposable(modifier: Modifier) {
         DisposableEffect(Unit) {
             onDispose {
                 // Stop the handler from running callbacks
-                handler?.removeCallbacks(runnableCode!!)
-                handler = null
-                runnableCode = null
+                // handler?.removeCallbacks(runnableCode!!)
+                // handler = null
+                // runnableCode = null
 
                 webView?.let {
                     it.stopLoading()
