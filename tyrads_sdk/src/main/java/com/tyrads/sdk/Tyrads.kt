@@ -29,6 +29,8 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import java.util.UUID
 import android.net.Uri
+import android.widget.Toast
+import kotlinx.coroutines.withContext
 
 @Keep
 class Tyrads private constructor() {
@@ -133,7 +135,7 @@ class Tyrads private constructor() {
                     }
                     identifierType = "OTHER"
                 }
-                
+
 
 
 
@@ -218,6 +220,9 @@ class Tyrads private constructor() {
             loginUserWait?.join()
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Please try back later", Toast.LENGTH_LONG).show()
+                }
                 return@launch
             }
             log("Launching offers", Log.INFO)
