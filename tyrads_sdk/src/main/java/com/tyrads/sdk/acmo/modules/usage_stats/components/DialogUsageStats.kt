@@ -168,7 +168,7 @@ fun UsageStatsCard(
                 }
             }
             Text(
-                text = "usage access allows an app to track which other apps you are using and how often, as well as your operator, language setting and other details.",
+                text = "usage access allows TyrSDK to track which other apps you are using and how often, as well as your operator, language setting and other details.",
                 modifier = Modifier.padding(top = 8.dp),
                 color = Color.Black,
                 fontWeight = FontWeight.Light
