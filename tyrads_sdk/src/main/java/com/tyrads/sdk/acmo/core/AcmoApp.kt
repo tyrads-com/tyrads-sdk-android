@@ -42,6 +42,7 @@ class AcmoApp : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
+                Tyrads.getInstance().preferences.edit().putBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID, false).apply()
                 var initPath = "privacy"
                 if (Tyrads.getInstance().preferences.getBoolean(
                         AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
