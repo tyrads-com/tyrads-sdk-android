@@ -49,12 +49,12 @@ fun LanguageDropdownMenu(
                 DropdownMenuItem(
                     text = { Text(language.name) },
                     onClick = {
-                        if(language.code == "default") {
-                            LocalizationHelper.setDeviceDefaultLanguage(context)
-                        }
-                        else {
-                            LocalizationHelper.changeLanguage(context, language.code)
-                        }
+//                        if(language.code == "default") {
+//                            LocalizationHelper.setDeviceDefaultLanguage(context)
+//                        }
+//                        else {
+//                            LocalizationHelper.changeLanguage(context, language.code)
+//                        }
                         selectedLanguage = language.code
                         expanded = false
                     }
