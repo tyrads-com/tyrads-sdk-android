@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.tyrads.sdk.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -118,7 +120,7 @@ fun UsageStatsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Permit Usage Access",
+                    text = stringResource(id = R.string.usage_permissions_permit_title),
                     style = TextStyle(fontSize = 16.sp),
                     modifier = Modifier.weight(1f),
                     color = Color.Black
@@ -168,7 +170,7 @@ fun UsageStatsCard(
                 }
             }
             Text(
-                text = "usage access allows an app to track which other apps you are using and how often, as well as your operator, language setting and other details.",
+                text = stringResource(id = R.string.usage_permissions_description),
                 modifier = Modifier.padding(top = 8.dp),
                 color = Color.Black,
                 fontWeight = FontWeight.Light

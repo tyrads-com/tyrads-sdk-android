@@ -1,0 +1,111 @@
+<resources>
+    <string name="title_activity_tyrads_webview">Tyrads SDK</string>
+    <string name="offers_title">Penawaran</string>
+    <string name="offers_active_offers_cta">Penawaran aktif</string>
+    <string name="offers_offers_cta">Main Sekarang</string>
+    <string name="offers_playtime">Waktu Bermain</string>
+    <string name="offers_ending_in">Selesai dalam</string>
+    <string name="offers_rewards_one">Hadiah</string>
+    <string name="offers_rewards_other">Hadiah</string>
+    <string name="offers_empty_message">Tidak ada penawaran yang tersedia sekarang, Kembali lagi nanti!</string>
+
+    <string name="active_offers_title">Penawaran Aktif</string>
+    <string name="active_offers_expiring_title">Penawaran yang Akan Berakhir</string>
+    <string name="active_offers_active_title">Penawaran Aktif</string>
+    <string name="active_offers_completed_title">Penawaran yang Selesai</string>
+    <string name="active_offers_back">Kembali</string>
+
+    <string name="offer_details_title">Detail Penawaran</string>
+    <string name="offer_details_cap_reached">Maaf, game ini sementara tidak tersedia, silakan kembali besok!</string>
+    <string name="offer_details_oops"></string>
+    <string name="offer_details_retry_download_message"><b>Ups!</b> Kami mengalami masalah dalam memvalidasi unduhan Anda. Klik "Coba Unduh Lagi" untuk mencoba lagi. Hadiah Anda tidak akan diberikan tanpa unduhan yang terlacak.</string>
+    <string name="offer_details_complete_within">Selesaikan semua hadiah dalam waktu</string>
+    <string name="offer_details_download_intro">Ikuti beberapa langkah ini untuk menghindari kegagalan unduhan dan pastikan Anda mendapatkan poin Anda.</string>
+    <string name="offer_details_android_steps_step1">1. Pastikan Anda memilih <b>Google Play Store</b> untuk mengunduh game.</string>
+    <string name="offer_details_android_steps_step2">2. Unduh segera setelah Anda mengklik tombol "<b>Konfirmasi</b>".</string>
+    <string name="offer_details_android_steps_step3">3. Setelah unduhan selesai, buka game dari <b>Google Play Store</b>.</string>
+    <string name="offer_details_ios_steps_step1">1. Pastikan Anda memilih <b>App Store</b> untuk mengunduh game.</string>
+    <string name="offer_details_ios_steps_step2">2. Unduh segera setelah Anda mengklik tombol "<b>Konfirmasi</b>".</string>
+    <string name="offer_details_ios_steps_step3">3. Setelah unduhan selesai, buka game dari <b>App Store</b>.</string>
+    <string name="offer_details_download_note">Catatan: Jika unduhan gagal, jangan lanjutkan untuk bermain!</string>
+    <string name="offer_details_play_now">Mainkan Sekarang</string>
+    <string name="offer_details_retry">Coba Lagi</string>
+    <string name="offer_details_completed_tasks">Tugas yang Selesai</string>
+    <string name="offer_details_active_tasks">Tugas aktif</string>
+    <string name="offer_details_available_tasks">Tugas Tersedia</string>
+    <string name="offer_details_rewards_one">Hadiah</string>
+    <string name="offer_details_rewards_other">Hadiah</string>
+    <string name="offer_details_purchase_micro_charge">MICRO CHARGE</string>
+    <string name="offer_details_purchase_earned">Anda mendapatkan: {{points}} {{currency}}</string>
+    <string name="offer_details_purchase_total">dari total {{points}} {{currency}}</string>
+    <string name="offer_details_purchase_daily_purchase">Hadiah Pembelian Harian</string>
+    <string name="offer_details_purchase_daily_reward">Hadiah Harian</string>
+    <string name="offer_details_event_status_not_available">Belum Tersedia</string>
+    <string name="offer_details_event_status_complete_to_continue">Selesaikan ini untuk melanjutkan</string>
+    <string name="offer_details_event_status_rejected">Ditolak</string>
+    <string name="offer_details_event_status_pending">Menunggu</string>
+    <string name="offer_details_event_status_completed">Selesai</string>
+    <string name="offer_details_event_status_rejected_time">Ditolak, batas waktu tercapai</string>
+    <string name="offer_details_event_status_complete_within">Selesaikan dalam waktu</string>
+
+    <string name="dashboard_suggested_offers">Penawaran yang Disarankan</string>
+    <string name="dashboard_more_offers">Penawaran Lainnya</string>
+    <string name="dashboard_my_games">Permainan Saya</string>
+    <string name="dashboard_play_button">Mainkan</string>
+    <string name="dashboard_top_ranking">Top {{number}}</string>
+
+    <string name="help_title">Bantuan</string>
+    <string name="help_points_issue">Saya tidak mendapatkan poin</string>
+    <string name="help_faqs">FAQs</string>
+
+    <string name="privacy_policy_title">Kamu Hampir Mendapatkan\nHadiah Pertamamu!</string>
+    <string name="privacy_policy_subtitle">Mainkan Game Favoritmu! Dan Dapatkan Hadiahmu!</string>
+    <string name="privacy_policy_consent_info">Dengan ini kami informasikan bahwa Tyrads Pte. Ltd. memproses data pribadi berikut dalam kerangka penggunaan TyrSDK:\nAplikasi yang diinstal (termasuk durasi penggunaan dan riwayat penggunaan)\nData tersebut ditautkan ke perangkat Anda melalui ID perangkat (GAID atau IDFA) yang dikirimkan ke server kami dalam bentuk terenkripsi. Agar penyedia aplikasi dapat membiayai saran aplikasi kami, kami harus mengirimkan ID perangkat kepada mereka untuk tujuan penagihan.\n\nPemrosesan data di atas diperlukan untuk dapat merekomendasikan aplikasi melalui pesan sistem, pemasangan aplikasi yang tersedia di TyrSDK yang sesuai dengan minat Anda, dan menghitung imbalan yang diperoleh sebagai hasil penggunaan aplikasi terkait oleh Anda.\n\nPersetujuan\n\nDengan mengklik "Terima", saya memberikan persetujuan kepada Tyrads Pte. Ltd untuk memproses data pribadi yang disebutkan di atas dan mengirimkannya ke aplikasi lain sehingga saya dapat menggunakan TyrSDK sebagaimana dijelaskan.\n\nSaya mengetahui bahwa data di atas menghasilkan profil minat, yang, tergantung pada jenis aplikasi yang saya gunakan, dapat berisi data pribadi yang sangat sensitif (seperti data kesehatan atau data tentang orientasi seksual saya serta data lain dari kategori khusus yang didefinisikan dalam Pasal 9 paragraf 11).\n\nData ini akan diproses oleh Tyrads Pte. Ltd, TyrSDK. Untuk informasi lebih lanjut</string>
+    <string name="privacy_policy_agreement_prefix">Saya telah membaca dan setuju dengan\n</string>
+    <string name="privacy_policy_terms_text">Syarat dan Ketentuan</string>
+    <string name="privacy_policy_and">" dan "</string>
+    <string name="privacy_policy_privacy_text">Kebijakan Privasi</string>
+    <string name="privacy_policy_accept">Terima</string>
+    <string name="privacy_policy_reject">Tolak</string>
+
+    <string name="privacy_terms_title">Privasi &amp; Ketentuan</string>
+    <string name="privacy_terms_privacy_policy">Kebijakan Privasi</string>
+    <string name="privacy_terms_terms_of_service">Syarat dan Ketentuan</string>
+
+    <string name="usage_permissions_title">Izinkan TyrSDK Untuk Melacak Data Penggunaan\nUntuk Memungkinkan Potensi Penghasilan Anda</string>
+    <string name="usage_permissions_permit_title">Izinkan Akses Penggunaan</string>
+    <string name="usage_permissions_description">Akses penggunaan memungkinkan TyrSDK untuk melacak aplikasi lain yang Anda gunakan dan seberapa sering, serta operator, pengaturan bahasa, dan detail lainnya.</string>
+
+    <string name="user_profile_title">Langkah terakhir..\nAnda hampir sampai!</string>
+    <string name="user_profile_gender_title">Pilih Jenis Kelamin Anda</string>
+    <string name="user_profile_male">Laki-laki</string>
+    <string name="user_profile_female">Perempuan</string>
+    <string name="user_profile_age_title">Pilih umur anda</string>
+    <string name="user_profile_continue_cta">Lanjutkan</string>
+
+    <string name="tickets_title">Saya tidak menerima poin saya</string>
+    <string name="tickets_header">Kami dengan senang hati akan membantu!</string>
+    <string name="tickets_subheader">Silakan pilih tugas mana yang Anda rasa telah selesai, tetapi Anda tidak mendapatkan poin.</string>
+    <string name="tickets_instructions">Silakan lampirkan ID Pesanan dan Screenshot seperti yang ditunjukkan di atas.</string>
+    <string name="tickets_help_title">Kami dengan senang hati akan membantu!</string>
+    <string name="tickets_help_subtitle">Silakan pilih tugas mana yang Anda rasa telah selesai, tetapi Anda tidak mendapatkan poin.</string>
+    <string name="tickets_game_player_id">ID Pemain Game:</string>
+    <string name="tickets_game_player_validation">Silakan masukkan ID pemain game yang valid</string>
+    <string name="tickets_order_id">ID Pesanan</string>
+    <string name="tickets_order_validation">Silakan masukkan ID pesanan</string>
+    <string name="tickets_screenshot">Screenshot</string>
+    <string name="tickets_screenshot_validation">Silakan pilih screenshot</string>
+    <string name="tickets_browse">Pilih</string>
+    <string name="tickets_prev">Contoh</string>
+    <string name="tickets_helper_text">Tidak yakin apa yang harus dilampirkan? Klik di sini untuk melihat contoh.</string>
+    <string name="tickets_submit">Kirim</string>
+    <string name="tickets_understand">Saya Mengerti</string>
+    <string name="tickets_submitting">Kirim tiket</string>
+
+    <string name="ticket_submitted_title">Saya tidak mendapatkan poin</string>
+    <string name="ticket_submitted_footnote">Percaya padaku</string>
+    <string name="ticket_submitted_header">Kami sedang mengerjakannya..</string>
+    <string name="ticket_submitted_back">Kembali ke halaman offer</string>
+    <string name="ticket_submitted_subheader">Kami tahu apa yang kami lakukan</string>
+    <string name="language">Bahasa</string>
+</resources>

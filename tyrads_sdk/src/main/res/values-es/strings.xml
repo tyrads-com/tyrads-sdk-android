@@ -1,0 +1,112 @@
+<resources>
+    <string name="title_activity_tyrads_webview">Tyrads SDK</string>
+    <string name="offers_title">Ofertas</string>
+    <string name="offers_active_offers_cta">Ofertas activas</string>
+    <string name="offers_offers_cta">Jugar ahora</string>
+    <string name="offers_playtime">Tiempo de juego</string>
+    <string name="offers_ending_in">Terminando en</string>
+    <string name="offers_rewards_one">Recompensa</string>
+    <string name="offers_rewards_other">Recompensas</string>
+    <string name="offers_empty_message">No hay ofertas disponibles en este momento. ¡Por favor, inténtalo más tarde!</string>
+
+    <string name="active_offers_title">Ofertas activas</string>
+    <string name="active_offers_expiring_title">Ofertas por vencer</string>
+    <string name="active_offers_active_title">Ofertas activas</string>
+    <string name="active_offers_completed_title">Ofertas completadas</string>
+    <string name="active_offers_back">Atrás</string>
+
+    <string name="offer_details_title">Detalles de la oferta</string>
+    <string name="offer_details_cap_reached">Lo siento, este juego no está disponible temporalmente, ¡por favor vuelve mañana!</string>
+    <string name="offer_details_oops"></string>
+    <string name="offer_details_retry_download_message"><b>¡Ups!</b> Tenemos problemas para validar tu descarga. Haz clic en "Reintentar descarga" para intentarlo de nuevo. No recibirás tus recompensas sin una descarga registrada.</string>
+    <string name="offer_details_complete_within">Completa todas las recompensas dentro de</string>
+    <string name="offer_details_download_intro">Sigue estos pocos pasos para evitar fallos en la descarga y asegurarte de que recibirás tus puntos.</string>
+    <string name="offer_details_android_steps_step1">1. Asegúrate de seleccionar <b>Google Play Store</b> para descargar el juego.</string>
+    <string name="offer_details_android_steps_step2">2. Descarga inmediatamente después de hacer clic en el botón "<b>Confirmar</b>".</string>
+    <string name="offer_details_android_steps_step3">3. Una vez que se complete la descarga, abre el juego desde <b>Google Play Store</b>.</string>
+    <string name="offer_details_ios_steps_step1">1. Asegúrate de seleccionar <b>App Store</b> para descargar el juego.</string>
+    <string name="offer_details_ios_steps_step2">2. Descarga de inmediato después de hacer clic en el botón "<b>Confirmar</b>".</string>
+    <string name="offer_details_ios_steps_step3">3. Una vez que se complete la descarga, abre el juego desde <b>App Store</b>.</string>
+    <string name="offer_details_download_note">Nota: Si la descarga falla, ¡no continúes jugando!</string>
+    <string name="offer_details_play_now">Jugar ahora</string>
+    <string name="offer_details_retry">Reintentar</string>
+    <string name="offer_details_completed_tasks">Tareas completadas</string>
+    <string name="offer_details_active_tasks">Tareas activas</string>
+    <string name="offer_details_available_tasks">Tareas disponibles</string>
+    <string name="offer_details_rewards_one">Recompensa</string>
+    <string name="offer_details_rewards_other">Recompensas</string>
+    <string name="offer_details_purchase_micro_charge">CARGA MICRO</string>
+    <string name="offer_details_purchase_earned">Has ganado: {{points}} {{currency}}</string>
+    <string name="offer_details_purchase_total">De un total de {{points}} {{currency}}</string>
+    <string name="offer_details_purchase_daily_purchase">Recompensa diaria de compra</string>
+    <string name="offer_details_purchase_daily_reward">Recompensa diaria</string>
+    <string name="offer_details_event_status_not_available">Aún no disponible</string>
+    <string name="offer_details_event_status_complete_to_continue">Completa esto para continuar</string>
+    <string name="offer_details_event_status_rejected">Rechazado</string>
+    <string name="offer_details_event_status_pending">Pendiente</string>
+    <string name="offer_details_event_status_completed">Completado</string>
+    <string name="offer_details_event_status_rejected_time">Rechazado, se alcanzó el límite de tiempo</string>
+    <string name="offer_details_event_status_complete_within">Completar dentro de</string>
+
+    <string name="dashboard_suggested_offers">Ofertas sugeridas</string>
+    <string name="dashboard_more_offers">Más ofertas</string>
+    <string name="dashboard_my_games">Mis juegos</string>
+    <string name="dashboard_play_button">Jugar</string>
+    <string name="dashboard_top_ranking">Los mejores {{number}}</string>
+
+    <string name="help_title">Obtener ayuda</string>
+    <string name="help_points_issue">No recibí mis puntos</string>
+    <string name="help_faqs">Preguntas frecuentes</string>
+
+    <string name="privacy_policy_title">¡Estás tan cerca de ganar\ntu primera recompensa!</string>
+    <string name="privacy_policy_subtitle">¡Juega tus juegos favoritos y gana tus recompensas!</string>
+    <string name="privacy_policy_consent_info">Por la presente, le informamos que Tyrads Pte. Ltd. procesa los siguientes datos personales en el marco del uso de TyrSDK:\nAplicaciones instaladas (incluyendo la duración del uso y el historial de uso).\nLos datos están vinculados a su dispositivo a través del ID del dispositivo (GAID o IDFA) transmitido a nuestros servidores en forma cifrada. Para que los proveedores de aplicaciones puedan financiar nuestras sugerencias de aplicaciones, debemos enviarles el ID del dispositivo con fines de facturación.\n\nEl procesamiento de los datos mencionados anteriormente es necesario para poder recomendar aplicaciones a través de mensajes del sistema, la instalación de aplicaciones disponibles en TyrSDK que coincidan con su interés y calcular las recompensas obtenidas como resultado de su uso de las aplicaciones correspondientes.\n\nConsentimiento\n\nAl hacer clic en "Aceptar", doy mi consentimiento a Tyrads Pte. Ltd. para procesar los datos personales mencionados anteriormente y transmitirlos a otras aplicaciones para que pueda usar TyrSDK tal como se explicó.\n\nSoy consciente de que los datos anteriores resultan en un perfil de interés, el cual, dependiendo del tipo de aplicaciones que uso, puede contener datos personales especialmente sensibles (como datos de salud o datos sobre mi orientación sexual, así como cualquier otro dato de categorías especiales definidas en el Art. 9, párrafo 1 del Reglamento General de Protección de Datos de la Unión Europea (GDPR).\n\nEstos datos serán procesados por Tyrads Pte. Ltd., TyrSDK. Para más información</string>
+    <string name="privacy_policy_agreement_prefix">He leído y estoy de acuerdo con\n</string>
+    <string name="privacy_policy_terms_text">Términos de servicio</string>
+    <string name="privacy_policy_and">" y "</string>
+    <string name="privacy_policy_privacy_text">Política de privacidad</string>
+    <string name="privacy_policy_accept">Aceptar</string>
+    <string name="privacy_policy_reject">Rechazar</string>
+
+    <string name="privacy_terms_title">Privacidad y Términos</string>
+    <string name="privacy_terms_privacy_policy">Política de privacidad</string>
+    <string name="privacy_terms_terms_of_service">Términos de servicio</string>
+
+    <string name="usage_permissions_title">"Permitir que TyrSDK rastree los datos de uso\nPara habilitar tu potencial de ganancias"</string>
+    <string name="usage_permissions_permit_title">Permitir acceso al uso</string>
+    <string name="usage_permissions_description">El acceso al uso permite que TyrSDK rastree qué otras aplicaciones estás utilizando y con qué frecuencia, así como tu operador, configuración de idioma y otros detalles.</string>
+
+    <string name="user_profile_title">Último paso..\n¡Estás casi allí!</string>
+    <string name="user_profile_gender_title">Elige tu género</string>
+    <string name="user_profile_male">Masculino</string>
+    <string name="user_profile_female">Femenino</string>
+    <string name="user_profile_age_title">Elige tu edad</string>
+    <string name="user_profile_continue_cta">Continuar</string>
+
+    <string name="tickets_title">No recibí mis puntos</string>
+    <string name="tickets_header">¡Estamos más que felices de ayudar!</string>
+    <string name="tickets_subheader">Por favor, selecciona qué tarea(s) crees que has completado pero no recibiste los puntos.</string>
+    <string name="tickets_instructions">Por favor, adjunta el ID de pedido y la captura de pantalla como se muestra arriba.</string>
+    <string name="tickets_help_title">¡Estamos más que felices de ayudar!</string>
+    <string name="tickets_help_subtitle">Por favor, selecciona qué tarea(s) crees que has completado pero no recibiste los puntos.</string>
+    <string name="tickets_game_player_id">ID del jugador del juego:</string>
+    <string name="tickets_game_player_validation">Por favor, ingresa un ID de jugador válido</string>
+    <string name="tickets_order_id">ID de pedido:</string>
+    <string name="tickets_order_validation">Por favor, ingresa el ID de pedido.</string>
+    <string name="tickets_screenshot">Captura de pantalla</string>
+    <string name="tickets_screenshot_validation">Por favor, selecciona una captura de pantalla</string>
+    <string name="tickets_browse">Navegar</string>
+    <string name="tickets_prev">Anterior</string>
+    <string name="tickets_helper_text">¿No estás seguro de qué adjuntar? Haz clic aquí para ver un ejemplo.</string>
+    <string name="tickets_submit">Enviar</string>
+    <string name="tickets_understand">Entiendo</string>
+    <string name="tickets_submitting">Enviando ticket</string>
+
+    <string name="ticket_submitted_title">No recibí mis puntos</string>
+    <string name="ticket_submitted_footnote">Confía en mí.</string>
+    <string name="ticket_submitted_header">Estamos en ello…</string>
+    <string name="ticket_submitted_back">Volver a la página de ofertas</string>
+    <string name="ticket_submitted_subheader">Sabemos lo que estamos haciendo</string>
+
+    <string name="language">Idioma</string>
+</resources>

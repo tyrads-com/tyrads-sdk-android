@@ -20,6 +20,7 @@ import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -86,6 +87,9 @@ class Tyrads private constructor() {
             preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
             preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
             NetworkCommons()
+
+            val defaultLanguage = LocalizationHelper.getLanguageCode(context)
+            LocalizationHelper.changeLanguage(context, defaultLanguage)
 
             log(
                 "Warning: debugMode is set to true. This should not be used in production.",
@@ -173,12 +177,20 @@ class Tyrads private constructor() {
                 return@launch
             }
             log("Launching offers", Log.INFO)
-            url = "https://websdk.tyrads.com/?apiKey=${apiKey}&apiSecret=${apiSecret}&userID=${publisherUserID}&newUser=${newUser}&platform=Android&hc=${loginData.data.publisherApp.headerColor}&mc=${loginData.data.publisherApp.mainColor}&route=${route}&campaignID=${campaignID}"
+            url = "https://websdk.tyrads.com/?apiKey=${apiKey}&apiSecret=${apiSecret}&userID=${publisherUserID}&newUser=${newUser}&platform=Android&hc=${loginData.data.publisherApp.headerColor}&mc=${loginData.data.publisherApp.mainColor}&route=${route}&campaignID=${campaignID}&lang=en"
 
 
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
+        }
+    }
+
+    fun changeLanguage(context: Context, languageCode: String){
+        tyradScope.launch {
+            LocalizationHelper.changeLanguage(
+                context, languageCode
+            )
         }
     }
 
