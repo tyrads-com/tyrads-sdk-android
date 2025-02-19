@@ -25,12 +25,15 @@ import com.tyrads.sdk.ui.theme.TyradsSdkTheme
 class AcmoApp : ComponentActivity() {
     companion object {
         private const val ACMO_KEY_ACTIVITY_KILLED = "acmo_activity_killed"
+        private const val ACMO_KEY_LANGUAGE_CHANGE = "acmo_language_change"
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true) {
+        if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&
+            !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)) {
             Tyrads.getInstance().log("Offerwall closed")
             finish()
             return
@@ -79,5 +82,6 @@ class AcmoApp : ComponentActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(ACMO_KEY_ACTIVITY_KILLED, true)
+        outState.putBoolean(ACMO_KEY_LANGUAGE_CHANGE, true)
     }
 }
