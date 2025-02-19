@@ -1,6 +1,7 @@
 package com.tyrads.sdk.acmo.core.localization.helper
 
 import AcmoKeyNames
+import android.app.Activity
 import android.app.LocaleManager
 import android.content.Context
 import android.os.Build
@@ -37,6 +38,11 @@ object LocalizationHelper {
 
     fun changeLanguage(context: Context, languageCode: String) {
         try {
+            val currentLanguage = getLanguageCode(context)
+            if (currentLanguage == languageCode) {
+                return
+            }
+
             Log.i("Localization", "Attempting to change language to: $languageCode")
 
             // Create a new Locale object
@@ -46,6 +52,7 @@ object LocalizationHelper {
             // Create a new Configuration object
             val config = context.resources.configuration
             config.setLocale(locale)
+            context.createConfigurationContext(config)
 
             // Update the resources with the new configuration
             context.resources.updateConfiguration(config, context.resources.displayMetrics)
@@ -63,6 +70,13 @@ object LocalizationHelper {
 
             Tyrads.getInstance().preferences.edit().putString(AcmoKeyNames.LANGUAGE, languageCode).apply()
             Log.i("Localization", "Saved language to preferences: $languageCode")
+            Tyrads.getInstance().preferences.edit()
+                .putString(AcmoKeyNames.LANGUAGE, languageCode)
+                .apply()
+
+            if (context is Activity) {
+                context.recreate()
+            }
 
         } catch (e: Exception) {
             Log.e("Localization", "Error while changing language: ${e.localizedMessage}")
