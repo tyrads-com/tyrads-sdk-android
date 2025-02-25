@@ -4,6 +4,7 @@ import AcmoKeyNames
 import android.app.Activity
 import android.app.LocaleManager
 import android.content.Context
+import android.content.res.Configuration
 import android.os.Build
 import android.os.LocaleList
 import android.util.Log
@@ -14,10 +15,18 @@ import java.util.Locale
 
 object LocalizationHelper {
 
-    fun changeLanguagee(context: Context, languageCode: String) {
+    fun changeLanguage(context: Context, languageCode: String, shouldRecreate: Boolean = true) {
         try {
-            Log.i("Localization", "Attempting to change language to: $languageCode")
+            val currentLanguage = getLanguageCode(context)
 
+            Log.i("Localization", "Attempting to change language to: $languageCode")
+            val locale = Locale(languageCode)
+            Locale.setDefault(locale)
+
+            val config = Configuration(context.resources.configuration)
+            config.setLocale(locale)
+
+            context.createConfigurationContext(config)
             // Android 13+ (API 33+)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 val localeManager = context.getSystemService(LocaleManager::class.java)
@@ -26,66 +35,26 @@ object LocalizationHelper {
             } else {
                 // Android < 13
                 AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageCode))
+                @Suppress("DEPRECATION")
+                context.resources.updateConfiguration(config, context.resources.displayMetrics)
                 Log.i("Localization", "Locale set via AppCompatDelegate: ${AppCompatDelegate.getApplicationLocales()}")
             }
-            Tyrads.getInstance().preferences.edit().putString(AcmoKeyNames.LANGUAGE, languageCode).apply()
-            Log.i("Localization", "Saved language to preferences: $languageCode")
-
-        } catch (e: Exception) {
-            Log.e("Localization", "Error while changing language: ${e.localizedMessage}")
-        }
-    }
-
-    fun changeLanguage(context: Context, languageCode: String) {
-        try {
-            val currentLanguage = getLanguageCode(context)
             if (currentLanguage == languageCode) {
-                return
+                //Eat 5 star do nothing
+            }else{
+                (context as? Activity)?.recreate()
             }
-
-            Log.i("Localization", "Attempting to change language to: $languageCode")
-
-            // Create a new Locale object
-            val locale = Locale(languageCode)
-            Locale.setDefault(locale)
-
-            // Create a new Configuration object
-            val config = context.resources.configuration
-            config.setLocale(locale)
-            context.createConfigurationContext(config)
-
-            // Update the resources with the new configuration
-            context.resources.updateConfiguration(config, context.resources.displayMetrics)
-
-            // For Android 13+
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val localeManager = context.getSystemService(LocaleManager::class.java)
-                localeManager?.applicationLocales = LocaleList.forLanguageTags(languageCode)
-                Log.i("Localization", "Locale set via LocaleManager: ${localeManager?.applicationLocales}")
-            } else {
-                // For Android < 13
-                AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(languageCode))
-                Log.i("Localization", "Locale set via AppCompatDelegate: ${AppCompatDelegate.getApplicationLocales()}")
-            }
-
             Tyrads.getInstance().preferences.edit().putString(AcmoKeyNames.LANGUAGE, languageCode).apply()
             Log.i("Localization", "Saved language to preferences: $languageCode")
-            Tyrads.getInstance().preferences.edit()
-                .putString(AcmoKeyNames.LANGUAGE, languageCode)
-                .apply()
-
-            if (context is Activity) {
-                context.recreate()
-            }
 
         } catch (e: Exception) {
             Log.e("Localization", "Error while changing language: ${e.localizedMessage}")
         }
     }
-
 
 
     fun getLanguageCode(context: Context): String {
+        Log.i("Localization", "in the get lang")
         var currentLanguage = Tyrads.getInstance().preferences.getString(AcmoKeyNames.LANGUAGE, null)
 
         if(currentLanguage.isNullOrBlank()) {
@@ -101,5 +70,23 @@ object LocalizationHelper {
 
     fun setDeviceDefaultLanguage(context: Context){
         Tyrads.getInstance().preferences.edit().remove(AcmoKeyNames.LANGUAGE).apply()
+    }
+
+    fun applySavedLanguage(context: Context) {
+        val savedLanguage = getLanguageCode(context)
+        if (savedLanguage.isNotEmpty()) {
+            changeLanguage(context, savedLanguage, shouldRecreate = false)
+        }
+    }
+
+    fun wrapContext(context: Context): Context {
+        val languageCode = getLanguageCode(context)
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+
+        return context.createConfigurationContext(config)
     }
 }

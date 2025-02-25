@@ -17,6 +17,7 @@
             android:name=".acmo.core.AcmoApp"
             android:exported="false"
             android:label="@string/title_activity_tyrads_webview"
+            android:configChanges="locale|layoutDirection"
             android:theme="@style/Theme.TyradsSdk" />
 
     </application>
