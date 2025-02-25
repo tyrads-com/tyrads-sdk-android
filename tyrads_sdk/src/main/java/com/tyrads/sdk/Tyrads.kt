@@ -23,10 +23,8 @@ import com.tyrads.sdk.acmo.core.AcmoApp
 import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
 @Keep
@@ -87,9 +85,6 @@ class Tyrads private constructor() {
             preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
             preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
             NetworkCommons()
-
-            val defaultLanguage = LocalizationHelper.getLanguageCode(context)
-            LocalizationHelper.changeLanguage(context, defaultLanguage)
 
             log(
                 "Warning: debugMode is set to true. This should not be used in production.",
@@ -178,7 +173,6 @@ class Tyrads private constructor() {
             }
             log("Launching offers", Log.INFO)
             url = "https://websdk.tyrads.com/?apiKey=${apiKey}&apiSecret=${apiSecret}&userID=${publisherUserID}&newUser=${newUser}&platform=Android&hc=${loginData.data.publisherApp.headerColor}&mc=${loginData.data.publisherApp.mainColor}&route=${route}&campaignID=${campaignID}&lang=en"
-
 
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
