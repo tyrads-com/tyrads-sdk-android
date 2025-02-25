@@ -3,7 +3,6 @@ package com.tyrads.sdk.acmo.modules.webview
 import AcmoUsageStatsController
 import AcmoUsageStatsDialog
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -41,24 +40,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.activity.compose.rememberLauncherForActivityResult
-import com.tyrads.sdk.acmo.core.AcmoApp
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 
 class WebAppInterface(private val context: Context) {
+    private val mainHandler = Handler(Looper.getMainLooper())
     @JavascriptInterface
     fun changeLanguage(langCode: String?) {
         try {
             if (langCode == null) {
-                Log.e("WebAppInterface", "Language code is null")
                 return
             }
-
-            Log.d("WebAppInterface", "Language change requested: $langCode")
-            LocalizationHelper.changeLanguage(context, langCode)
+            mainHandler.post {
+                LocalizationHelper.changeLanguage(context, langCode, shouldRecreate = false)
+            }
         } catch (e: Exception) {
             Log.e("WebAppInterface", "Error changing language: ${e.message}")
         }
@@ -146,10 +143,7 @@ fun WebViewComposable(modifier: Modifier) {
                             evaluateJavascript("""
                                  window.addEventListener('message', function(event) {
                                     try {
-                                        console.log('Received message:', event.data);
                                         const message = JSON.parse(event.data);
-                                        console.log('Message action:', message.action);
-                                        console.log('Language code:', message.languageCode);
                                         if (message && message.action === 'changeLanguage') {
                                             AndroidInterface.changeLanguage(message.languageCode);
                                         }

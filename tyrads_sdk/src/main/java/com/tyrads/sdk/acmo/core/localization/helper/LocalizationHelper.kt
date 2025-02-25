@@ -15,7 +15,7 @@ import java.util.Locale
 
 object LocalizationHelper {
 
-    fun changeLanguage(context: Context, languageCode: String, shouldRecreate: Boolean = true) {
+    fun changeLanguage(context: Context, languageCode: String, shouldRecreate: Boolean=true) {
         try {
             val currentLanguage = getLanguageCode(context)
 
@@ -39,7 +39,7 @@ object LocalizationHelper {
                 context.resources.updateConfiguration(config, context.resources.displayMetrics)
                 Log.i("Localization", "Locale set via AppCompatDelegate: ${AppCompatDelegate.getApplicationLocales()}")
             }
-            if (currentLanguage == languageCode) {
+            if (currentLanguage == languageCode || !shouldRecreate) {
                 //Eat 5 star do nothing
             }else{
                 (context as? Activity)?.recreate()
