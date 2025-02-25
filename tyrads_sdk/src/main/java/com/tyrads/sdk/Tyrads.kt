@@ -7,6 +7,7 @@ import AcmoInitModel
 import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
+import TyradsActivity
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -21,11 +22,16 @@ import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
 import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
+import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.util.UUID
+import android.net.Uri
+import android.widget.Toast
 
 @Keep
 class Tyrads private constructor() {
@@ -41,11 +47,12 @@ class Tyrads private constructor() {
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
-    val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
     internal var url: String? = null
-
+    private var mediaSourceInfo: TyradsMediaSourceInfo? = null
+    private var userInfo: TyradsUserInfo? = null
 
     companion object {
         @Volatile
@@ -107,19 +114,59 @@ class Tyrads private constructor() {
                 }
                 log("Starting user login process", Log.INFO)
                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
+                var advertisingId: String? = ""
+                var identifierType = ""
+                try {
+                    if (isGooglePlayServicesAvailable(context)) {
+                        advertisingId =
+                            AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                        identifierType = "GAID"
+                    }
+                } catch (e: Exception) {
+                    log("Error getting advertising id", Log.ERROR)
+                }
 
-                val advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
-                val identifierType = "GAID"
+                if (advertisingId.isNullOrBlank()) {
+                    advertisingId = preferences.getString("uuid", null) ?: run {
+                        val newUuid = UUID.randomUUID().toString()
+                        preferences.edit().putString("uuid", newUuid).apply()
+                        newUuid
+                    }
+                    identifierType = "OTHER"
+                }
+
                 val deviceDetailsController = AcmoDeviceDetailsController()
                 val deviceDetails = deviceDetailsController.getDeviceDetails()
 
-                val fd = mapOf(
+                val fd = mutableMapOf(
                     "publisherUserId" to userId,
                     "platform" to "Android",
                     "identifierType" to identifierType,
                     "identifier" to advertisingId,
                     "deviceData" to deviceDetails
                 )
+                mediaSourceInfo?.let { info ->
+                    info.sub1?.let { fd["sub1"] = it }
+                    info.sub2?.let { fd["sub2"] = it }
+                    info.sub3?.let { fd["sub3"] = it }
+                    info.sub4?.let { fd["sub4"] = it }
+                    info.sub5?.let { fd["sub5"] = it }
+                    info.mediaSourceName?.let { fd["mediaSourceName"] = it }
+                    info.mediaSourceId?.let { fd["mediaSourceId"] = it }
+                    info.mediaSubSourceId?.let { fd["mediaSubSourceId"] = it }
+                    info.incentivized?.let { fd["incentivized"] = it }
+                    info.mediaAdsetName?.let { fd["mediaAdsetName"] = it }
+                    info.mediaAdsetId?.let { fd["mediaAdsetId"] = it }
+                    info.mediaCreativeName?.let { fd["mediaCreativeName"] = it }
+                    info.mediaCreativeId?.let { fd["mediaCreativeId"] = it }
+                    info.mediaCampaignName?.let { fd["mediaCampaignName"] = it }
+                }
+
+                userInfo?.let { info ->
+                    info.email?.let { fd["email"] = it }
+                    info.phoneNumber?.let { fd["phoneNumber"] = it }
+                    info.userGroup?.let { fd["userGroup"] = it }
+                }
 
                 val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                     .body(Gson().toJson(fd))
@@ -143,7 +190,7 @@ class Tyrads private constructor() {
                             usageStatsController.saveUsageStats()
                         }
 
-                        track(TyradsActivity.initialized);
+                        track(TyradsActivity.initialized)
                     }
 
                     is Result.Failure -> {
@@ -169,10 +216,28 @@ class Tyrads private constructor() {
             loginUserWait?.join()
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "Please try back later", Toast.LENGTH_LONG).show()
+                }
                 return@launch
             }
             log("Launching offers", Log.INFO)
-            url = "https://websdk.tyrads.com/?apiKey=${apiKey}&apiSecret=${apiSecret}&userID=${publisherUserID}&newUser=${newUser}&platform=Android&hc=${loginData.data.publisherApp.headerColor}&mc=${loginData.data.publisherApp.mainColor}&route=${route}&campaignID=${campaignID}&lang=en"
+            url = Uri.Builder()
+                .scheme("https")
+                .authority("websdk.tyrads.com")
+                .appendQueryParameter("apiKey", apiKey)
+                .appendQueryParameter("apiSecret", apiSecret)
+                .appendQueryParameter("userID", publisherUserID)
+                .appendQueryParameter("newUser", newUser.toString())
+                .appendQueryParameter("platform", "Android")
+                .appendQueryParameter("hc", loginData.data.publisherApp.headerColor)
+                .appendQueryParameter("mc", loginData.data.publisherApp.mainColor)
+                .appendQueryParameter("route", route?.toString())
+                .appendQueryParameter("campaignID", campaignID?.toString())
+                .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
+                .appendQueryParameter("av", AcmoConfig.AV)
+                .build()
+                .toString()
 
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -193,10 +258,33 @@ class Tyrads private constructor() {
         content()
     }
 
-
     fun track(activity: String) {
-        tracker.trackUser(activity);
+        tracker.trackUser(activity)
     }
 
+    fun setMediaSourceInfo(mediaSourceInfo: TyradsMediaSourceInfo) {
+        this.mediaSourceInfo = mediaSourceInfo
+    }
 
+    fun setUserInfo(userInfo: TyradsUserInfo) {
+        this.userInfo = userInfo
+    }
+
+//    // Expose GameOffersScreen
+    @Composable
+    fun GameOffersScreen() {
+        com.tyrads.sdk.acmo.modules.dashboard.GameOffersScreen()
+    }
+    @Composable
+    fun OffersScreen() {
+        com.tyrads.sdk.acmo.modules.dashboard.OffersScreen()
+    }
+    @Composable
+    fun OffersScreen4() {
+        com.tyrads.sdk.acmo.modules.dashboard.OffersScreen4()
+    }
+    @Composable
+    fun OffersScreen3() {
+        com.tyrads.sdk.acmo.modules.dashboard.OffersScreen3()
+    }
 }
