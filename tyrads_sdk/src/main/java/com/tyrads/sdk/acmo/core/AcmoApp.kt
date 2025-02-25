@@ -3,11 +3,14 @@ package com.tyrads.sdk.acmo.core
 
 import AcmoKeyNames
 import AcmoUsagePermissionsPage
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -17,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.modules.legal.AcmoPrivacyPolicyPage
 import com.tyrads.sdk.acmo.modules.webview.WebViewComposable
 import com.tyrads.sdk.ui.theme.TyradsSdkTheme
@@ -29,6 +33,10 @@ class AcmoApp : ComponentActivity() {
 
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(LocalizationHelper.wrapContext(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -38,14 +46,15 @@ class AcmoApp : ComponentActivity() {
             finish()
             return
         }
-
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
         }
+        LocalizationHelper.applySavedLanguage(this)
+
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
-                Tyrads.getInstance().preferences.edit().putBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID, false).apply()
+                Tyrads.getInstance().preferences.edit().putBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID, true).apply()
                 var initPath = "privacy"
                 if (Tyrads.getInstance().preferences.getBoolean(
                         AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
