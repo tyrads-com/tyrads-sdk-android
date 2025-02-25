@@ -45,8 +45,25 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
+import com.tyrads.sdk.acmo.core.AcmoApp
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 
+class WebAppInterface(private val context: Context) {
+    @JavascriptInterface
+    fun changeLanguage(langCode: String?) {
+        try {
+            if (langCode == null) {
+                Log.e("WebAppInterface", "Language code is null")
+                return
+            }
 
+            Log.d("WebAppInterface", "Language change requested: $langCode")
+            LocalizationHelper.changeLanguage(context, langCode)
+        } catch (e: Exception) {
+            Log.e("WebAppInterface", "Error changing language: ${e.message}")
+        }
+    }
+}
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewComposable(modifier: Modifier) {
@@ -118,12 +135,29 @@ fun WebViewComposable(modifier: Modifier) {
                             return true
                         }
                     }
+                    addJavascriptInterface(WebAppInterface(context), "AndroidInterface")
+
                     webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
                             view?.postDelayed({
                                 isLoading.value = false
                             }, 0)
+                            evaluateJavascript("""
+                                 window.addEventListener('message', function(event) {
+                                    try {
+                                        console.log('Received message:', event.data);
+                                        const message = JSON.parse(event.data);
+                                        console.log('Message action:', message.action);
+                                        console.log('Language code:', message.languageCode);
+                                        if (message && message.action === 'changeLanguage') {
+                                            AndroidInterface.changeLanguage(message.languageCode);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error handling message:', error);
+                                    }
+                                });
+                            """.trimIndent(), null)
                         }
 
                         override fun shouldOverrideUrlLoading(
