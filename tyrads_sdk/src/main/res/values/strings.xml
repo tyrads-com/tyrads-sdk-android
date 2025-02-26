@@ -5,8 +5,10 @@
     <string name="offers_offers_cta">Play Now</string>
     <string name="offers_playtime">Playtime</string>
     <string name="offers_ending_in">Ending in</string>
-    <string name="offers_rewards_one">Reward</string>
-    <string name="offers_rewards_other">Rewards</string>
+    <plurals name="offers_rewards">
+        <item quantity="one">Reward</item>
+        <item quantity="other">Rewards</item>
+    </plurals>
     <string name="offers_empty_message">No offers <b>available</b> right now\nPlease try again later!</string>
 
     <string name="active_offers_title">Active Offers</string>
@@ -36,8 +38,8 @@
     <string name="offer_details_rewards_one">Reward</string>
     <string name="offer_details_rewards_other">Rewards</string>
     <string name="offer_details_purchase_micro_charge">MICRO CHARGE</string>
-    <string name="offer_details_purchase_earned">you earned: {{points}} {{currency}}</string>
-    <string name="offer_details_purchase_total">from total {{points}} {{currency}}</string>
+    <string name="offer_details_purchase_earned">you earned: %1$d %2$s</string>
+    <string name="offer_details_purchase_total">from total %1$d %2$s</string>
     <string name="offer_details_purchase_daily_purchase">Daily Purchase Reward</string>
     <string name="offer_details_purchase_daily_reward">Daily Reward</string>
     <string name="offer_details_event_status_not_available">Not available yet</string>
@@ -52,7 +54,7 @@
     <string name="dashboard_more_offers">More Offers</string>
     <string name="dashboard_my_games">My Games</string>
     <string name="dashboard_play_button">Play</string>
-    <string name="dashboard_top_ranking">Top {{number}}</string>
+    <string name="dashboard_top_ranking">Top %1$d</string>
 
     <string name="help_title">Get Help</string>
     <string name="help_points_issue">I didn\'t receive my points</string>

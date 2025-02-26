@@ -5,8 +5,9 @@
     <string name="offers_offers_cta">지금 플레이하기</string>
     <string name="offers_playtime">놀이 시간</string>
     <string name="offers_ending_in">끝나는</string>
-    <string name="offers_rewards_one">보상</string>
-    <string name="offers_rewards_other">보상들</string>
+    <plurals name="offers_rewards">
+        <item quantity="other">보상들</item>
+    </plurals>
     <string name="offers_empty_message">현재 이용 가능한 제안이 없습니다. 나중에 다시 시도해 주세요!</string>
 
     <string name="active_offers_title">활성화된 제안</string>
@@ -36,8 +37,8 @@
     <string name="offer_details_rewards_one">보상</string>
     <string name="offer_details_rewards_other">보상들</string>
     <string name="offer_details_purchase_micro_charge">마이크로 충전</string>
-    <string name="offer_details_purchase_earned">당신이 획득한 점수: {{points}} {{currency}}</string>
-    <string name="offer_details_purchase_total">총 {{points}} {{currency}} 중에서 획득한 점수</string>
+    <string name="offer_details_purchase_earned">당신이 획득한 점수: %1$d %2$s</string>
+    <string name="offer_details_purchase_total">총 %1$d %2$s 중에서 획득한 점수</string>
     <string name="offer_details_purchase_daily_purchase">일일 구매 보상</string>
     <string name="offer_details_purchase_daily_reward">일일 보상</string>
     <string name="offer_details_event_status_not_available">아직 이용할 수 없습니다</string>
@@ -52,7 +53,7 @@
     <string name="dashboard_more_offers">더 많은 제안</string>
     <string name="dashboard_my_games">내 게임</string>
     <string name="dashboard_play_button">플레이</string>
-    <string name="dashboard_top_ranking">상위 {{number}}</string>
+    <string name="dashboard_top_ranking">상위 %1$d</string>
 
     <string name="help_title">도움을 받다</string>
     <string name="help_points_issue">내 포인트를 받지 못했어요</string>
