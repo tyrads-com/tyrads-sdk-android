@@ -5,8 +5,10 @@
     <string name="offers_offers_cta">Jugar ahora</string>
     <string name="offers_playtime">Tiempo de juego</string>
     <string name="offers_ending_in">Terminando en</string>
-    <string name="offers_rewards_one">Recompensa</string>
-    <string name="offers_rewards_other">Recompensas</string>
+    <plurals name="offers_rewards">
+        <item quantity="one">Recompensa</item>
+        <item quantity="other">Recompensas</item>
+    </plurals>
     <string name="offers_empty_message">No hay ofertas disponibles en este momento. ¡Por favor, inténtalo más tarde!</string>
 
     <string name="active_offers_title">Ofertas activas</string>
@@ -36,8 +38,8 @@
     <string name="offer_details_rewards_one">Recompensa</string>
     <string name="offer_details_rewards_other">Recompensas</string>
     <string name="offer_details_purchase_micro_charge">CARGA MICRO</string>
-    <string name="offer_details_purchase_earned">Has ganado: {{points}} {{currency}}</string>
-    <string name="offer_details_purchase_total">De un total de {{points}} {{currency}}</string>
+    <string name="offer_details_purchase_earned">Has ganado: %1$d %2$s</string>
+    <string name="offer_details_purchase_total">De un total de %1$d %2$s</string>
     <string name="offer_details_purchase_daily_purchase">Recompensa diaria de compra</string>
     <string name="offer_details_purchase_daily_reward">Recompensa diaria</string>
     <string name="offer_details_event_status_not_available">Aún no disponible</string>
@@ -52,7 +54,7 @@
     <string name="dashboard_more_offers">Más ofertas</string>
     <string name="dashboard_my_games">Mis juegos</string>
     <string name="dashboard_play_button">Jugar</string>
-    <string name="dashboard_top_ranking">Los mejores {{number}}</string>
+    <string name="dashboard_top_ranking">Los mejores %1$d</string>
 
     <string name="help_title">Obtener ayuda</string>
     <string name="help_points_issue">No recibí mis puntos</string>

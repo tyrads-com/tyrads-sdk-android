@@ -5,8 +5,9 @@
     <string name="offers_offers_cta">Main Sekarang</string>
     <string name="offers_playtime">Waktu Bermain</string>
     <string name="offers_ending_in">Selesai dalam</string>
-    <string name="offers_rewards_one">Hadiah</string>
-    <string name="offers_rewards_other">Hadiah</string>
+    <plurals name="offers_rewards">
+        <item quantity="other">Hadiah</item>
+    </plurals>
     <string name="offers_empty_message">Tidak ada penawaran yang tersedia sekarang, Kembali lagi nanti!</string>
 
     <string name="active_offers_title">Penawaran Aktif</string>
@@ -36,8 +37,8 @@
     <string name="offer_details_rewards_one">Hadiah</string>
     <string name="offer_details_rewards_other">Hadiah</string>
     <string name="offer_details_purchase_micro_charge">MICRO CHARGE</string>
-    <string name="offer_details_purchase_earned">Anda mendapatkan: {{points}} {{currency}}</string>
-    <string name="offer_details_purchase_total">dari total {{points}} {{currency}}</string>
+    <string name="offer_details_purchase_earned">Anda mendapatkan: %1$d %2$s</string>
+    <string name="offer_details_purchase_total">dari total %1$d %2$s</string>
     <string name="offer_details_purchase_daily_purchase">Hadiah Pembelian Harian</string>
     <string name="offer_details_purchase_daily_reward">Hadiah Harian</string>
     <string name="offer_details_event_status_not_available">Belum Tersedia</string>
@@ -52,7 +53,7 @@
     <string name="dashboard_more_offers">Penawaran Lainnya</string>
     <string name="dashboard_my_games">Permainan Saya</string>
     <string name="dashboard_play_button">Mainkan</string>
-    <string name="dashboard_top_ranking">Top {{number}}</string>
+    <string name="dashboard_top_ranking">Top %1$d</string>
 
     <string name="help_title">Bantuan</string>
     <string name="help_points_issue">Saya tidak mendapatkan poin</string>
