@@ -125,7 +125,7 @@ fun WebViewComposable(modifier: Modifier) {
         AndroidView(
             modifier = Modifier.fillMaxSize(),
             factory = { context ->
-                WebView(context).apply {
+                webView = WebView(context).apply {
                     webChromeClient = object : WebChromeClient() {
                         override fun onShowFileChooser(
                             webView: WebView,
