@@ -1,7 +1,8 @@
 package com.tyrads.sdk
 
-import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
+import AcmoConfig
+import AcmoEndpointNames
+import AcmoKeyNames
 import android.util.Log
 import androidx.annotation.Keep
 import com.github.kittinunf.fuel.Fuel
@@ -10,8 +11,7 @@ import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.gson.responseObject
-import com.tyrads.sdk.Tyrads
-import com.tyrads.sdk.acmo.modules.input_models.ApiResponse
+import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.BannerData
 import kotlinx.coroutines.runBlocking
 
@@ -70,29 +70,35 @@ class NetworkCommons {
         }
     }
 
-    fun fetchCampaigns(onSuccess: (List<BannerData>) -> Unit, onError: (Exception) -> Unit) {
-        val url = "${AcmoConfig.BASE_URL}campaigns?lang=en"   //API we are using
-//        val url = "${AcmoConfig.BASE_URL}${OFFERS}?lang=en"   //API we are using
-
+    fun fetchCampaigns(onSuccess: (List<BannerData>) -> Unit, onError: (Exception) -> Unit, langCode: String) {
+        val url = "${AcmoConfig.BASE_URL}campaigns?lang=$langCode"
         Fuel.get(url)
-            .responseObject<ApiResponse> { _, _, result ->
+            .responseObject<AcmoOffersModel> { _, _, result ->
                 result.fold(
                     success = { response ->
                         val banners = response.data.map { campaign ->
                             BannerData(
-                                campaignId = campaign.campaignId,
+                                campaignId = campaign.campaignID,
                                 appId = campaign.app.id,
                                 title = campaign.app.title,
                                 creativePackName = campaign.creative.creativePacks.firstOrNull()?.creativePackName
                                     ?: "",
                                 fileUrl = campaign.creative.creativePacks.firstOrNull()?.creatives?.firstOrNull()?.fileUrl
                                     ?: "",
-                                points = "${campaign.campaignPayout.totalPayoutConverted}M TPoints",
-                                rewards = "${campaign.campaignPayout.totalEvents} Rewards",
-                                thumbnail = campaign.app.thumbnail
+                                points = campaign.campaignPayout.totalPayoutConverted,
+                                rewards = campaign.campaignPayout.totalEvents,
+                                currency = campaign.currency,
+                                thumbnail = campaign.app.thumbnail,
+                                premium = campaign.premium,
+                                sortingScore = campaign.sortingScore
                             )
                         }
-                        onSuccess(banners)
+                        val hotOffers = banners
+                            .sortedWith(compareByDescending<BannerData> { it.premium }.thenByDescending { it.sortingScore })
+                            .filter { it.points > 0 }
+                            .take(5)
+
+                        onSuccess(hotOffers)
                     },
                     failure = { error -> onError(error) }
                 )
