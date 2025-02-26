@@ -32,6 +32,7 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
 import android.widget.Toast
+import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
 
 @Keep
 class Tyrads private constructor() {
@@ -53,6 +54,7 @@ class Tyrads private constructor() {
     internal var url: String? = null
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
+    private lateinit var currentLanguageCode: String
 
     companion object {
         @Volatile
@@ -92,6 +94,7 @@ class Tyrads private constructor() {
             preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
             preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
             NetworkCommons()
+            currentLanguageCode  = LocalizationHelper.getLanguageCode(context)
 
             log(
                 "Warning: debugMode is set to true. This should not be used in production.",
@@ -224,7 +227,8 @@ class Tyrads private constructor() {
             log("Launching offers", Log.INFO)
             url = Uri.Builder()
                 .scheme("https")
-                .authority("websdk.tyrads.com")
+//                .authority("websdk.tyrads.com")
+                .authority("staging-websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
                 .appendQueryParameter("userID", publisherUserID)
@@ -236,6 +240,7 @@ class Tyrads private constructor() {
                 .appendQueryParameter("campaignID", campaignID?.toString())
                 .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
                 .appendQueryParameter("av", AcmoConfig.AV)
+                .appendQueryParameter("lang", currentLanguageCode)
                 .build()
                 .toString()
 
@@ -251,6 +256,16 @@ class Tyrads private constructor() {
                 context, languageCode
             )
         }
+    }
+//    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
+    @Composable
+    fun TopPremiumOffers(){
+        TopOffers(
+            showMore = true,
+            showMyOffers = true,
+            showMyOffersEmptyView = false,
+            style = 2,
+        )
     }
 
     @Composable
@@ -270,21 +285,4 @@ class Tyrads private constructor() {
         this.userInfo = userInfo
     }
 
-//    // Expose GameOffersScreen
-    @Composable
-    fun GameOffersScreen() {
-        com.tyrads.sdk.acmo.modules.dashboard.GameOffersScreen()
-    }
-    @Composable
-    fun OffersScreen() {
-        com.tyrads.sdk.acmo.modules.dashboard.OffersScreen()
-    }
-    @Composable
-    fun OffersScreen4() {
-        com.tyrads.sdk.acmo.modules.dashboard.OffersScreen4()
-    }
-    @Composable
-    fun OffersScreen3() {
-        com.tyrads.sdk.acmo.modules.dashboard.OffersScreen3()
-    }
 }
