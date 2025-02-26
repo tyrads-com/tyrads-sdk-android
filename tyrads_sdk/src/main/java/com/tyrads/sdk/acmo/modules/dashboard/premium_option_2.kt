@@ -1,8 +1,5 @@
 package com.tyrads.sdk.acmo.modules.dashboard
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -24,15 +21,21 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
+import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.modules.dashboard.components.MyGamesButton
+import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.input_models.BannerData
 import com.tyrads.sdk.acmo.modules.input_models.*
 import com.tyrads.sdk.ui.theme.*
@@ -41,133 +44,64 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 
-class PremiumActivity2 : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            OffersScreen()
-        }
-    }
-}
-
 @Composable
-fun OffersScreen() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = LightGrayColor
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = offersScreenPaddingTop),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            SlidingBannerSystem2()
-        }
-    }
-}
-
-@Composable
-fun SlidingBannerSystem2() {
+fun OffersScreen(
+    banners: List<BannerData>
+) {
     var currentIndex by remember { mutableStateOf(0) }
     var targetIndex by remember { mutableStateOf(0) }
-    var banners by remember { mutableStateOf<List<BannerData>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
     var isAnimating by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
-    val networkCommons =
-        remember { NetworkCommons() }// Instance Created for NetworkCommons using remember
+    val offsetAnimation = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
-        networkCommons.fetchCampaigns(
-            onSuccess = {
-                banners = it
-                isLoading = false
-            },
-            onError = {
-                error = it.message
-                isLoading = false
+        while (true) {
+            delay(autoScrollDelay)
+            if (!isAnimating) {
+                targetIndex = (currentIndex + 1) % banners.size
+                isAnimating = true
+
+                offsetAnimation.snapTo(0f)
+                offsetAnimation.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = LinearOutSlowInEasing
+                    )
+                )
+                currentIndex = targetIndex
+                isAnimating = false
             }
-        )
+        }
     }
-    when {
-        isLoading -> {
-            CircularProgressIndicator(
-                modifier = Modifier.size(loaderSize),
-                color = MaterialTheme.colorScheme.primary
-            )
-        }
+    OfferCard(
+        banners = banners,
+        currentIndex = currentIndex,
+        targetIndex = targetIndex,
+        offsetAnimation = offsetAnimation.value,
+        onSwipe = { direction ->
+            if (!isAnimating) {
+                coroutineScope.launch {
+                    isAnimating = true
+                    targetIndex = when (direction) {
+                        SwipeDirection2.LEFT -> (currentIndex + 1) % banners.size
+                        SwipeDirection2.RIGHT -> (currentIndex - 1 + banners.size) % banners.size
+                    }
 
-        error != null -> {
-            Text(
-                text = "Error: $error",
-                color = RedColor,
-                modifier = Modifier.padding(errorPadding)
-            )
-        }
-
-        banners.isEmpty() -> {
-            Text(
-                text = "No campaigns available",
-                modifier = Modifier.padding(noCampaignPadding)
-            )
-        }
-
-        else -> {
-            val offsetAnimation = remember { Animatable(0f) }
-
-            LaunchedEffect(Unit) {
-                while (true) {
-                    delay(autoScrollDelay)
-                    if (!isAnimating) {
-                        targetIndex = (currentIndex + 1) % banners.size
-                        isAnimating = true
-
-                        offsetAnimation.snapTo(0f)
-                        offsetAnimation.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(
-                                durationMillis = animationDuration,
-                                easing = LinearOutSlowInEasing
-                            )
+                    offsetAnimation.snapTo(0f)
+                    offsetAnimation.animateTo(
+                        targetValue = 1f,
+                        animationSpec = tween(
+                            durationMillis = animationDuration,
+                            easing = LinearOutSlowInEasing
                         )
-                        currentIndex = targetIndex
-                        isAnimating = false
-                    }
+                    )
+                    currentIndex = targetIndex
+                    isAnimating = false
                 }
             }
-            OfferCard(
-                banners = banners,
-                currentIndex = currentIndex,
-                targetIndex = targetIndex,
-                offsetAnimation = offsetAnimation.value,
-                onSwipe = { direction ->
-                    if (!isAnimating) {
-                        coroutineScope.launch {
-                            isAnimating = true
-                            targetIndex = when (direction) {
-                                SwipeDirection2.LEFT -> (currentIndex + 1) % banners.size
-                                SwipeDirection2.RIGHT -> (currentIndex - 1 + banners.size) % banners.size
-                            }
-
-                            offsetAnimation.snapTo(0f)
-                            offsetAnimation.animateTo(
-                                targetValue = 1f,
-                                animationSpec = tween(
-                                    durationMillis = animationDuration,
-                                    easing = LinearOutSlowInEasing
-                                )
-                            )
-                            currentIndex = targetIndex
-                            isAnimating = false
-                        }
-                    }
-                }
-            )
         }
-    }
+    )
 }
 
 enum class SwipeDirection2 {
@@ -203,8 +137,9 @@ fun OfferCard(
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
+                .wrapContentHeight()
         ) {
-            HeaderSection2()
+            PremiumHeaderSection()
 
             Box(
                 modifier = Modifier
@@ -275,63 +210,12 @@ fun OfferCard(
                 }
             }
             PaginationDots(currentIndex, banners.size)
-            MyGamesButton2()
+            MyGamesButton()
         }
     }
 }
 
-@Composable
-fun HeaderSection2() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                start = headerPaddingStart,
-                end = headerPaddingEnd,
-                top = headerPaddingTop,
-                bottom = headerPaddingBottom
-            ),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_star_new),
-                contentDescription = "Star",
-                modifier = Modifier.size(starIconSize)
-            )
-            Spacer(modifier = Modifier.width(headerTextSpacing))
-            Text(
-                text = "Suggested Offers",
-                fontSize = headerFontSize,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { }
-        ) {
-            Text(
-                text = "More Offers",
-                color = PrimaryBlue,
-                fontSize = moreOffersFontSize,
-                maxLines = 1
-            )
-            Spacer(modifier = Modifier.width(headerIconSpacing))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_right),
-                contentDescription = "Arrow",
-                modifier = Modifier.size(moreOffersIconSize),
-                tint = PrimaryBlue
-            )
-        }
-    }
-}
+
 
 @Composable
 fun GameBanner(bannerData: BannerData) {
@@ -418,12 +302,12 @@ fun GameInfoSection(bannerData: BannerData) {
                         )
                         Spacer(modifier = Modifier.width(gameInfoImgSpacerWidth))
                         Text(
-                            text = bannerData.points,
+                            text = bannerData.points.numeral(),
                             color = WhiteColor,
                             fontSize = pointsFontSize,
                         )
                         Text(
-                            text = "  ${bannerData.rewards}",
+                            text = "  ${bannerData.rewards} ${pluralStringResource(R.plurals.offers_rewards, bannerData.rewards)}",
                             color = WhiteColor,
                             fontSize = rewardsFontSize,
                             fontStyle = FontStyle.Italic
@@ -443,7 +327,7 @@ fun GameInfoSection(bannerData: BannerData) {
                 modifier = Modifier.height(playButtonHeight)
             ) {
                 Text(
-                    text = "Play Now",
+                    text = stringResource(id = R.string.dashboard_play_button),
                     color = PrimaryBlue,
                     fontWeight = FontWeight.Bold,
                     fontSize = gameInfoButtonFontSize
@@ -473,36 +357,4 @@ fun PaginationDots(currentIndex: Int, totalItems: Int) {
             )
         }
     }
-}
-
-
-@Composable
-fun MyGamesButton2() {
-    Button(
-        onClick = { },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                start = myGamesButtonPadding,
-                end = myGamesButtonPadding,
-//                top =  myGamesButtonPadding,
-                bottom = myGamesButtonPadding
-            )
-            .height(myGamesButtonHeight),
-        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-        shape = RoundedCornerShape(myGamesButtonCornerRadius)
-    ) {
-        Text(
-            text = "My Games",
-            fontSize = myGamesButtonFontSize,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Preview(showBackground = true, showSystemUi = true)
-@Composable
-fun OfferCardPreview() {
-    OffersScreen()
-
 }

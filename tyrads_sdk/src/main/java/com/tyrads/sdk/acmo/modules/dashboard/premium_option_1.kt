@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -23,40 +24,18 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.tyrads.sdk.R
 import com.tyrads.sdk.NetworkCommons
+import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.modules.dashboard.components.MyGamesButton
+import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.input_models.BannerData
 import com.tyrads.sdk.acmo.modules.input_models.*
 import com.tyrads.sdk.ui.theme.*
 
-
-class PremiumActivity1 : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            GameOffersScreen()
-        }
-    }
-}
-
 @Composable
-fun GameOffersScreen() {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = LightGrayColor
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(top = offersScreenPaddingTop),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            GameOffersCard()
-        }
-    }
-}
-
-@Composable
-fun GameOffersCard() {
+fun GameOffersScreen(
+    data: List<BannerData>
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -79,121 +58,13 @@ fun GameOffersCard() {
                 .fillMaxWidth()
                 .padding(horizontal = cardPaddingHorizontal, vertical = cardPaddingVertical)
         ) {
-            HeaderSection()
+            PremiumHeaderSection()
             Spacer(modifier = Modifier.height(headerTextSpacing))
-            GameList()
+            data.forEachIndexed { index, game ->
+                GameOfferItem(game = game, rank = index + 1)
+            }
             Spacer(modifier = Modifier.height(cardGameListSpacing))
             MyGamesButton()
-        }
-    }
-}
-
-@Composable
-fun HeaderSection() {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = headerPaddingEnd),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(1f)
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_star_new),
-                contentDescription = "Star",
-                modifier = Modifier.size(starIconSize)
-            )
-            Spacer(modifier = Modifier.width(headerTextSpacing))
-            Text(
-                text = "Suggested Offers",
-                fontSize = headerFontSize,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable { }
-        ) {
-            Text(
-                text = "More Offers",
-                color = PrimaryBlue,
-                fontSize = moreOffersFontSize,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Spacer(modifier = Modifier.width(headerIconSpacing))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_right),
-                contentDescription = "Arrow",
-                modifier = Modifier.size(moreOffersIconSize),
-                tint = PrimaryBlue
-            )
-        }
-    }
-}
-
-@Composable
-fun GameList() {
-    var games by remember { mutableStateOf<List<BannerData>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    val networkCommons = remember { NetworkCommons() }
-
-    LaunchedEffect(Unit) {
-        networkCommons.fetchCampaigns(
-            onSuccess = {
-                games = it
-                isLoading = false
-            },
-            onError = {
-                error = it.message
-                isLoading = false
-            }
-        )
-    }
-
-    when {
-        isLoading -> {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(loaderSize),
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-        }
-
-        error != null -> {
-            Text(
-                text = "Error: $error",
-                color = Color.Red,
-                modifier = Modifier.padding(errorPadding)
-            )
-        }
-
-        games.isEmpty() -> {
-            Text(
-                text = "No games available",
-                modifier = Modifier.padding(noCampaignPadding)
-            )
-        }
-
-        else -> {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(gameListArrangementSpace)
-            ) {
-                games.forEachIndexed { index, game ->
-                    GameOfferItem(game = game, rank = index + 1)
-                }
-            }
         }
     }
 }
@@ -203,7 +74,10 @@ fun GameOfferItem(game: BannerData, rank: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = gameListVerticalPadding),
+            .padding(vertical = gameListVerticalPadding)
+            .clickable {
+                Tyrads.getInstance().showOffers(route = "campaign-details", campaignID = game.campaignId)
+            },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -242,7 +116,7 @@ fun GameOfferItem(game: BannerData, rank: Int) {
                         shape = RoundedCornerShape(playButtonCornerRadius)
                     ) {
                         Text(
-                            text = "Top $rank",
+                            text = stringResource(id= R.string.dashboard_top_ranking, rank),
                             color = Color.White,
                             fontSize = gameListTopRankFontSize,
                             fontWeight = FontWeight.Medium,
@@ -260,7 +134,7 @@ fun GameOfferItem(game: BannerData, rank: Int) {
                     )
                     Spacer(modifier = Modifier.width(gameListSpacerWidth4))
                     Text(
-                        text = game.points,
+                        text = game.points.numeral(),
                         color = Color.Gray,
                         fontSize = pointsFontSize,
                         fontWeight = FontWeight.Medium,
@@ -282,37 +156,10 @@ fun GameOfferItem(game: BannerData, rank: Int) {
             modifier = Modifier.height(gameListButtonHeight)
         ) {
             Text(
-                text = "Play Now",
+                text = stringResource(R.string.dashboard_play_button),
                 fontSize = gameListButtonFontSize,
                 fontWeight = FontWeight.Medium
             )
         }
     }
-}
-
-@Composable
-fun MyGamesButton() {
-    Button(
-        onClick = { },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                bottom = myGamesButtonPadding8
-            )
-            .height(myGamesButtonHeight),
-        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
-        shape = RoundedCornerShape(myGamesButtonCornerRadius)
-    ) {
-        Text(
-            text = "My Games",
-            fontSize = myGamesButtonFontSize,
-            fontWeight = FontWeight.Bold
-        )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GameOffersScreenPreview() {
-    GameOffersScreen()
 }
