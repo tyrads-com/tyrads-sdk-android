@@ -43,7 +43,7 @@ fun AcmoPrivacyPolicyPage() {
     Scaffold(
         containerColor = Color.White
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -53,33 +53,26 @@ fun AcmoPrivacyPolicyPage() {
                 Body()
                 Column(
                     modifier = Modifier
+                        .weight(1f)
                         .height((LocalConfiguration.current.screenHeightDp - 600).dp)
                         .verticalScroll(scrollState)
                         .padding(horizontal = 30.dp)
                 ) {
                     Info()
                 }
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Info2(
-                    )
-                }
+
+                TwoButtonsWithInfo2(
+                    acceptOnTap = {
+                        Tyrads.getInstance().navController.navigate("usage-permissions")
+
+                    },
+                    rejectOntap = {
+                        activityContext?.finish()
+                    },
+                )
             }
-            TwoButtons(
-                acceptOnTap = {
-                    Tyrads.getInstance().navController.navigate("usage-permissions")
 
-                },
-                rejectOntap = {
-                    activityContext?.finish()
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-            )
 
-        }
     }
 }
 
@@ -139,13 +132,13 @@ fun Body() {
 
             )
         )
-        LanguageDropdownMenu()
+//        LanguageDropdownMenu()
         Spacer(modifier = Modifier.height(25.dp))
         Image(
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",
             modifier = Modifier
-                .height(180.dp)
+                .height(150.dp)
                 .fillMaxWidth()
                 .wrapContentSize(Alignment.Center)
         )
@@ -203,7 +196,7 @@ fun Info() {
                 textDecoration = TextDecoration.Underline
             )
         ) {
-            append("https://tyrads.com/tyrsdk-privacy-policy/")
+            append(" https://tyrads.com/tyrsdk-privacy-policy/")
         }
         addStringAnnotation(
             tag = "URL",
@@ -269,7 +262,7 @@ fun Info2() {
     ClickableText(
         text = annotatedString,
         style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 30.dp)
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
     ) { offset ->
         annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { annotation ->
             when (annotation.tag) {
@@ -281,15 +274,18 @@ fun Info2() {
 }
 
 @Composable
-fun TwoButtons(
+fun TwoButtonsWithInfo2(
     acceptOnTap: () -> Unit,
     rejectOntap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(bottom = 38.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .padding(bottom = 35.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Info2()
         Button(
             onClick = acceptOnTap,
             modifier = Modifier
@@ -299,7 +295,6 @@ fun TwoButtons(
         ) {
             Text(stringResource(id = R.string.privacy_policy_accept))
         }
-//        Spacer(modifier = Modifier.height(10.dp))
         TextButton(onClick = rejectOntap) {
             Text(
                 stringResource(id = R.string.privacy_policy_reject),
