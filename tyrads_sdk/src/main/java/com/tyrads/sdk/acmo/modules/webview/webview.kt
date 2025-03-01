@@ -142,9 +142,7 @@ fun WebViewComposable(modifier: Modifier) {
                     webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
-                            view?.postDelayed({
-                                isLoading.value = false
-                            }, 0)
+                            isLoading.value = false
                             evaluateJavascript("""
                                  window.addEventListener('message', function(event) {
                                     try {
