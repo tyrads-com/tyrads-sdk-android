@@ -76,6 +76,7 @@ class NetworkCommons {
             .responseObject<AcmoOffersModel> { _, _, result ->
                 result.fold(
                     success = { response ->
+                        Log.i("offers response", response.data.toString())
                         val banners = response.data.map { campaign ->
                             BannerData(
                                 campaignId = campaign.campaignID,

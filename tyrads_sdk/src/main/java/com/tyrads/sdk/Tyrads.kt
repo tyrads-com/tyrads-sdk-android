@@ -89,6 +89,7 @@ class Tyrads private constructor() {
         this.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this.debugMode = debugMode
+        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
         initWait = tyradScope.launch {
             preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
             preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
@@ -243,7 +244,7 @@ class Tyrads private constructor() {
                 .appendQueryParameter("lang", currentLanguageCode)
                 .build()
                 .toString()
-
+            Log.i("url", url.toString())
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
@@ -259,12 +260,17 @@ class Tyrads private constructor() {
     }
 //    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
     @Composable
-    fun TopPremiumOffers(){
+    fun TopPremiumOffers(
+        showMore: Boolean = true,
+        showMyOffers: Boolean = true,
+        showMyOffersEmptyView: Boolean = false,
+        style: Int = 2,
+    ){
         TopOffers(
-            showMore = true,
-            showMyOffers = true,
-            showMyOffersEmptyView = false,
-            style = 2,
+            showMore = showMore,
+            showMyOffers = showMyOffers,
+            showMyOffersEmptyView = showMyOffersEmptyView,
+            style = style,
         )
     }
 

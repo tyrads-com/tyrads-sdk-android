@@ -12,7 +12,7 @@ data class BannerData(
     val currency: Currency,
     val rewards: Int,
     val thumbnail: String,
-    val premium: Long?,
+    val premium: Boolean?,
     val sortingScore: Double
 )
 
@@ -31,7 +31,7 @@ data class Campaign (
     val expiredOn: Any? = null,
     val hasPlaytimeEvents: Boolean,
     val capReached: Boolean,
-    val premium: Long? = null,
+    val premium: Boolean? = null,
     val app: App,
     val currency: Currency,
     val campaignPayout: CampaignPayout,
