@@ -25,5 +25,7 @@ data class PublisherApp(
     @SerializedName("headerColor")
     val headerColor: String = "",
     @SerializedName("mainColor")
-    val mainColor: String = ""
+    val mainColor: String = "",
+    @SerializedName("premiumColor")
+    val premiumColor: String = ""
 )

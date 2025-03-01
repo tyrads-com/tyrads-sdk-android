@@ -237,6 +237,7 @@ class Tyrads private constructor() {
                 .appendQueryParameter("platform", "Android")
                 .appendQueryParameter("hc", loginData.data.publisherApp.headerColor)
                 .appendQueryParameter("mc", loginData.data.publisherApp.mainColor)
+                .appendQueryParameter("pc", loginData.data.publisherApp.premiumColor)
                 .appendQueryParameter("route", route?.toString())
                 .appendQueryParameter("campaignID", campaignID?.toString())
                 .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
