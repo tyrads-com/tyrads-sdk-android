@@ -46,7 +46,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,14 +77,14 @@ fun Greeting(modifier: Modifier = Modifier) {
     var apiSecretInput by remember {
         mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "")
     }
-    var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "") ?: "") }
+    var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
 
     fun handleButtonClick() {
-        if (apiKeyInput.isBlank() || apiSecretInput.isBlank() || userIdInput.isBlank()) {
-            // Show a message to the user
-            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-            return
-        }
+//        if (apiKeyInput.isBlank() || apiSecretInput.isBlank() || userIdInput.isBlank()) {
+//            // Show a message to the user
+//            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+//            return
+//        }
 
         isLoadingOffers = true
         CoroutineScope(Dispatchers.Main).launch {
@@ -95,12 +97,12 @@ fun Greeting(modifier: Modifier = Modifier) {
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = apiKeyInput,
-                apiSecret = apiSecretInput,
+                apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
+                apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
                 debugMode = true
             )
 
-            Tyrads.getInstance().loginUser(userID = userIdInput)
+            Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "1" })
             Tyrads.getInstance().showOffers()
             isLoadingOffers = false
         }
@@ -135,10 +137,21 @@ fun Greeting(modifier: Modifier = Modifier) {
         }
     }
 
+    LaunchedEffect(Unit) {
+        Tyrads.getInstance().init(
+            context,
+            apiKey = "4f0eaa99e38e49b8b52804116e638a41",
+            apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
+            debugMode = true
+        )
+        Tyrads.getInstance().loginUser(userID = "66")
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .wrapContentSize(Alignment.Center),
+            .wrapContentSize(Alignment.Center)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
 
@@ -149,6 +162,9 @@ fun Greeting(modifier: Modifier = Modifier) {
                 modifier = modifier
             )
         }
+        Tyrads.getInstance().TopPremiumOffers(
+            style = 1
+        )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = apiKeyInput,
@@ -188,22 +204,22 @@ fun Greeting(modifier: Modifier = Modifier) {
             Text(text = "Show Offers")
         }
 
-        Button(
-            onClick = {
-                handleWidgetsClick()
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            if (isLoadingWidgets) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    strokeWidth = 2.dp,
-                    color = Color.Black
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
-            Text(text = "Widgets")
-        }
+//        Button(
+//            onClick = {
+//                handleWidgetsClick()
+//            },
+//            modifier = Modifier.padding(16.dp)
+//        ) {
+//            if (isLoadingWidgets) {
+//                CircularProgressIndicator(
+//                    modifier = Modifier.size(16.dp),
+//                    strokeWidth = 2.dp,
+//                    color = Color.Black
+//                )
+//                Spacer(modifier = Modifier.width(8.dp))
+//            }
+//            Text(text = "Widgets")
+//        }
     }
 }
 
