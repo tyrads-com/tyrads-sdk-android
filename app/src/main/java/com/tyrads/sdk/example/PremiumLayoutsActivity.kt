@@ -209,12 +209,12 @@ fun LayoutsScreen() {
             )
             .background(Color.White)
     ) {
-        Column {
-            Tyrads.getInstance().OffersScreen()
-            Tyrads.getInstance().OffersScreen4()
-            Tyrads.getInstance().GameOffersScreen()
-            Tyrads.getInstance().OffersScreen3()
-        }
+//        Column {
+//            Tyrads.getInstance().OffersScreen()
+//            Tyrads.getInstance().OffersScreen4()
+//            Tyrads.getInstance().GameOffersScreen()
+//            Tyrads.getInstance().OffersScreen3()
+//        }
     }
 }
 
