@@ -47,6 +47,7 @@ import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -144,7 +145,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
             debugMode = true
         )
-        Tyrads.getInstance().loginUser(userID = "66")
+        Tyrads.getInstance().loginUser(userID = "67386")
     }
 
     Column(
@@ -163,7 +164,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             )
         }
         Tyrads.getInstance().TopPremiumOffers(
-            style = 1
+            style = 4
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
