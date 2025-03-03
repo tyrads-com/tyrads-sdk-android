@@ -33,7 +33,9 @@ import com.tyrads.sdk.acmo.modules.input_models.starIconSize
 import com.tyrads.sdk.ui.theme.PrimaryBlue
 
 @Composable
-fun PremiumHeaderSection() {
+fun PremiumHeaderSection(
+    showMore: Boolean
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -64,25 +66,27 @@ fun PremiumHeaderSection() {
                 overflow = TextOverflow.Ellipsis
             )
         }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.clickable {
-                Tyrads.getInstance().showOffers()
+        if(showMore) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable {
+                    Tyrads.getInstance().showOffers()
+                }
+            ) {
+                Text(
+                    text = stringResource(id = R.string.dashboard_more_offers),
+                    color = PrimaryBlue,
+                    fontSize = moreOffersFontSize,
+                    maxLines = 1
+                )
+                Spacer(modifier = Modifier.width(headerIconSpacing))
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_arrow_right),
+                    contentDescription = "Arrow",
+                    modifier = Modifier.size(moreOffersIconSize),
+                    tint = PrimaryBlue
+                )
             }
-        ) {
-            Text(
-                text = stringResource(id = R.string.dashboard_more_offers),
-                color = PrimaryBlue,
-                fontSize = moreOffersFontSize,
-                maxLines = 1
-            )
-            Spacer(modifier = Modifier.width(headerIconSpacing))
-            Icon(
-                painter = painterResource(id = R.drawable.ic_arrow_right),
-                contentDescription = "Arrow",
-                modifier = Modifier.size(moreOffersIconSize),
-                tint = PrimaryBlue
-            )
         }
     }
 }

@@ -36,36 +36,8 @@ import com.tyrads.sdk.ui.theme.*
 fun GameOffersScreen(
     data: List<BannerData>
 ) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(
-                horizontal = cardPaddingHorizontal,
-                vertical = cardPaddingVertical
-            ),
-        shape = RoundedCornerShape(
-            topStart = cardCornerTopStart,
-            topEnd = cardCornerTopEnd,
-            bottomEnd = cardCornerBottomEnd,
-            bottomStart = cardCornerBottomStart
-        ),
-        colors = CardDefaults.cardColors(containerColor = WhiteColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = cardElevation)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = cardPaddingHorizontal, vertical = cardPaddingVertical)
-        ) {
-            PremiumHeaderSection()
-            Spacer(modifier = Modifier.height(headerTextSpacing))
-            data.forEachIndexed { index, game ->
-                GameOfferItem(game = game, rank = index + 1)
-            }
-            Spacer(modifier = Modifier.height(cardGameListSpacing))
-            MyGamesButton()
-        }
+    data.forEachIndexed { index, game ->
+        GameOfferItem(game = game, rank = index + 1)
     }
 }
 

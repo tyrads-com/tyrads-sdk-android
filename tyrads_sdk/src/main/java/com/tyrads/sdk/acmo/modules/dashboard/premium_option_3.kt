@@ -3,6 +3,7 @@ package com.tyrads.sdk.acmo.modules.dashboard
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,6 +21,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -53,6 +57,7 @@ import coil.request.ImageRequest
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.modules.dashboard.components.AutoScrollPagerWithIndicators
 import com.tyrads.sdk.acmo.modules.dashboard.components.MyGamesButton
 import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.input_models.BannerData
@@ -93,154 +98,20 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OffersScreen3(
     banners: List<BannerData>
 ) {
-    var currentIndex by remember { mutableStateOf(0) }
-    var targetIndex by remember { mutableStateOf(0) }
-    var isAnimating by remember { mutableStateOf(false) }
-    val coroutineScope = rememberCoroutineScope()
-
-    val offsetAnimation = remember { Animatable(0f) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(autoScrollDelay)
-            if (!isAnimating) {
-                targetIndex = (currentIndex + 1) % banners.size
-                isAnimating = true
-
-                offsetAnimation.snapTo(0f)
-                offsetAnimation.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-                currentIndex = targetIndex
-                isAnimating = false
-            }
-        }
-    }
-
-    OfferCard3(
-        banners = banners,
-        currentIndex = currentIndex,
-        targetIndex = targetIndex,
-        offsetAnimation = offsetAnimation.value,
-        onSwipe = { direction ->
-            if (!isAnimating) {
-                coroutineScope.launch {
-                    isAnimating = true
-                    targetIndex = when (direction) {
-                        SwipeDirection3.LEFT -> (currentIndex + 1) % banners.size
-                        SwipeDirection3.RIGHT -> (currentIndex - 1 + banners.size) % banners.size
-                    }
-
-                    offsetAnimation.snapTo(0f)
-                    offsetAnimation.animateTo(
-                        targetValue = 1f,
-                        animationSpec = tween(
-                            durationMillis = animationDuration,
-                            easing = LinearOutSlowInEasing
-                        )
-                    )
-                    currentIndex = targetIndex
-                    isAnimating = false
-                }
-            }
-        }
-    )
-
-}
-
-
-@Composable
-fun OfferCard3(
-    banners: List<BannerData>,
-    currentIndex: Int,
-    targetIndex: Int,
-    offsetAnimation: Float,
-    onSwipe: (SwipeDirection3) -> Unit
-) {
-    var containerWidth by remember { mutableStateOf(0) }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(
-                horizontal = cardPaddingHorizontal,
-                vertical = cardPaddingVertical
-            ),
-        shape = RoundedCornerShape(
-            topStart = cardCornerTopStart,
-            topEnd = cardCornerTopEnd,
-            bottomEnd = cardCornerBottomEnd,
-            bottomStart = cardCornerBottomStart
-        ),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = cardElevation)
+    AutoScrollPagerWithIndicators(
+        banners.size,
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            PremiumHeaderSection()
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .onSizeChanged { size ->
-                        containerWidth = size.width
-                    }
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures { _, dragAmount ->
-                            when {
-                                dragAmount < -50 -> onSwipe(SwipeDirection3.LEFT)
-                                dragAmount > 50 -> onSwipe(SwipeDirection3.RIGHT)
-                            }
-                        }
-                    }
-            ) {
-                // Current info section
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset {
-                            IntOffset(
-                                (-(offsetAnimation * containerWidth)).roundToInt(),
-                                0
-                            )
-                        }
-                ) {
-                    GameInfoSection3(banners[currentIndex])
-                }
-                // Next info section
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .offset {
-                            IntOffset(
-                                (containerWidth - (offsetAnimation * containerWidth)).roundToInt(),
-                                0
-                            )
-                        }
-                ) {
-                    GameInfoSection3(banners[targetIndex])
-                }
-            }
-
-            PaginationDots3(currentIndex, banners.size)
-            MyGamesButton()
-        }
+        GameInfoSection3(
+            bannerData = banners[it]
+        )
     }
 }
 
-enum class SwipeDirection3 {
-    LEFT, RIGHT
-}
 @Composable
 fun GameInfoSection3(bannerData: BannerData) {
     Box(
