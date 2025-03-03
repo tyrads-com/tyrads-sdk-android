@@ -6,6 +6,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,6 +39,7 @@ import coil.request.ImageRequest
 import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
 import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.modules.dashboard.components.AutoScrollPagerWithIndicators
 import com.tyrads.sdk.acmo.modules.dashboard.components.MyGamesButton
 import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.input_models.BannerData
@@ -48,165 +50,16 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OffersScreen4(
     banners: List<BannerData>
 ) {
-    var currentIndex by remember { mutableStateOf(0) }
-    var targetIndex by remember { mutableStateOf(0) }
-    var isAnimating by remember { mutableStateOf(false) }
-
-
-    val coroutineScope = rememberCoroutineScope()
-
-    val offsetAnimation = remember { Animatable(0f) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(autoScrollDelay)
-            if (!isAnimating) {
-                targetIndex = (currentIndex + 1) % banners.size
-                isAnimating = true
-
-                offsetAnimation.snapTo(0f)
-                offsetAnimation.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-
-                currentIndex = targetIndex
-                isAnimating = false
-            }
-        }
-    }
-
-    OfferCard4(
-        banners = banners,
-        currentIndex = currentIndex,
-        targetIndex = targetIndex,
-        offsetAnimation = offsetAnimation.value
-    ) { direction ->
-        if (!isAnimating) {
-            targetIndex = when (direction) {
-                SwipeDirection.LEFT -> (currentIndex + 1) % banners.size
-                SwipeDirection.RIGHT -> (currentIndex - 1 + banners.size) % banners.size
-            }
-            isAnimating = true
-
-            coroutineScope.launch {
-                offsetAnimation.snapTo(0f)
-                offsetAnimation.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = LinearOutSlowInEasing
-                    )
-                )
-
-                currentIndex = targetIndex
-                isAnimating = false
-            }
-        }
-    }
-
-}
-
-@Composable
-fun OfferCard4(
-    banners: List<BannerData>,
-    currentIndex: Int,
-    targetIndex: Int,
-    offsetAnimation: Float,
-    onSwipe: (SwipeDirection) -> Unit
-) {
-    var containerWidth by remember { mutableStateOf(0) }
-    var initialX by remember { mutableStateOf(0f) }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(
-                horizontal = cardPaddingHorizontal,
-                vertical = cardPaddingVertical
-            ),
-        shape = RoundedCornerShape(
-            topStart = cardCornerTopStart,
-            topEnd = cardCornerTopEnd,
-            bottomEnd = cardCornerBottomEnd,
-            bottomStart = cardCornerBottomStart
-        ),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = cardElevation)
+    AutoScrollPagerWithIndicators(
+        banners.size
     ) {
-        Column(
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            PremiumHeaderSection()
-
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(offerCard4BannerHeight)
-                    .clip(RoundedCornerShape(offerCard4BannerCornerRadius))
-                    .onSizeChanged { size ->
-                        containerWidth = size.width
-                    }
-                    .pointerInput(Unit) {
-                        detectHorizontalDragGestures(
-                            onDragStart = { offset ->
-                                initialX = offset.x
-                            },
-                            onDragEnd = {},
-                            onHorizontalDrag = { change, dragAmount ->
-                                change.consume()
-                                if (abs(dragAmount) > 50) {
-                                    val direction =
-                                        if (dragAmount < 0) SwipeDirection.LEFT else SwipeDirection.RIGHT
-                                    onSwipe(direction)
-                                }
-                            }
-                        )
-                    }
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset {
-                            IntOffset(
-                                (-(offsetAnimation * containerWidth)).roundToInt(),
-                                0
-                            )
-                        }
-                ) {
-                    GameBanner4(banners[currentIndex])
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .offset {
-                            IntOffset(
-                                (containerWidth - (offsetAnimation * containerWidth)).roundToInt(),
-                                0
-                            )
-                        }
-                ) {
-                    GameBanner4(banners[targetIndex])
-                }
-            }
-
-            PaginationDots4(currentIndex, banners.size)
-            MyGamesButton()
-        }
+        GameBanner4(banners[it])
     }
-}
-
-enum class SwipeDirection {
-    LEFT, RIGHT
 }
 
 @Composable
@@ -343,24 +196,3 @@ fun GameBanner4(bannerData: BannerData) {
     }
 }
 
-@Composable
-fun PaginationDots4(currentIndex: Int, totalBanners: Int) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = paginationPaddingVertical),
-        horizontalArrangement = Arrangement.Center
-    ) {
-        repeat(totalBanners) { index ->
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = paginationPaddingHorizontal)
-                    .size(paginationDotSize)
-                    .background(
-                        color = if (index == currentIndex) PrimaryBlue else Color.Gray.copy(alpha = 0.3f),
-                        shape = CircleShape
-                    )
-            )
-        }
-    }
-}
