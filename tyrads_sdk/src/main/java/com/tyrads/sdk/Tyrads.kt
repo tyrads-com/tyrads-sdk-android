@@ -49,7 +49,7 @@ class Tyrads private constructor() {
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
-    internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
     internal var url: String? = null
