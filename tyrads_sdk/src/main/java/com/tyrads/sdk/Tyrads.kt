@@ -33,6 +33,7 @@ import java.util.UUID
 import android.net.Uri
 import android.widget.Toast
 import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
+import kotlinx.coroutines.coroutineScope
 
 @Keep
 class Tyrads private constructor() {
@@ -55,6 +56,16 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
+
+    data class ApiHeaders(
+        val xApiKey: String,
+        val xApiSecret: String,
+        val xUserId: String,
+        val xSdkPlatform: String?,
+        val xSdkVersion: String?,
+        val userAgent: String,
+        val languageCode: String,
+    )
 
     companion object {
         @Volatile
@@ -105,16 +116,17 @@ class Tyrads private constructor() {
         }
     }
 
-    fun loginUser(userID: String? = null) {
-        try {
-            loginUserWait = tyradScope.launch {
+    suspend fun loginUser(userID: String? = null): ApiHeaders? {
+        return try {
+            coroutineScope {
+                // Wait for initialization to complete
                 if (initWait?.isCompleted == false) {
                     log("Waiting for init setup to complete", Log.DEBUG, true)
                 }
                 initWait?.join()
                 if (!::preferences.isInitialized) {
                     log("loginUser: init setup error", Log.ERROR)
-                    return@launch
+                    return@coroutineScope null
                 }
                 log("Starting user login process", Log.INFO)
                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
@@ -122,8 +134,7 @@ class Tyrads private constructor() {
                 var identifierType = ""
                 try {
                     if (isGooglePlayServicesAvailable(context)) {
-                        advertisingId =
-                            AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                        advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
                         identifierType = "GAID"
                     }
                 } catch (e: Exception) {
@@ -195,6 +206,22 @@ class Tyrads private constructor() {
                         }
 
                         track(TyradsActivity.initialized)
+
+                        val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
+                        val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
+                        val sdkPlatform = AcmoConfig.SDK_PLATFORM
+                        val sdkVersion = AcmoConfig.SDK_VERSION
+                        val userAgent = "Android"
+
+                        ApiHeaders(
+                            xApiKey = apiKey,
+                            xApiSecret = apiSecret,
+                            xUserId = userId,
+                            xSdkPlatform = sdkPlatform,
+                            xSdkVersion = sdkVersion,
+                            userAgent = userAgent,
+                            languageCode = currentLanguageCode
+                        )
                     }
 
                     is Result.Failure -> {
@@ -203,11 +230,13 @@ class Tyrads private constructor() {
                         val errorMessage = String(response.data)
                         log("Error: ${error.message}")
                         log("Server Message: $errorMessage")
+                        null
                     }
                 }
             }
         } catch (e: Exception) {
             log("Exception during login: ${e.message}", Log.ERROR)
+            null
         }
     }
 
