@@ -32,6 +32,7 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
 import android.widget.Toast
+import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
 import kotlinx.coroutines.coroutineScope
 
@@ -56,19 +57,6 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
-
-    data class ApiHeaders(
-        val xApiKey: String,
-        val xApiSecret: String,
-        val xUserId: String,
-        val xSdkPlatform: String?,
-        val xSdkVersion: String?,
-        val userAgent: String,
-        val languageCode: String,
-        val premiumColor: String,
-        val headerColor: String,
-        val mainColor: String,
-    )
 
     companion object {
         @Volatile
