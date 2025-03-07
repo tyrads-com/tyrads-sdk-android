@@ -65,6 +65,9 @@ class Tyrads private constructor() {
         val xSdkVersion: String?,
         val userAgent: String,
         val languageCode: String,
+        val premiumColor: String,
+        val headerColor: String,
+        val mainColor: String,
     )
 
     companion object {
@@ -220,7 +223,10 @@ class Tyrads private constructor() {
                             xSdkPlatform = sdkPlatform,
                             xSdkVersion = sdkVersion,
                             userAgent = userAgent,
-                            languageCode = currentLanguageCode
+                            languageCode = currentLanguageCode,
+                            premiumColor = loginData.data.publisherApp.premiumColor,
+                            headerColor = loginData.data.publisherApp.headerColor,
+                            mainColor = loginData.data.publisherApp.mainColor,
                         )
                     }
 
