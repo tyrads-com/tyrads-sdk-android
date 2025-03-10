@@ -14,12 +14,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.input_models.headerFontSize
 import com.tyrads.sdk.acmo.modules.input_models.headerIconSpacing
 import com.tyrads.sdk.acmo.modules.input_models.headerPaddingBottom
@@ -30,7 +32,6 @@ import com.tyrads.sdk.acmo.modules.input_models.headerTextSpacing
 import com.tyrads.sdk.acmo.modules.input_models.moreOffersFontSize
 import com.tyrads.sdk.acmo.modules.input_models.moreOffersIconSize
 import com.tyrads.sdk.acmo.modules.input_models.starIconSize
-import com.tyrads.sdk.ui.theme.PrimaryBlue
 
 @Composable
 fun PremiumHeaderSection(
@@ -55,7 +56,7 @@ fun PremiumHeaderSection(
             Image(
                 painter = painterResource(id = R.drawable.ic_star_new),
                 contentDescription = "Star",
-                modifier = Modifier.size(starIconSize)
+                modifier = Modifier.size(starIconSize),
             )
             Spacer(modifier = Modifier.width(headerTextSpacing))
             Text(
@@ -75,7 +76,7 @@ fun PremiumHeaderSection(
             ) {
                 Text(
                     text = stringResource(id = R.string.dashboard_more_offers),
-                    color = PrimaryBlue,
+                    color = Tyrads.getInstance().premiumColor.toColor(),
                     fontSize = moreOffersFontSize,
                     maxLines = 1
                 )
@@ -84,7 +85,7 @@ fun PremiumHeaderSection(
                     painter = painterResource(id = R.drawable.ic_arrow_right),
                     contentDescription = "Arrow",
                     modifier = Modifier.size(moreOffersIconSize),
-                    tint = PrimaryBlue
+                    tint = Tyrads.getInstance().premiumColor.toColor()
                 )
             }
         }
