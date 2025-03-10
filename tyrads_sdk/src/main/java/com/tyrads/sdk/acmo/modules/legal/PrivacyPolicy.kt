@@ -138,7 +138,7 @@ fun Body() {
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",
             modifier = Modifier
-                .height(150.dp)
+                .height(140.dp)
                 .fillMaxWidth()
                 .wrapContentSize(Alignment.Center)
         )
@@ -262,7 +262,7 @@ fun Info2() {
     ClickableText(
         text = annotatedString,
         style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
     ) { offset ->
         annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { annotation ->
             when (annotation.tag) {
@@ -281,7 +281,7 @@ fun TwoButtonsWithInfo2(
 ) {
     Column(
         modifier = modifier
-            .padding(bottom = 35.dp)
+            .padding(bottom = 20.dp)
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
