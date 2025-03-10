@@ -54,6 +54,7 @@ fun AcmoUsageStatsDialog(
         )
     ) {
         UsageStatsCard(
+            modifier = Modifier.height(195.dp),
             onGrant = {
                 onDismissRequest()
             }
@@ -63,7 +64,8 @@ fun AcmoUsageStatsDialog(
 
 @Composable
 fun UsageStatsCard(
-    onGrant: () -> Unit
+    onGrant: () -> Unit,
+    modifier: Modifier = Modifier
 ){
     val usageStatsController = AcmoUsageStatsController()
     var checked by remember { mutableStateOf(false) }
@@ -105,14 +107,14 @@ fun UsageStatsCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
 
     ) {
         Column(
-            modifier = Modifier
-                .height(170.dp)
+            modifier = modifier
+                .height(176.dp)
                 .padding(horizontal = 24.dp, vertical = 8.dp)
         ) {
             Row(
