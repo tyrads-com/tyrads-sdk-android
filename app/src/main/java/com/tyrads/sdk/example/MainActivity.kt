@@ -92,8 +92,8 @@ fun Greeting(modifier: Modifier = Modifier) {
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
-                apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
+                apiKey = apiKeyInput.ifBlank { "" },
+                apiSecret = apiSecretInput.ifBlank { "" },
                 debugMode = true
             )
 
@@ -137,8 +137,8 @@ fun Greeting(modifier: Modifier = Modifier) {
         CoroutineScope(Dispatchers.IO).launch {
             Tyrads.getInstance().init(
                 context,
-                apiKey = "4f0eaa99e38e49b8b52804116e638a41",
-                apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
+                apiKey = "",
+                apiSecret = "",
                 debugMode = true
             )
             Tyrads.getInstance().loginUser(userID = "67386")
