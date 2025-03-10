@@ -3,7 +3,7 @@ import android.graphics.Color
 object AcmoConfig {
    const val API_VERSION = "2.0";
    const val BUILD_VERSION = "12";
-   const val AV = "4";
+   const val AV = "3";
 
    const val SDK_VERSION = "$API_VERSION.$BUILD_VERSION";
    const val SDK_PLATFORM = "ReactNative";
