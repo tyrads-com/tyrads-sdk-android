@@ -57,7 +57,6 @@ fun PremiumHeaderSection(
                 painter = painterResource(id = R.drawable.ic_star_new),
                 contentDescription = "Star",
                 modifier = Modifier.size(starIconSize),
-                colorFilter = ColorFilter.tint(Tyrads.getInstance().premiumColor.toColor())
             )
             Spacer(modifier = Modifier.width(headerTextSpacing))
             Text(
