@@ -23,6 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.input_models.autoScrollDelay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -67,7 +69,7 @@ fun AutoScrollPagerWithIndicators(
         Row {
             repeat(totalPages){
                 val color = if(pagerState.currentPage == it){
-                    MaterialTheme.colorScheme.primary
+                    Tyrads.getInstance().premiumColor.toColor()
                 }else{
                     Color.LightGray
                 }
