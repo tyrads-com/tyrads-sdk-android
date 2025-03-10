@@ -1,25 +1,31 @@
 package com.tyrads.sdk.acmo.modules.dashboard
 
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
@@ -27,23 +33,36 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.dashboard.components.AutoScrollPagerWithIndicators
-import com.tyrads.sdk.acmo.modules.dashboard.components.MyGamesButton
-import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.input_models.BannerData
-import com.tyrads.sdk.acmo.modules.input_models.*
-import com.tyrads.sdk.ui.theme.*
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
+import com.tyrads.sdk.acmo.modules.input_models.bannerHeight
+import com.tyrads.sdk.acmo.modules.input_models.bannerStarIconSize
+import com.tyrads.sdk.acmo.modules.input_models.bannerSurfacePadding
+import com.tyrads.sdk.acmo.modules.input_models.bannerSurfaceSize
+import com.tyrads.sdk.acmo.modules.input_models.coinIconSize
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoButtonFontSize
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoButtonPaddingHorizontal
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoButtonPaddingVertical
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoImgSpacerWidth
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoPadding
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoPaddingBottom
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoPaddingTop
+import com.tyrads.sdk.acmo.modules.input_models.gameInfoSpacerWidth
+import com.tyrads.sdk.acmo.modules.input_models.gameTextFontSize
+import com.tyrads.sdk.acmo.modules.input_models.imageCornerRadius
+import com.tyrads.sdk.acmo.modules.input_models.imageSize
+import com.tyrads.sdk.acmo.modules.input_models.playButtonCornerRadius
+import com.tyrads.sdk.acmo.modules.input_models.playButtonHeight
+import com.tyrads.sdk.acmo.modules.input_models.pointsFontSize
+import com.tyrads.sdk.acmo.modules.input_models.rewardsFontSize
+import com.tyrads.sdk.ui.theme.TransparentColor
+import com.tyrads.sdk.ui.theme.WhiteColor
 
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -98,7 +117,7 @@ fun GameInfoSection(bannerData: BannerData) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .background(PrimaryBlue)
+            .background(Tyrads.getInstance().premiumColor.toColor())
             .padding(gameInfoPadding)
             .wrapContentHeight()
     ) {
@@ -139,10 +158,14 @@ fun GameInfoSection(bannerData: BannerData) {
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.padding(top = gameInfoPaddingTop)
                     ) {
-                        Image(
-                            painter = painterResource(id = R.drawable.ic_coin2),
-                            contentDescription = "Coin Icon",
-                            modifier = Modifier.size(coinIconSize)
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(bannerData.currency.adUnitCurrencyIcon)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = "Game Icon",
+                            modifier = Modifier
+                                .size(coinIconSize)
                         )
                         Spacer(modifier = Modifier.width(gameInfoImgSpacerWidth))
                         Text(
@@ -161,7 +184,8 @@ fun GameInfoSection(bannerData: BannerData) {
             }
             Spacer(modifier = Modifier.width(gameInfoSpacerWidth))
             Button(
-                onClick = { },
+                onClick = { Tyrads.getInstance()
+                    .showOffers(route = "campaign-details", campaignID = bannerData.campaignId) },
                 colors = ButtonDefaults.buttonColors(containerColor = WhiteColor),
                 shape = RoundedCornerShape(playButtonCornerRadius),
                 contentPadding = PaddingValues(
@@ -172,7 +196,7 @@ fun GameInfoSection(bannerData: BannerData) {
             ) {
                 Text(
                     text = stringResource(id = R.string.dashboard_play_button),
-                    color = PrimaryBlue,
+                    color = Tyrads.getInstance().premiumColor.toColor(),
                     fontWeight = FontWeight.Bold,
                     fontSize = gameInfoButtonFontSize
                 )

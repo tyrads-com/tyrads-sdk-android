@@ -13,11 +13,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonCornerRadius
 import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonFontSize
 import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonHeight
 import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonPadding
-import com.tyrads.sdk.ui.theme.PrimaryBlue
 
 @Composable
 fun MyGamesButton() {
@@ -34,7 +34,7 @@ fun MyGamesButton() {
                 bottom = myGamesButtonPadding
             )
             .height(myGamesButtonHeight),
-        colors = ButtonDefaults.buttonColors(containerColor = PrimaryBlue),
+        colors = ButtonDefaults.buttonColors(containerColor = Tyrads.getInstance().premiumColor.toColor()),
         shape = RoundedCornerShape(myGamesButtonCornerRadius)
     ) {
         Text(
