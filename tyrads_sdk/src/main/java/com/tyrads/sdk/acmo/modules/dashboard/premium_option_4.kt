@@ -170,10 +170,14 @@ fun GameBanner4(bannerData: BannerData) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Image(
-                                painter = painterResource(id = R.drawable.ic_coin2),
-                                contentDescription = "Coin Icon",
-                                modifier = Modifier.size(coinIconSize)
+                            AsyncImage(
+                                model = ImageRequest.Builder(LocalContext.current)
+                                    .data(bannerData.currency.adUnitCurrencyIcon)
+                                    .crossfade(true)
+                                    .build(),
+                                contentDescription = "Game Icon",
+                                modifier = Modifier
+                                    .size(coinIconSize)
                             )
                             Spacer(modifier = Modifier.width(gameInfoImgSpacerWidth))
                             Text(

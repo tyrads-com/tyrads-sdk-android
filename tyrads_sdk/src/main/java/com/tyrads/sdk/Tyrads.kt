@@ -191,7 +191,6 @@ class Tyrads private constructor() {
                         preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
                         newUser = loginData.data.newRegisteredUser
 
-                        // check for empty
                         mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
                         premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
                         headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
