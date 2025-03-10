@@ -55,6 +55,10 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
+    // need these variables outside
+    var premiumColor:  String = "#1C90DF"
+    var headerColor:  String? = null
+    var mainColor: String? = null
 
     companion object {
         @Volatile
@@ -185,6 +189,11 @@ class Tyrads private constructor() {
                         preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
                         newUser = loginData.data.newRegisteredUser
 
+                        // check for empty
+                        mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                        premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                        headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+
                         if (preferences.getBoolean(
                                 AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
                                 false
@@ -228,7 +237,7 @@ class Tyrads private constructor() {
             log("Launching offers", Log.INFO)
             url = Uri.Builder()
                 .scheme("https")
-                .authority("websdk.tyrads.com")
+                .authority("staging-websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
                 .appendQueryParameter("userID", publisherUserID)
