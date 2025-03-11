@@ -57,7 +57,7 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
-    // need these variables outside
+
     var premiumColor:  String = "#1C90DF"
     var headerColor:  String? = null
     var mainColor: String? = null
