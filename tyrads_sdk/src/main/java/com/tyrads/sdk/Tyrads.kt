@@ -237,7 +237,7 @@ class Tyrads private constructor() {
             log("Launching offers", Log.INFO)
             url = Uri.Builder()
                 .scheme("https")
-                .authority("staging-websdk.tyrads.com")
+                .authority("websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
                 .appendQueryParameter("userID", publisherUserID)
