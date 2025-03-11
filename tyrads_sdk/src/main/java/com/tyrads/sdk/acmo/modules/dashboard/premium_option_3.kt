@@ -29,6 +29,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.tyrads.sdk.R
@@ -74,11 +75,14 @@ fun GameInfoSection3(bannerData: BannerData) {
         modifier = Modifier
             .fillMaxWidth()
             .background(Tyrads.getInstance().premiumColor.toColor())
-            .padding(gameInfoPadding)
-            .wrapContentHeight()
             .clickable {
                 Tyrads.getInstance().showOffers(route = "campaign-details", campaignID = bannerData.campaignId)
             }
+            .padding(
+                horizontal = gameInfoPadding,
+                vertical = gameInfoPaddingTop + 15.dp,
+            )
+            .wrapContentHeight()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
