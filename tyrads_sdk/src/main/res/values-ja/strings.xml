@@ -52,7 +52,7 @@
     <string name="dashboard_suggested_offers">おすすめのオファー</string>
     <string name="dashboard_more_offers">その他のオファー</string>
     <string name="dashboard_my_games">マイゲーム</string>
-    <string name="dashboard_play_button">プレイ</string>
+    <string name="dashboard_play_button">プレイ する</string>
     <string name="dashboard_top_ranking">トップ %1$d</string>
 
     <string name="help_title">ヘルプ</string>
