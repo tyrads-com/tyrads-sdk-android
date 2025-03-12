@@ -22,7 +22,7 @@ data class AcmoOffersModel (
 )
 
 data class Campaign (
-    val campaignID: Int,
+    val campaignId: Int,
     val campaignName: String,
     val campaignDescription: String? = null,
     val createdOn: String,

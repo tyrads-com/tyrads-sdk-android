@@ -79,7 +79,7 @@ class NetworkCommons {
                         Log.i("offers response", response.data.toString())
                         val banners = response.data.map { campaign ->
                             BannerData(
-                                campaignId = campaign.campaignID,
+                                campaignId = campaign.campaignId,
                                 appId = campaign.app.id,
                                 title = campaign.app.title,
                                 creativePackName = campaign.creative.creativePacks.firstOrNull()?.creativePackName
