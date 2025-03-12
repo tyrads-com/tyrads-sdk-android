@@ -92,12 +92,12 @@ fun Greeting(modifier: Modifier = Modifier) {
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = apiKeyInput.ifBlank { "" },
-                apiSecret = apiSecretInput.ifBlank { "" },
+                apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
+                apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
                 debugMode = true
             )
 
-            Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "46" })
+            Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
             Tyrads.getInstance().showOffers()
             isLoadingOffers = false
         }
@@ -134,15 +134,15 @@ fun Greeting(modifier: Modifier = Modifier) {
     }
 
     LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Default).launch {
             Tyrads.getInstance().init(
                 context,
-                apiKey = "",
-                apiSecret = "",
+                apiKey = "4f0eaa99e38e49b8b52804116e638a41",
+                apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
                 debugMode = true
             )
-            Tyrads.getInstance().loginUser(userID = "67386")
-            delay(1000L)
+           val userData = Tyrads.getInstance().loginUser(userID = "6")
+            delay(1500L)
             isTyradsInitialized = true
         }
     }
@@ -163,7 +163,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             )
         }
         if (isTyradsInitialized) {
-            Tyrads.getInstance().TopPremiumOffers(style = 1)
+            Tyrads.getInstance().TopPremiumOffers(style = 2)
         } else {
             CircularProgressIndicator(modifier = Modifier.size(24.dp))
         }
@@ -206,22 +206,6 @@ fun Greeting(modifier: Modifier = Modifier) {
             Text(text = "Show Offers")
         }
 
-//        Button(
-//            onClick = {
-//                handleWidgetsClick()
-//            },
-//            modifier = Modifier.padding(16.dp)
-//        ) {
-//            if (isLoadingWidgets) {
-//                CircularProgressIndicator(
-//                    modifier = Modifier.size(16.dp),
-//                    strokeWidth = 2.dp,
-//                    color = Color.Black
-//                )
-//                Spacer(modifier = Modifier.width(8.dp))
-//            }
-//            Text(text = "Widgets")
-//        }
     }
 }
 
