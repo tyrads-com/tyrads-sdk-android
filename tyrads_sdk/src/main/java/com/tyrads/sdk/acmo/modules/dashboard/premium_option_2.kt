@@ -3,6 +3,7 @@ package com.tyrads.sdk.acmo.modules.dashboard
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,12 +21,13 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -100,22 +102,28 @@ fun GameBanner(bannerData: BannerData) {
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop
         )
-        Surface(
-            color = TransparentColor,
+        Box(
             modifier = Modifier
                 .size(bannerSurfaceSize)
                 .padding(bannerSurfacePadding)
                 .align(Alignment.TopStart)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_dollar_star),
+                painter = painterResource(id = R.drawable.premium_star),
                 contentDescription = "Star",
-                modifier = Modifier.size(bannerStarIconSize)
+                modifier = Modifier.size(bannerStarIconSize).align(Alignment.Center),
+                colorFilter = ColorFilter.tint(Tyrads.getInstance().premiumColor.toColor())
             )
+            Text(
+                text="$",
+                color= Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Center))
         }
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameInfoSection(bannerData: BannerData) {
     Box(
@@ -149,14 +157,15 @@ fun GameInfoSection(bannerData: BannerData) {
                     modifier = Modifier.weight(1f)
                 ) {
                     Text(
-                        text = bannerData.title,  // Changed from creativePackName
+                        text = bannerData.title,
                         color = WhiteColor,
                         fontSize = gameTextFontSize,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(bottom = gameInfoPaddingBottom),
+                            .padding(bottom = gameInfoPaddingBottom)
+                            .basicMarquee(),
                     )
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
