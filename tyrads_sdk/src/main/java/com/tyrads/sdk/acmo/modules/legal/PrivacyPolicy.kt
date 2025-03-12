@@ -1,9 +1,11 @@
 package com.tyrads.sdk.acmo.modules.legal
 
+import AcmoConfig
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -243,7 +245,7 @@ fun Info2() {
                 tag = "TOS",
                 annotation = "https://tyrads.com/tyrsdk-terms-of-service/"
             )
-            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
+            withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
                 append(stringResource(id = R.string.privacy_policy_terms_text))
             }
             pop()
@@ -252,7 +254,7 @@ fun Info2() {
                 tag = "PP",
                 annotation = "https://tyrads.com/tyrsdk-privacy-policy/"
             )
-            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
+            withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
                 append(stringResource(id = R.string.privacy_policy_privacy_text))
             }
             pop()
@@ -291,7 +293,8 @@ fun TwoButtonsWithInfo2(
             modifier = Modifier
                 .width(160.dp)
                 .height(35.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(AcmoConfig.SECONDARY_COLOR))
         ) {
             Text(stringResource(id = R.string.privacy_policy_accept))
         }

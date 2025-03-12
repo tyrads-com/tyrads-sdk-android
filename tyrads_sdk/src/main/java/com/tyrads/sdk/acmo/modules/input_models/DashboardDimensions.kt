@@ -14,7 +14,7 @@ val offersScreenPaddingTop = 16.dp
 val loaderSize = 40.dp
 val errorPadding = 16.dp
 val noCampaignPadding = 16.dp
-val autoScrollDelay = 3000L // in milliseconds
+val autoScrollDelay = 5000L // in milliseconds
 val animationDuration = 1500 // in milliseconds
 
 
@@ -29,7 +29,7 @@ val gameListSpacerWidth4 = 4.dp
 val gameListSpacerWidth6 = 6.dp
 val gameListSpacerWidth8 = 8.dp
 val gameListTopVerticalPadding = 2.dp
-val gameListTopRankFontSize = 12.sp
+val gameListTopRankFontSize = 10.sp
 val gameListTopRankHorizontalPadding = 6.dp
 val gameListTopRankVerticalPadding = 2.dp
 val gameListButtonCornerShape = 8.dp
@@ -54,7 +54,7 @@ val headerPaddingStart = 16.dp
 val headerPaddingEnd = 12.dp
 val headerPaddingTop = 22.dp
 val headerPaddingBottom = 10.dp
-val starIconSize = 20.dp
+val starIconSize = 13.dp
 val headerTextSpacing = 8.dp
 val headerFontSize = 18.sp
 val moreOffersFontSize = 14.sp

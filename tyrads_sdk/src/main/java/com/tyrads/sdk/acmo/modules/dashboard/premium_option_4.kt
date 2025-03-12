@@ -3,6 +3,7 @@ package com.tyrads.sdk.acmo.modules.dashboard
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -80,6 +82,7 @@ fun OffersScreen4(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameBanner4(bannerData: BannerData) {
     Box(
@@ -106,18 +109,23 @@ fun GameBanner4(bannerData: BannerData) {
             contentScale = ContentScale.Crop
         )
 
-        Surface(
-            color = Color.Transparent,
+        Box(
             modifier = Modifier
                 .size(bannerSurfaceSize)
                 .padding(bannerSurfacePadding)
                 .align(Alignment.TopStart)
         ) {
             Image(
-                painter = painterResource(id = R.drawable.ic_dollar_star),
+                painter = painterResource(id = R.drawable.premium_star),
                 contentDescription = "Star",
-                modifier = Modifier.size(bannerStarIconSize)
+                modifier = Modifier.size(bannerStarIconSize).align(Alignment.Center),
+                colorFilter = ColorFilter.tint(Tyrads.getInstance().premiumColor.toColor())
             )
+            Text(
+                text="$",
+                color= Color.White,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.align(Alignment.Center))
         }
 
         Box(
@@ -169,6 +177,7 @@ fun GameBanner4(bannerData: BannerData) {
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(bottom = gameInfoPaddingBottom)
+                                .basicMarquee()
                         )
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
