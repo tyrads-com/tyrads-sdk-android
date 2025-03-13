@@ -23,7 +23,9 @@ import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonPadding
 fun MyGamesButton() {
     Button(
         onClick = {
-            Tyrads.getInstance().showOffers()
+            Tyrads.getInstance().showOffers(
+                route = "campaigns-activated"
+            )
         },
         modifier = Modifier
             .fillMaxWidth()
