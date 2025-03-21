@@ -9,5 +9,4 @@ object AcmoEndpointNames {
     const val DEVICE_DETAILS = "user-device"
     const val USAGE_STATS = "usage-stats"
     const val USER_ACTIVITIES = "user-activities";
-
 }

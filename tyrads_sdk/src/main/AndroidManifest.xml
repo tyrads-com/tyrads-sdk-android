@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"  xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
@@ -17,8 +17,29 @@
             android:name=".acmo.core.AcmoApp"
             android:exported="false"
             android:label="@string/title_activity_tyrads_webview"
+            android:configChanges="locale|layoutDirection"
+            android:theme="@style/Theme.TyradsSdk" />
+
+        <!-- Add these activity declarations -->
+        <activity
+            android:name=".acmo.modules.dashboard.PremiumActivity1"
+            android:exported="false"
+            android:theme="@style/Theme.TyradsSdk" />
+
+        <activity
+            android:name=".acmo.modules.dashboard.PremiumActivity2"
+            android:exported="false"
+            android:theme="@style/Theme.TyradsSdk" />
+
+        <activity
+            android:name=".acmo.modules.dashboard.PremiumActivity3"
+            android:exported="false"
+            android:theme="@style/Theme.TyradsSdk" />
+
+        <activity
+            android:name=".acmo.modules.dashboard.PremiumActivity4"
+            android:exported="false"
             android:theme="@style/Theme.TyradsSdk" />
 
     </application>
-
 </manifest>

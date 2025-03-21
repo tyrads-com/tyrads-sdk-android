@@ -41,13 +41,29 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
 import java.lang.ref.WeakReference
 
-
+class WebAppInterface(private val context: Context) {
+    private val mainHandler = Handler(Looper.getMainLooper())
+    @JavascriptInterface
+    fun changeLanguage(langCode: String?) {
+        try {
+            if (langCode == null) {
+                return
+            }
+            mainHandler.post {
+                LocalizationHelper.changeLanguage(context, langCode, shouldRecreate = false)
+            }
+        } catch (e: Exception) {
+            Log.e("WebAppInterface", "Error changing language: ${e.message}")
+        }
+    }
+}
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun WebViewComposable(modifier: Modifier) {
@@ -121,12 +137,25 @@ fun WebViewComposable(modifier: Modifier) {
                             return true
                         }
                     }
+                    addJavascriptInterface(WebAppInterface(context), "AndroidInterface")
+
                     webViewClient = object : WebViewClient() {
                         override fun onPageFinished(view: WebView?, url: String?) {
                             super.onPageFinished(view, url)
                             isLoading.value = false
+                            evaluateJavascript("""
+                                 window.addEventListener('message', function(event) {
+                                    try {
+                                        const message = JSON.parse(event.data);
+                                        if (message && message.action === 'changeLanguage') {
+                                            AndroidInterface.changeLanguage(message.languageCode);
+                                        }
+                                    } catch (error) {
+                                        console.error('Error handling message:', error);
+                                    }
+                                });
+                            """.trimIndent(), null)
                         }
-
 
                         override fun shouldOverrideUrlLoading(
                             view: WebView?,
@@ -136,7 +165,7 @@ fun WebViewComposable(modifier: Modifier) {
                                 when {
                                     url.contains("acmo-cmd") -> {
                                         if (url.contains("close-app")) {
-                                            activityReference.get()?.finish()
+                                            activityContext?.finish()
                                             return true
                                         }
                                     }

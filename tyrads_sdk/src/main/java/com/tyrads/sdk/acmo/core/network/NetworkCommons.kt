@@ -1,22 +1,18 @@
 package com.tyrads.sdk
 
-
-import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
+import AcmoConfig
+import AcmoEndpointNames
+import AcmoKeyNames
 import android.util.Log
 import androidx.annotation.Keep
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
+import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
-import com.tyrads.sdk.Tyrads
+import com.github.kittinunf.fuel.gson.responseObject
+import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
+import com.tyrads.sdk.acmo.modules.input_models.BannerData
 import kotlinx.coroutines.runBlocking
 
 @Keep
@@ -38,7 +34,7 @@ class NetworkCommons {
             { request: Request ->
                 runBlocking {
                     request.header("X-SDK-Platform", "Android")
-                    request.header("X-SDK-Version", "v0.1.0")
+                    request.header("X-SDK-Version", AcmoConfig.SDK_VERSION)
                     request.header("Content-Type", "application/json")
                     val sharedPreferences = Tyrads.getInstance().preferences
 
@@ -73,7 +69,40 @@ class NetworkCommons {
             }
         }
     }
+
+    fun fetchCampaigns(onSuccess: (List<BannerData>) -> Unit, onError: (Exception) -> Unit, langCode: String) {
+        val url = "${AcmoConfig.BASE_URL}campaigns?lang=$langCode"
+        Fuel.get(url)
+            .responseObject<AcmoOffersModel> { _, _, result ->
+                result.fold(
+                    success = { response ->
+                        Log.i("offers response", response.data.toString())
+                        val banners = response.data.map { campaign ->
+                            BannerData(
+                                campaignId = campaign.campaignId,
+                                appId = campaign.app.id,
+                                title = campaign.app.title,
+                                creativePackName = campaign.creative.creativePacks.firstOrNull()?.creativePackName
+                                    ?: "",
+                                fileUrl = campaign.creative.creativePacks.firstOrNull()?.creatives?.firstOrNull()?.fileUrl
+                                    ?: "",
+                                points = campaign.campaignPayout.totalPayoutConverted,
+                                rewards = campaign.campaignPayout.totalEvents,
+                                currency = campaign.currency,
+                                thumbnail = campaign.app.thumbnail,
+                                premium = campaign.premium,
+                                sortingScore = campaign.sortingScore
+                            )
+                        }
+                        val hotOffers = banners
+                            .sortedWith(compareByDescending<BannerData> { it.premium }.thenByDescending { it.sortingScore })
+                            .filter { it.points > 0 }
+                            .take(5)
+
+                        onSuccess(hotOffers)
+                    },
+                    failure = { error -> onError(error) }
+                )
+            }
+    }
 }
-
-
-

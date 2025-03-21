@@ -21,16 +21,18 @@ import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
 import android.widget.Toast
-import kotlinx.coroutines.withContext
+import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
 
 @Keep
 class Tyrads private constructor() {
@@ -46,14 +48,17 @@ class Tyrads private constructor() {
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
-
     internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
     internal var url: String? = null
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
-
+    private lateinit var currentLanguageCode: String
+    // need these variables outside
+    var premiumColor:  String = "#1C90DF"
+    var headerColor:  String? = null
+    var mainColor: String? = null
 
     companion object {
         @Volatile
@@ -88,11 +93,13 @@ class Tyrads private constructor() {
         this.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this.debugMode = debugMode
+        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
         initWait = tyradScope.launch {
             preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
             preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
             preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
             NetworkCommons()
+            currentLanguageCode  = LocalizationHelper.getLanguageCode(context)
 
             log(
                 "Warning: debugMode is set to true. This should not be used in production.",
@@ -115,7 +122,7 @@ class Tyrads private constructor() {
                 }
                 log("Starting user login process", Log.INFO)
                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
-                var advertisingId : String? = ""
+                var advertisingId: String? = ""
                 var identifierType = ""
                 try {
                     if (isGooglePlayServicesAvailable(context)) {
@@ -127,7 +134,7 @@ class Tyrads private constructor() {
                     log("Error getting advertising id", Log.ERROR)
                 }
 
-                if(advertisingId.isNullOrBlank()){
+                if (advertisingId.isNullOrBlank()) {
                     advertisingId = preferences.getString("uuid", null) ?: run {
                         val newUuid = UUID.randomUUID().toString()
                         preferences.edit().putString("uuid", newUuid).apply()
@@ -135,9 +142,6 @@ class Tyrads private constructor() {
                     }
                     identifierType = "OTHER"
                 }
-
-
-
 
                 val deviceDetailsController = AcmoDeviceDetailsController()
                 val deviceDetails = deviceDetailsController.getDeviceDetails()
@@ -172,7 +176,6 @@ class Tyrads private constructor() {
                     info.userGroup?.let { fd["userGroup"] = it }
                 }
 
-
                 val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                     .body(Gson().toJson(fd))
                     .response()
@@ -186,6 +189,11 @@ class Tyrads private constructor() {
                         preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
                         newUser = loginData.data.newRegisteredUser
 
+                        // check for empty
+                        mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                        premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                        headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+
                         if (preferences.getBoolean(
                                 AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
                                 false
@@ -195,7 +203,7 @@ class Tyrads private constructor() {
                             usageStatsController.saveUsageStats()
                         }
 
-                        track(TyradsActivity.initialized);
+                        track(TyradsActivity.initialized)
                     }
 
                     is Result.Failure -> {
@@ -211,6 +219,7 @@ class Tyrads private constructor() {
             log("Exception during login: ${e.message}", Log.ERROR)
         }
     }
+
     fun showOffers(route: String? = null, campaignID: Int? = null) {
         tyradScope.launch {
             log("Preparing to show offers", Log.INFO)
@@ -236,17 +245,42 @@ class Tyrads private constructor() {
                 .appendQueryParameter("platform", "Android")
                 .appendQueryParameter("hc", loginData.data.publisherApp.headerColor)
                 .appendQueryParameter("mc", loginData.data.publisherApp.mainColor)
+                .appendQueryParameter("pc", loginData.data.publisherApp.premiumColor)
                 .appendQueryParameter("route", route?.toString())
                 .appendQueryParameter("campaignID", campaignID?.toString())
                 .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
                 .appendQueryParameter("av", AcmoConfig.AV)
+                .appendQueryParameter("lang", currentLanguageCode)
                 .build()
                 .toString()
-
+            Log.i("url", url.toString())
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         }
+    }
+
+    fun changeLanguage(context: Context, languageCode: String){
+        tyradScope.launch {
+            LocalizationHelper.changeLanguage(
+                context, languageCode
+            )
+        }
+    }
+//    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
+    @Composable
+    fun TopPremiumOffers(
+        showMore: Boolean = true,
+        showMyOffers: Boolean = true,
+        showMyOffersEmptyView: Boolean = false,
+        style: Int = 2,
+    ){
+        TopOffers(
+            showMore = showMore,
+            showMyOffers = showMyOffers,
+            showMyOffersEmptyView = showMyOffersEmptyView,
+            style = style,
+        )
     }
 
     @Composable
@@ -254,21 +288,16 @@ class Tyrads private constructor() {
         content()
     }
 
-
     fun track(activity: String) {
-        tracker.trackUser(activity);
+        tracker.trackUser(activity)
     }
 
     fun setMediaSourceInfo(mediaSourceInfo: TyradsMediaSourceInfo) {
         this.mediaSourceInfo = mediaSourceInfo
     }
 
-
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
     }
-
-
-
 
 }

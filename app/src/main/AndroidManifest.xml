@@ -30,10 +30,14 @@
             android:theme="@style/Theme.TyradsSdk">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-    </application>
 
+        <!-- Add the PremiumLayoutsActivity -->
+        <activity
+            android:name=".PremiumLayoutsActivity"
+            android:exported="false"
+            android:theme="@style/Theme.TyradsSdk" />
+    </application>
 </manifest>

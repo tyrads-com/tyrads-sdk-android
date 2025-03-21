@@ -1,9 +1,11 @@
 package com.tyrads.sdk.acmo.modules.legal
 
+import AcmoConfig
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,10 +18,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.googlefonts.Font
@@ -29,10 +31,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.compose.rememberNavController
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.helpers.acmoLaunchURL
+import com.tyrads.sdk.acmo.modules.legal.settings.LanguageDropdownMenu
 
 @Composable
 fun AcmoPrivacyPolicyPage() {
@@ -43,7 +45,7 @@ fun AcmoPrivacyPolicyPage() {
     Scaffold(
         containerColor = Color.White
     ) { innerPadding ->
-        Box(modifier = Modifier.fillMaxSize()) {
+
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -53,33 +55,26 @@ fun AcmoPrivacyPolicyPage() {
                 Body()
                 Column(
                     modifier = Modifier
+                        .weight(1f)
                         .height((LocalConfiguration.current.screenHeightDp - 600).dp)
                         .verticalScroll(scrollState)
                         .padding(horizontal = 30.dp)
                 ) {
                     Info()
                 }
-                Box(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Info2(
-                    )
-                }
+
+                TwoButtonsWithInfo2(
+                    acceptOnTap = {
+                        Tyrads.getInstance().navController.navigate("usage-permissions")
+
+                    },
+                    rejectOntap = {
+                        activityContext?.finish()
+                    },
+                )
             }
-            TwoButtons(
-                acceptOnTap = {
-                    Tyrads.getInstance().navController.navigate("usage-permissions")
 
-                },
-                rejectOntap = {
-                    activityContext?.finish()
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-            )
 
-        }
     }
 }
 
@@ -122,12 +117,13 @@ fun Body() {
         Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Medium),
         Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Bold)
     )
+    val context = LocalContext.current
     Column(
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "You're So Close To Earning\nYour First Reward!",
+            text = stringResource(id = R.string.privacy_policy_title),
             style = TextStyle(
                 fontFamily = lexendFontFamily,
                 fontSize = 16.sp,
@@ -138,18 +134,20 @@ fun Body() {
 
             )
         )
+//        LanguageDropdownMenu()
         Spacer(modifier = Modifier.height(25.dp))
         Image(
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",
             modifier = Modifier
-                .height(180.dp)
+                .height(140.dp)
                 .fillMaxWidth()
                 .wrapContentSize(Alignment.Center)
         )
         Spacer(modifier = Modifier.height(18.dp))
         Text(
-            text = "Play Your Favorite Games!\nAnd Earn Your Rewards!",
+//            text = "Play Your Favorite Games!\nAnd Earn Your Rewards!",
+            text = stringResource(id = R.string.privacy_policy_subtitle),
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = lexendFontFamily,
                 fontSize = 15.sp,
@@ -191,14 +189,7 @@ fun Info() {
             )
         ) {
             append(
-                "We hereby inform you that Tyrads Pte. Ltd. processes the following personal data within the framework of the use of TyrSDK:\n" +
-                        "Installed apps (including the use duration and use history)\n" +
-                        "The data is linked to your device via the device ID (GAID or IDFA) transmitted to our servers in encrypted form. So that app providers can finance our app suggestions, we must send them the device ID for billing purposes.\n\n" +
-                        "The processing of the above data is necessary to be able to recommend apps via system messages, the installation of apps available in TyrSDK that matches your interest and calculate the rewards acquired as a result of your use of the corresponding apps.\n\n" +
-                        "Consent\n\n" +
-                        "By clicking on 'Accept' I give Tyrads Pte. Ltd my consent to process above mentioned personal data and transmit it to other apps so that i can use TyrSDK as explained.\n\n" +
-                        "I am aware that the above data results in an interest profile, which, depending on the type of apps I use, may contain particularly sensitive personal data (such as health data or data on my sexual orientation as well as any other data from special categories defined in Art. 9 para. 1 of the European General Data Protection Regulation (GDPR).\n\n" +
-                        "This data will be processed by Tyrads Pte. Ltd, TyrSDK. For more information "
+                text = stringResource(id = R.string.privacy_policy_consent_info)
             )
         }
         withStyle(
@@ -207,7 +198,7 @@ fun Info() {
                 textDecoration = TextDecoration.Underline
             )
         ) {
-            append("https://tyrads.com/tyrsdk-privacy-policy/")
+            append(" https://tyrads.com/tyrsdk-privacy-policy/")
         }
         addStringAnnotation(
             tag = "URL",
@@ -249,22 +240,22 @@ fun Info2() {
     )
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(fontFamily = interFontFamily)) {
-            append("I have read and agree to the\n")
+            append(stringResource(id = R.string.privacy_policy_agreement_prefix))
             pushStringAnnotation(
                 tag = "TOS",
                 annotation = "https://tyrads.com/tyrsdk-terms-of-service/"
             )
-            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                append("Terms of Service")
+            withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
+                append(stringResource(id = R.string.privacy_policy_terms_text))
             }
             pop()
-            append(" and ")
+            append(stringResource(id = R.string.privacy_policy_and))
             pushStringAnnotation(
                 tag = "PP",
                 annotation = "https://tyrads.com/tyrsdk-privacy-policy/"
             )
-            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.secondary)) {
-                append("Privacy Policy")
+            withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
+                append(stringResource(id = R.string.privacy_policy_privacy_text))
             }
             pop()
         }
@@ -273,7 +264,7 @@ fun Info2() {
     ClickableText(
         text = annotatedString,
         style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 30.dp)
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
     ) { offset ->
         annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { annotation ->
             when (annotation.tag) {
@@ -285,28 +276,31 @@ fun Info2() {
 }
 
 @Composable
-fun TwoButtons(
+fun TwoButtonsWithInfo2(
     acceptOnTap: () -> Unit,
     rejectOntap: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(bottom = 38.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = modifier
+            .padding(bottom = 20.dp)
+            .fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Info2()
         Button(
             onClick = acceptOnTap,
             modifier = Modifier
                 .width(160.dp)
                 .height(35.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+            shape = RoundedCornerShape(8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Color(AcmoConfig.SECONDARY_COLOR))
         ) {
-            Text("Accept")
+            Text(stringResource(id = R.string.privacy_policy_accept))
         }
-        Spacer(modifier = Modifier.height(10.dp))
         TextButton(onClick = rejectOntap) {
             Text(
-                "Reject",
+                stringResource(id = R.string.privacy_policy_reject),
                 color = Color(0xFFB32C2C),
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
             )

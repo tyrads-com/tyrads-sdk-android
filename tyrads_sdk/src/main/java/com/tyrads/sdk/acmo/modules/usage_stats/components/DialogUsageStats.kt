@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import com.tyrads.sdk.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -52,6 +54,7 @@ fun AcmoUsageStatsDialog(
         )
     ) {
         UsageStatsCard(
+            modifier = Modifier.height(195.dp),
             onGrant = {
                 onDismissRequest()
             }
@@ -61,7 +64,8 @@ fun AcmoUsageStatsDialog(
 
 @Composable
 fun UsageStatsCard(
-    onGrant: () -> Unit
+    onGrant: () -> Unit,
+    modifier: Modifier = Modifier
 ){
     val usageStatsController = AcmoUsageStatsController()
     var checked by remember { mutableStateOf(false) }
@@ -103,14 +107,14 @@ fun UsageStatsCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-        shape = RoundedCornerShape(32.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
 
     ) {
         Column(
-            modifier = Modifier
-                .height(170.dp)
+            modifier = modifier
+                .height(176.dp)
                 .padding(horizontal = 24.dp, vertical = 8.dp)
         ) {
             Row(
@@ -118,7 +122,7 @@ fun UsageStatsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Permit Usage Access",
+                    text = stringResource(id = R.string.usage_permissions_permit_title),
                     style = TextStyle(fontSize = 16.sp),
                     modifier = Modifier.weight(1f),
                     color = Color.Black
@@ -168,7 +172,7 @@ fun UsageStatsCard(
                 }
             }
             Text(
-                text = "usage access allows TyrSDK to track which other apps you are using and how often, as well as your operator, language setting and other details.",
+                text = stringResource(id = R.string.usage_permissions_description),
                 modifier = Modifier.padding(top = 8.dp),
                 color = Color.Black,
                 fontWeight = FontWeight.Light

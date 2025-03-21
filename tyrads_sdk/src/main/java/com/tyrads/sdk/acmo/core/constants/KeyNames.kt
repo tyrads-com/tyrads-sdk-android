@@ -17,6 +17,7 @@ class AcmoKeyNames {
         const val TRACKED_CAMPAIGNS_FOR_USER_ID = "${PREFIX}tracking_info_for_user_id_"
         const val PLAY_PER_MINUTE_PACKAGES = "${PREFIX}play_per_minute_packages"
         const val PRIVACY_ACCEPTED_FOR_USER_ID = "${PREFIX}privacy_accepted_for_user_id_"
+        const val LANGUAGE = "${PREFIX}language"
 
     }
 }

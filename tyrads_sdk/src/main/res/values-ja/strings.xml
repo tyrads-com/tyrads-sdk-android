@@ -1,0 +1,112 @@
+<resources>
+    <string name="title_activity_tyrads_webview">Tyrads SDK</string>
+    <string name="offers_title">オファー</string>
+    <string name="offers_active_offers_cta">有効なオファー</string>
+    <string name="offers_offers_cta">今すぐプレイ</string>
+    <string name="offers_playtime">プレイ時間</string>
+    <string name="offers_ending_in">終了まで</string>
+    <plurals name="offers_rewards">
+        <item quantity="other">報酬</item>
+    </plurals>
+    <string name="offers_empty_message">現在利用可能なオファーはありません。後でもう一度お試しください！</string>
+
+    <string name="active_offers_title">有効なオファー</string>
+    <string name="active_offers_expiring_title">期限切れのオファー</string>
+    <string name="active_offers_active_title">有効なオファー</string>
+    <string name="active_offers_completed_title">完了したオファー</string>
+    <string name="active_offers_back">戻る</string>
+
+    <string name="offer_details_title">オファーの詳細</string>
+    <string name="offer_details_cap_reached">申し訳ありませんが、このゲームは一時的にご利用いただけません。明日もう一度お試しください！</string>
+    <string name="offer_details_oops"></string>
+    <string name="offer_details_retry_download_message"><b>おっと！</b> ダウンロードの検証中に問題が発生しました。[ダウンロードを再試行]をクリックしてもう一度お試しください。ダウンロードを追跡しないと、報酬は付与されません。</string>
+    <string name="offer_details_complete_within">すべての報酬を期限内に完了してください</string>
+    <string name="offer_details_download_intro">ダウンロードの失敗を回避し、ポイントを確実に獲得するには、次の手順に従ってください。</string>
+    <string name="offer_details_android_steps_step1">1. ゲームをダウンロードするには<b>Google Play ストア</b>を選択してください。</string>
+    <string name="offer_details_android_steps_step2">2. "<b>確認</b>" ボタンをクリックした後、すぐにダウンロードしてください。</string>
+    <string name="offer_details_android_steps_step3">3. ダウンロードが完了したら、<b>Google Play ストア</b>からゲームを開きます。</string>
+    <string name="offer_details_ios_steps_step1">1. ゲームをダウンロードするには<b>App Store</b>を選択してください。</string>
+    <string name="offer_details_ios_steps_step2">2. "<b>確認</b>" ボタンをクリックした後、すぐにダウンロードしてください。</string>
+    <string name="offer_details_ios_steps_step3">3. ダウンロードが完了したら、<b>App Store</b>からゲームを開きます。</string>
+    <string name="offer_details_download_note">注: ダウンロードに失敗した場合は、プレイを続行しないでください！</string>
+    <string name="offer_details_play_now">今すぐプレイ</string>
+    <string name="offer_details_retry">再試行</string>
+    <string name="offer_details_completed_tasks">完了したタスク</string>
+    <string name="offer_details_active_tasks">アクティブなタスク</string>
+    <string name="offer_details_available_tasks">利用可能なタスク</string>
+    <string name="offer_details_rewards_one">報酬</string>
+    <string name="offer_details_rewards_other">報酬</string>
+    <string name="offer_details_purchase_micro_charge">マイクロチャージ</string>
+    <string name="offer_details_purchase_earned">獲得したポイント: %1$d %2$s</string>
+    <string name="offer_details_purchase_total">合計 %1$d %2$s から</string>
+    <string name="offer_details_purchase_daily_purchase">毎日の購入報酬</string>
+    <string name="offer_details_purchase_daily_reward">毎日の報酬</string>
+    <string name="offer_details_event_status_not_available">まだ利用できません</string>
+    <string name="offer_details_event_status_complete_to_continue">続行するにはこれを完了してください</string>
+    <string name="offer_details_event_status_rejected">拒否</string>
+    <string name="offer_details_event_status_pending">保留中</string>
+    <string name="offer_details_event_status_completed">完了</string>
+    <string name="offer_details_event_status_rejected_time">拒否されました。制限時間に達しました</string>
+    <string name="offer_details_event_status_complete_within">完了してください</string>
+
+    <string name="dashboard_suggested_offers">おすすめのオファー</string>
+    <string name="dashboard_more_offers">その他のオファー</string>
+    <string name="dashboard_my_games">マイゲーム</string>
+    <string name="dashboard_play_button">プレイ する</string>
+    <string name="dashboard_top_ranking">トップ %1$d</string>
+
+    <string name="help_title">ヘルプ</string>
+    <string name="help_points_issue">ポイントが受け取れませんでした</string>
+    <string name="help_faqs">よくある質問</string>
+
+    <string name="privacy_policy_title">最初の報酬獲得まであと少しです！</string>
+    <string name="privacy_policy_subtitle">お気に入りのゲームをプレイして報酬を獲得しましょう！</string>
+    <string name="privacy_policy_consent_info">Tyrads Pte. Ltd. は、TyrSDK の使用の一環として、以下の個人データを処理していることをお知らせします:\nインストールされたアプリ (使用期間と使用履歴を含む)\nデータは、暗号化された形式でサーバーに送信されるデバイス ID (GAID または IDFA) を介してデバイスにリンクされます。アプリ プロバイダーが当社のアプリ提案に資金を提供できるように、課金目的でデバイス ID をプロバイダーに送信する必要があります。\n\n上記のデータの処理は、システム メッセージによるアプリの推奨、TyrSDK で利用可能なアプリのうちユーザーの興味に合ったもののインストール、および対応するアプリの使用の結果として獲得した報酬の計算を可能にするために必要です。\n\n同意\n\n[承認] をクリックすると、Tyrads Pte. Ltd. に次の個人データの処理を許可します。 \n\n上記のデータは興味関心プロファイルに含まれ、使用するアプリの種類によっては、特に機密性の高い個人データ（健康データや性的指向に関するデータ、欧州一般データ保護規則（GDPR）第9条第1項で定義されている特別なカテゴリのその他のデータなど）が含まれる可能性があることを認識しています。\n\nこのデータはTyrSDKのTyrads Pte. Ltdによって処理されます。詳細については</string>
+    <string name="privacy_policy_agreement_prefix">私は、を読み同意します\n</string>
+    <string name="privacy_policy_terms_text">利用規約</string>
+    <string name="privacy_policy_and">" と "</string>
+    <string name="privacy_policy_privacy_text">プライバシーポリシー</string>
+    <string name="privacy_policy_accept">承諾</string>
+    <string name="privacy_policy_reject">拒否</string>
+
+    <string name="privacy_terms_title">プライバシーと利用規約</string>
+    <string name="privacy_terms_privacy_policy">プライバシーポリシー</string>
+    <string name="privacy_terms_terms_of_service">利用規約</string>
+
+    <string name="usage_permissions_title">TyrSDK による使用状況データの追跡を許可\n収益の可能性を高めるために</string>
+    <string name="usage_permissions_permit_title">使用状況アクセスを許可</string>
+    <string name="usage_permissions_description">使用状況アクセスにより、TyrSDK は、使用している他のアプリとその使用頻度、およびオペレーター、言語設定、その他の詳細を追跡できるようになります。</string>
+
+    <string name="user_profile_title">最後のステップ。あと少しです！</string>
+    <string name="user_profile_gender_title">性別を選択してください</string>
+    <string name="user_profile_male">男性</string>
+    <string name="user_profile_female">女性</string>
+    <string name="user_profile_age_title">年齢を選択してください</string>
+    <string name="user_profile_continue_cta">続行</string>
+
+    <string name="tickets_title">ポイントを受け取れませんでした</string>
+    <string name="tickets_header">喜んでお手伝いいたします！</string>
+    <string name="tickets_subheader">達成したと思われるタスクのうち、ポイントを受け取れなかったものを選択してください。</string>
+    <string name="tickets_instructions">上記のように、注文 ID とスクリーンショットを添付してください。</string>
+    <string name="tickets_help_title">喜んでお手伝いいたします！</string>
+    <string name="tickets_help_subtitle">達成したと思われるタスクのうち、ポイントを受け取れなかったものを選択してください。</string>
+    <string name="tickets_game_player_id">ゲーム プレーヤー ID:</string>
+    <string name="tickets_game_player_validation">有効なゲーム プレーヤー ID を入力してください</string>
+    <string name="tickets_order_id">注文 ID:</string>
+    <string name="tickets_order_validation">注文 ID を入力してください</string>
+    <string name="tickets_screenshot">スクリーンショット</string>
+    <string name="tickets_screenshot_validation">スクリーンショットを選択してください</string>
+    <string name="tickets_browse">参照</string>
+    <string name="tickets_prev">前へ</string>
+    <string name="tickets_helper_text">何を添付すればよいかわかりませんか? ここをクリックして例をご覧ください</string>
+    <string name="tickets_submit">送信</string>
+    <string name="tickets_understand">理解しました</string>
+    <string name="tickets_submitting">チケットを送信しています</string>
+
+    <string name="ticket_submitted_title">ポイントを受け取れませんでした</string>
+    <string name="ticket_submitted_footnote">信じてください。</string>
+    <string name="ticket_submitted_header">私たちは対応中です。</string>
+    <string name="ticket_submitted_back">オファーページに戻る</string>
+    <string name="ticket_submitted_subheader">私たちは何をすべきかわかっています</string>
+    <string name="language">言語</string>
+</resources>
