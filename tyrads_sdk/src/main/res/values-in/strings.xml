@@ -52,7 +52,7 @@
     <string name="dashboard_suggested_offers">Penawaran yang Disarankan</string>
     <string name="dashboard_more_offers">Penawaran Lainnya</string>
     <string name="dashboard_my_games">Permainan Saya</string>
-    <string name="dashboard_play_button">Mainkan</string>
+    <string name="dashboard_play_button">Mainkan Sekarang</string>
     <string name="dashboard_top_ranking">Top %1$d</string>
 
     <string name="help_title">Bantuan</string>

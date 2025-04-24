@@ -53,7 +53,7 @@
     <string name="dashboard_suggested_offers">Suggested Offers</string>
     <string name="dashboard_more_offers">More Offers</string>
     <string name="dashboard_my_games">My Games</string>
-    <string name="dashboard_play_button">Play</string>
+    <string name="dashboard_play_button">Play Now</string>
     <string name="dashboard_top_ranking">Top %1$d</string>
 
     <string name="help_title">Get Help</string>
