@@ -46,21 +46,35 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.activity.compose.rememberLauncherForActivityResult
+import org.json.JSONException
+import org.json.JSONObject
 import java.lang.ref.WeakReference
 
 class WebAppInterface(private val context: Context) {
     private val mainHandler = Handler(Looper.getMainLooper())
     @JavascriptInterface
-    fun changeLanguage(langCode: String?) {
+    fun postMessage(jsonMessage: String) {
         try {
-            if (langCode == null) {
-                return
+            Log.d("JsonMessage: ", jsonMessage)
+            val json = JSONObject(jsonMessage)
+            val action = json.optString("action")
+            when (action) {
+                "closeWebview" -> {
+                    mainHandler.post {
+                        (context as? Activity)?.finish()
+                    }
+                }
+                "changeLanguage" -> {
+                    val langCode = json.optString("languageCode")
+                    if (langCode.isNotEmpty()) {
+                        mainHandler.post {
+                            LocalizationHelper.changeLanguage(context, langCode, false)
+                        }
+                    }
+                }
             }
-            mainHandler.post {
-                LocalizationHelper.changeLanguage(context, langCode, shouldRecreate = false)
-            }
-        } catch (e: Exception) {
-            Log.e("WebAppInterface", "Error changing language: ${e.message}")
+        } catch (e: JSONException) {
+            Log.e("WebAppInterface", "Error parsing message: ${e.message}")
         }
     }
 }
@@ -68,7 +82,7 @@ class WebAppInterface(private val context: Context) {
 @Composable
 fun WebViewComposable(modifier: Modifier) {
     val webViewState = rememberWebViewState()
-    
+
     val fileChooserLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         val result = uri?.let { arrayOf(it) }
         webViewState.filePathCallback?.onReceiveValue(result)
@@ -144,11 +158,17 @@ fun WebViewComposable(modifier: Modifier) {
                             super.onPageFinished(view, url)
                             isLoading.value = false
                             evaluateJavascript("""
-                                 window.addEventListener('message', function(event) {
+                                window.addEventListener('message', function(event) {
                                     try {
-                                        const message = JSON.parse(event.data);
-                                        if (message && message.action === 'changeLanguage') {
-                                            AndroidInterface.changeLanguage(message.languageCode);
+                                        const message = typeof event.data === 'string' 
+                                                            ? JSON.parse(event.data) 
+                                                            : event.data;;
+                                        if (message && message.command === 'webview_command') {
+                                            AndroidInterface.postMessage(JSON.stringify({
+                                                command: message.command,
+                                                action: message.action,
+                                                languageCode: message.languageCode
+                                            }));
                                         }
                                     } catch (error) {
                                         console.error('Error handling message:', error);
