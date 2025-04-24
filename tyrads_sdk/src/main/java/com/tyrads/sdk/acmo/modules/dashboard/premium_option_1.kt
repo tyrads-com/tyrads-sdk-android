@@ -1,5 +1,8 @@
 package com.tyrads.sdk.acmo.modules.dashboard
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +32,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.tyrads.sdk.R
@@ -71,6 +75,7 @@ fun GameOffersScreen(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameOfferItem(game: BannerData, rank: Int) {
     Row(
@@ -107,25 +112,27 @@ fun GameOfferItem(game: BannerData, rank: Int) {
                     fontWeight = FontWeight.SemiBold,
                     fontSize = gameTextFontSize,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.basicMarquee()
                 )
                 Spacer(modifier = Modifier.height(gameListSpacerHeight))
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.padding(vertical = gameListTopVerticalPadding)
                 ) {
-                    Surface(
-                        color = Tyrads.getInstance().premiumColor.toColor(),
-                        shape = RoundedCornerShape(playButtonCornerRadius)
+                    Box(
+                        modifier = Modifier.height(18.dp)
+                            .clip(RoundedCornerShape(playButtonCornerRadius),)
+                            .background(Tyrads.getInstance().premiumColor.toColor())
+                            .align(Alignment.CenterVertically)
                     ) {
                         Text(
                             text = stringResource(id= R.string.dashboard_top_ranking, rank),
                             color = Color.White,
                             fontSize = gameListTopRankFontSize,
-                            fontWeight = FontWeight.Medium,
+                            lineHeight = 18.sp,
                             modifier = Modifier.padding(
                                 horizontal = gameListTopRankHorizontalPadding,
-                                vertical = gameListTopRankVerticalPadding
                             )
                         )
                     }

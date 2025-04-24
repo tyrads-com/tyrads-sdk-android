@@ -52,7 +52,7 @@
     <string name="dashboard_suggested_offers">추천 제안</string>
     <string name="dashboard_more_offers">더 많은 제안</string>
     <string name="dashboard_my_games">내 게임</string>
-    <string name="dashboard_play_button">플레이</string>
+    <string name="dashboard_play_button">플레이 하고</string>
     <string name="dashboard_top_ranking">상위 %1$d</string>
 
     <string name="help_title">도움을 받다</string>

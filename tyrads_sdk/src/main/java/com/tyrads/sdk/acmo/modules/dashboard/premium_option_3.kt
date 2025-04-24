@@ -2,6 +2,7 @@ package com.tyrads.sdk.acmo.modules.dashboard
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +30,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.tyrads.sdk.R
@@ -68,17 +70,21 @@ fun OffersScreen3(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameInfoSection3(bannerData: BannerData) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Tyrads.getInstance().premiumColor.toColor())
-            .padding(gameInfoPadding)
-            .wrapContentHeight()
             .clickable {
                 Tyrads.getInstance().showOffers(route = "campaign-details", campaignID = bannerData.campaignId)
             }
+            .padding(
+                horizontal = gameInfoPadding,
+                vertical = gameInfoPaddingTop + 15.dp,
+            )
+            .wrapContentHeight()
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -111,6 +117,7 @@ fun GameInfoSection3(bannerData: BannerData) {
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .basicMarquee()
                             .padding(bottom = gameInfoPaddingBottom)
                     )
                     Row(
