@@ -21,4 +21,10 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class com.tyrads.sdk.** { *; }
+-keepnames class com.tyrads.sdk.** { *; }
 -keepclassmembers class com.tyrads.sdk.** { *; }
+-keepattributes *Annotation*
+-dontobfuscate
+#-printseeds seeds.txt
+#-printusage usage.txt
+#-printmapping mapping.txt

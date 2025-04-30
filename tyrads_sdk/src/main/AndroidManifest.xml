@@ -20,26 +20,5 @@
             android:configChanges="locale|layoutDirection"
             android:theme="@style/Theme.TyradsSdk" />
 
-        <!-- Add these activity declarations -->
-        <activity
-            android:name=".acmo.modules.dashboard.PremiumActivity1"
-            android:exported="false"
-            android:theme="@style/Theme.TyradsSdk" />
-
-        <activity
-            android:name=".acmo.modules.dashboard.PremiumActivity2"
-            android:exported="false"
-            android:theme="@style/Theme.TyradsSdk" />
-
-        <activity
-            android:name=".acmo.modules.dashboard.PremiumActivity3"
-            android:exported="false"
-            android:theme="@style/Theme.TyradsSdk" />
-
-        <activity
-            android:name=".acmo.modules.dashboard.PremiumActivity4"
-            android:exported="false"
-            android:theme="@style/Theme.TyradsSdk" />
-
     </application>
 </manifest>
