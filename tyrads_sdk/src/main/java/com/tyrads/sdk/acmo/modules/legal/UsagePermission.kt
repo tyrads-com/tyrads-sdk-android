@@ -37,7 +37,7 @@ fun AcmoUsagePermissionsPage() {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Body()
-                Spacer(modifier = Modifier.height(70.dp))
+                Spacer(modifier = Modifier.height(40.dp))
                 UsageStatsCard(
                     onGrant = {
                         Tyrads.getInstance().preferences.edit().putBoolean(
@@ -81,6 +81,7 @@ fun Body() {
             contentDescription = "Privacy Banner",
             modifier = Modifier
                 .height(240.dp)
+                .fillMaxWidth()
                 .padding(top = 25.dp)
         )
     }

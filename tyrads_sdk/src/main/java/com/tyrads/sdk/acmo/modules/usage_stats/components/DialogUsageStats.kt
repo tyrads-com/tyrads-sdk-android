@@ -107,15 +107,15 @@ fun UsageStatsCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp, start = 16.dp, end = 16.dp),
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(5.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
 
     ) {
         Column(
             modifier = modifier
                 .height(176.dp)
-                .padding(horizontal = 24.dp, vertical = 8.dp)
+                .padding(horizontal = 38.dp, vertical = 10.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -156,16 +156,19 @@ fun UsageStatsCard(
 
                                     }
                                 } else {
-                                      onGrant()
+                                    onGrant()
                                 }
 
 
                             },
                             colors = SwitchDefaults.colors(
-//                                    checkedThumbColor = MaterialTheme.colors.secondary,
-//                                    uncheckedThumbColor = MaterialTheme.colors.secondary,
+                                checkedThumbColor = Color.Green,
+                                uncheckedThumbColor = Color.White,
                                 checkedTrackColor = Color.Black.copy(alpha = 0.12f),
-                                uncheckedTrackColor = Color.Black.copy(alpha = 0.12f)
+                                uncheckedTrackColor = Color.Black.copy(alpha = 0.12f),
+                                // Remove the border by setting border colors to transparent
+                                uncheckedBorderColor = Color.Transparent,
+                                checkedBorderColor = Color.Transparent
                             )
                         )
                     }
@@ -175,7 +178,8 @@ fun UsageStatsCard(
                 text = stringResource(id = R.string.usage_permissions_description),
                 modifier = Modifier.padding(top = 8.dp),
                 color = Color.Black,
-                fontWeight = FontWeight.Light
+                fontWeight = FontWeight.Light,
+                fontSize = 14.sp
             )
         }
     }
