@@ -159,6 +159,7 @@ public class MainActivity extends AppCompatActivity {
         if (isLoadingOffers) {
             showOffersButton.setText("Loading...");
             showOffersButton.setEnabled(false);
+            loadingIndicator.setMax(16);
             loadingIndicator.setVisibility(View.VISIBLE);
         } else {
             showOffersButton.setText("Show Offers");
