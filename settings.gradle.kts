@@ -22,3 +22,4 @@ dependencyResolutionManagement {
 rootProject.name = "Tyrads Sdk"
 include(":app")
 include(":tyrads_sdk")
+include(":example_java")
