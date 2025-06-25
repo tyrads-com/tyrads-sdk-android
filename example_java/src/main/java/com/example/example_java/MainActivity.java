@@ -1,6 +1,5 @@
 package com.example.example_java;
 
-
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -12,23 +11,30 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.tyrads.sdk.Tyrads;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.Dispatchers;
+import com.tyrads.sdk.acmo.modules.dashboard.TopPremiumOffersView;
 
 public class MainActivity extends AppCompatActivity {
 
+    // UI Components
     private EditText apiKeyInput;
     private EditText apiSecretInput;
     private EditText userIdInput;
     private Button showOffersButton;
     private ProgressBar loadingIndicator;
     private ProgressBar initializingIndicator;
-    private View topOffersView;
+    private TopPremiumOffersView topOffersView; // Changed to specific type
 
+    // State flags
     private boolean isLoadingOffers = false;
     private boolean isTyradsInitialized = false;
 
+    // SharedPreferences
     private SharedPreferences sharedPreferences;
+
+    // Default values (should be in config or build config)
+    private static final String DEFAULT_API_KEY = "4f0eaa99e38e49b8b52804116e638a41";
+    private static final String DEFAULT_API_SECRET = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a";
+    private static final String DEFAULT_USER_ID = "6";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,6 +57,9 @@ public class MainActivity extends AppCompatActivity {
         loadingIndicator = findViewById(R.id.loadingIndicator);
         initializingIndicator = findViewById(R.id.initializingIndicator);
         topOffersView = findViewById(R.id.topOffersView);
+
+        // Configure the TopOffersView with default values
+        topOffersView.setConfig(true, true, false, 2);
     }
 
     private void initializeSharedPreferences() {
@@ -58,28 +67,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadSavedValues() {
-        String savedApiKey = sharedPreferences.getString("apiKey", "");
-        String savedApiSecret = sharedPreferences.getString("apiSecret", "");
-        String savedUserId = sharedPreferences.getString("userId", "1");
-
-        apiKeyInput.setText(savedApiKey != null ? savedApiKey : "");
-        apiSecretInput.setText(savedApiSecret != null ? savedApiSecret : "");
-        userIdInput.setText(savedUserId != null ? savedUserId : "");
+        apiKeyInput.setText(sharedPreferences.getString("apiKey", ""));
+        apiSecretInput.setText(sharedPreferences.getString("apiSecret", ""));
+        userIdInput.setText(sharedPreferences.getString("userId", DEFAULT_USER_ID));
     }
 
     private void initializeTyrads() {
         new Thread(() -> {
             try {
+                // Initialize with default values
                 Tyrads.getInstance().init(
                         this,
-                        "4f0eaa99e38e49b8b52804116e638a41",
-                        "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
+                        DEFAULT_API_KEY,
+                        DEFAULT_API_SECRET,
                         true
                 );
 
-             Tyrads.getInstance().loginUser("6");
-
-                Thread.sleep(1500);
+                // Login with default user
+                Tyrads.getInstance().loginUser(DEFAULT_USER_ID);
 
                 runOnUiThread(() -> {
                     isTyradsInitialized = true;
@@ -91,61 +96,52 @@ public class MainActivity extends AppCompatActivity {
                 Log.e("TyradsInit", "Error initializing Tyrads", e);
                 runOnUiThread(() -> {
                     initializingIndicator.setVisibility(View.GONE);
-                    Toast.makeText(this, "Error initializing Tyrads", Toast.LENGTH_SHORT).show();
+                    showErrorToast("Error initializing Tyrads");
                 });
             }
         }).start();
     }
 
     private void handleButtonClick() {
-        String apiKey = apiKeyInput.getText().toString().trim();
-        String apiSecret = apiSecretInput.getText().toString().trim();
-        String userId = userIdInput.getText().toString().trim();
-
-        // Commented out validation as in original code
-        // if (apiKey.isEmpty() || apiSecret.isEmpty() || userId.isEmpty()) {
-        //     Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
-        //     return;
-        // }
+        if (isLoadingOffers) return;
 
         isLoadingOffers = true;
         updateLoadingState();
 
         new Thread(() -> {
             try {
+                String apiKey = getInputValue(apiKeyInput, DEFAULT_API_KEY);
+                String apiSecret = getInputValue(apiSecretInput, DEFAULT_API_SECRET);
+                String userId = getInputValue(userIdInput, DEFAULT_USER_ID);
+
                 saveToSharedPreferences(apiKey, apiSecret, userId);
 
-                String finalApiKey = apiKey.isEmpty() ? "4f0eaa99e38e49b8b52804116e638a41" : apiKey;
-                String finalApiSecret = apiSecret.isEmpty() ? "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" : apiSecret;
-                String finalUserId = userId.isEmpty() ? "6" : userId;
+                // Reinitialize with new values
+                Tyrads.getInstance().init(this, apiKey, apiSecret, true);
+                Tyrads.getInstance().loginUser(userId);
 
-                Tyrads.getInstance().init(
-                        this,
-                        finalApiKey,
-                        finalApiSecret,
-                        true
-                );
-
-                Tyrads.getInstance().loginUser(finalUserId);
-                Tyrads.getInstance().showOffers(null,null);
-
+                // Show offers in the embedded view
                 runOnUiThread(() -> {
-                    isLoadingOffers = false;
-                    updateLoadingState();
+                    topOffersView.setConfig(true, true, false, 2);
+                    topOffersView.setVisibility(View.VISIBLE);
                 });
 
             } catch (Exception e) {
                 Log.e("ShowOffers", "Error showing offers", e);
+                runOnUiThread(() -> showErrorToast("Error showing offers"));
+            } finally {
                 runOnUiThread(() -> {
                     isLoadingOffers = false;
                     updateLoadingState();
-                    Toast.makeText(this, "Error showing offers", Toast.LENGTH_SHORT).show();
                 });
             }
         }).start();
     }
 
-
+    private String getInputValue(EditText input, String defaultValue) {
+        String value = input.getText().toString().trim();
+        return value.isEmpty() ? defaultValue : value;
+    }
 
     private void saveToSharedPreferences(String apiKey, String apiSecret, String userId) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -156,15 +152,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateLoadingState() {
-        if (isLoadingOffers) {
-            showOffersButton.setText("Loading...");
-            showOffersButton.setEnabled(false);
-            loadingIndicator.setMax(16);
-            loadingIndicator.setVisibility(View.VISIBLE);
-        } else {
-            showOffersButton.setText("Show Offers");
-            showOffersButton.setEnabled(true);
-            loadingIndicator.setVisibility(View.GONE);
-        }
+        showOffersButton.setText(isLoadingOffers ? "Loading..." : "Show Offers");
+        showOffersButton.setEnabled(!isLoadingOffers);
+        loadingIndicator.setVisibility(isLoadingOffers ? View.VISIBLE : View.GONE);
+        loadingIndicator.setMax(16);
+    }
+
+    private void showErrorToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

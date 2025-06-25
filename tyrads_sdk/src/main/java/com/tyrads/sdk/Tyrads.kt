@@ -32,6 +32,7 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
 import android.widget.Toast
+import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
 
 @Keep
@@ -71,6 +72,11 @@ class Tyrads private constructor() {
                     instance = it
                 }
             }
+        }
+
+        @JvmStatic
+        fun getTyradsView(): TyradsViewHelper {
+            return TyradsViewHelper
         }
     }
 
