@@ -56,7 +56,6 @@ import com.tyrads.sdk.acmo.modules.input_models.playButtonHeight
 import com.tyrads.sdk.acmo.modules.input_models.pointsFontSize
 import com.tyrads.sdk.acmo.modules.input_models.rewardsFontSize
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OffersScreen3(
     banners: List<BannerData>
@@ -70,7 +69,6 @@ fun OffersScreen3(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameInfoSection3(bannerData: BannerData) {
     Box(

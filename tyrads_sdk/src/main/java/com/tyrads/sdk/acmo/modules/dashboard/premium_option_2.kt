@@ -68,7 +68,6 @@ import com.tyrads.sdk.ui.theme.TransparentColor
 import com.tyrads.sdk.ui.theme.WhiteColor
 
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OffersScreen(
     banners: List<BannerData>
@@ -123,7 +122,6 @@ fun GameBanner(bannerData: BannerData) {
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameInfoSection(bannerData: BannerData) {
     Box(

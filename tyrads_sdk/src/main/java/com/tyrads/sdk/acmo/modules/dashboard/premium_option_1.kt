@@ -75,7 +75,6 @@ fun GameOffersScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameOfferItem(game: BannerData, rank: Int) {
     Row(

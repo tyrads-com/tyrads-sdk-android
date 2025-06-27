@@ -1,4 +1,3 @@
-import java.lang.System.getProperty
 import java.util.Properties
 
 plugins {
@@ -15,7 +14,7 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.tyrads.sdk.example"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.tyrads.sdk.example"

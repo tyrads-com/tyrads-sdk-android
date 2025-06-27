@@ -40,7 +40,6 @@ import com.tyrads.sdk.acmo.modules.input_models.moreOffersFontSize
 import com.tyrads.sdk.acmo.modules.input_models.moreOffersIconSize
 import com.tyrads.sdk.acmo.modules.input_models.starIconSize
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PremiumHeaderSection(
     showMore: Boolean

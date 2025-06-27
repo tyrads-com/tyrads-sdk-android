@@ -18,7 +18,7 @@ afterEvaluate {
 }
 android {
     namespace = "com.tyrads.sdk"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24

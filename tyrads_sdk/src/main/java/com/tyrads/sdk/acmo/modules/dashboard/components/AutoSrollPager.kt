@@ -29,7 +29,6 @@ import com.tyrads.sdk.acmo.modules.input_models.autoScrollDelay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AutoScrollPagerWithIndicators(
     totalPages: Int,
