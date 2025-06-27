@@ -57,6 +57,20 @@ class TopPremiumOffersView @JvmOverloads constructor(
         invalidate()
     }
 
+    @JvmOverloads
+    fun setConfig(
+        showMore: Boolean = this._showMore,
+        showMyOffers: Boolean = this._showMyOffers,
+        showMyOffersEmptyView: Boolean = this._showMyOffersEmptyView,
+        style: Int = this._style
+    ) {
+        this._showMore = showMore
+        this._showMyOffers = showMyOffers
+        this._showMyOffersEmptyView = showMyOffersEmptyView
+        this._style = style
+        invalidate()
+    }
+
     @Composable
     override fun Content() {
         Tyrads.getInstance().TopPremiumOffers(
