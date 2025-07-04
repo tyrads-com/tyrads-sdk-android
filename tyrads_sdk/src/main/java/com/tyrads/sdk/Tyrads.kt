@@ -32,7 +32,10 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
 import android.widget.Toast
+import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
+import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
+import androidx.core.content.edit
 
 @Keep
 class Tyrads private constructor() {
@@ -43,8 +46,6 @@ class Tyrads private constructor() {
     internal lateinit var preferences: SharedPreferences
     internal lateinit var loginData: AcmoInitModel
     internal var newUser: Boolean = false
-    var initWait: Job? = null
-    var loginUserWait: Job? = null
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
@@ -55,9 +56,10 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
+
     // need these variables outside
-    var premiumColor:  String = "#1C90DF"
-    var headerColor:  String? = null
+    var premiumColor: String = "#1C90DF"
+    var headerColor: String? = null
     var mainColor: String? = null
 
     companion object {
@@ -86,158 +88,156 @@ class Tyrads private constructor() {
         }
     }
 
-    fun init(context: Context, apiKey: String, apiSecret: String, debugMode: Boolean = false) {
-        this.context = context.applicationContext
-        this.apiKey = apiKey.takeIf { it.isNotBlank() }
+    suspend fun init(
+        context: Context,
+        apiKey: String,
+        apiSecret: String,
+        encryptionKey: String? = null,
+        debugMode: Boolean = false
+    ) = withContext(Dispatchers.Default) {
+        this@Tyrads.context = context.applicationContext
+        this@Tyrads.apiKey = apiKey.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API key cannot be blank")
-        this.apiSecret = apiSecret.takeIf { it.isNotBlank() }
+        this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
-        this.debugMode = debugMode
+        this@Tyrads.debugMode = debugMode
         Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
-        initWait = tyradScope.launch {
-            preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
-            preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
-            preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
-            NetworkCommons()
-            currentLanguageCode  = LocalizationHelper.getLanguageCode(context)
-
-            log(
-                "Warning: debugMode is set to true. This should not be used in production.",
-                Log.WARN
-            )
-            log("Tyrads SDK initialized", Log.INFO)
+        preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
+        preferences.edit {
+            putString(AcmoKeyNames.API_KEY, apiKey)
+            putString(AcmoKeyNames.API_SECRET, apiSecret)
+            putString(AcmoKeyNames.ENCRYPTION_KEY, encryptionKey ?: "")
         }
+
+        NetworkCommons()
+        currentLanguageCode = LocalizationHelper.getLanguageCode(context)
+        val integrityToken = getPlayIntegrityToken(context)
+        log("Integrity Token: $integrityToken")
+        preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        log("Tyrads SDK initialized", Log.INFO)
     }
 
-    fun loginUser(userID: String? = null) {
+    suspend fun loginUser(userID: String? = null): Boolean = withContext(Dispatchers.Default) {
         try {
-            loginUserWait = tyradScope.launch {
-                if (initWait?.isCompleted == false) {
-                    log("Waiting for init setup to complete", Log.DEBUG, true)
+            if (!::preferences.isInitialized) {
+                log("loginUser: init setup error", Log.ERROR)
+                return@withContext false
+            }
+            log("Starting user login process", Log.INFO)
+            val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
+            var advertisingId: String? = ""
+            var identifierType = ""
+            try {
+                if (isGooglePlayServicesAvailable(context)) {
+                    advertisingId =
+                        AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                    identifierType = "GAID"
                 }
-                initWait?.join()
-                if (!::preferences.isInitialized) {
-                    log("loginUser: init setup error", Log.ERROR)
-                    return@launch
+            } catch (e: Exception) {
+                log("Error getting advertising id", Log.ERROR)
+            }
+
+            if (advertisingId.isNullOrBlank()) {
+                advertisingId = preferences.getString("uuid", null) ?: run {
+                    val newUuid = UUID.randomUUID().toString()
+                    preferences.edit() { putString("uuid", newUuid) }
+                    newUuid
                 }
-                log("Starting user login process", Log.INFO)
-                val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
-                var advertisingId: String? = ""
-                var identifierType = ""
-                try {
-                    if (isGooglePlayServicesAvailable(context)) {
-                        advertisingId =
-                            AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
-                        identifierType = "GAID"
-                    }
-                } catch (e: Exception) {
-                    log("Error getting advertising id", Log.ERROR)
-                }
+                identifierType = "OTHER"
+            }
 
-                if (advertisingId.isNullOrBlank()) {
-                    advertisingId = preferences.getString("uuid", null) ?: run {
-                        val newUuid = UUID.randomUUID().toString()
-                        preferences.edit().putString("uuid", newUuid).apply()
-                        newUuid
-                    }
-                    identifierType = "OTHER"
-                }
+            val deviceDetailsController = AcmoDeviceDetailsController()
+            val deviceDetails = deviceDetailsController.getDeviceDetails()
 
-                val deviceDetailsController = AcmoDeviceDetailsController()
-                val deviceDetails = deviceDetailsController.getDeviceDetails()
+            val fd = mutableMapOf(
+                "publisherUserId" to userId,
+                "platform" to "Android",
+                "identifierType" to identifierType,
+                "identifier" to advertisingId,
+                "deviceData" to deviceDetails
+            )
+            mediaSourceInfo?.let { info ->
+                info.sub1?.let { fd["sub1"] = it }
+                info.sub2?.let { fd["sub2"] = it }
+                info.sub3?.let { fd["sub3"] = it }
+                info.sub4?.let { fd["sub4"] = it }
+                info.sub5?.let { fd["sub5"] = it }
+                info.mediaSourceName?.let { fd["mediaSourceName"] = it }
+                info.mediaSourceId?.let { fd["mediaSourceId"] = it }
+                info.mediaSubSourceId?.let { fd["mediaSubSourceId"] = it }
+                info.incentivized?.let { fd["incentivized"] = it }
+                info.mediaAdsetName?.let { fd["mediaAdsetName"] = it }
+                info.mediaAdsetId?.let { fd["mediaAdsetId"] = it }
+                info.mediaCreativeName?.let { fd["mediaCreativeName"] = it }
+                info.mediaCreativeId?.let { fd["mediaCreativeId"] = it }
+                info.mediaCampaignName?.let { fd["mediaCampaignName"] = it }
+            }
 
-                val fd = mutableMapOf(
-                    "publisherUserId" to userId,
-                    "platform" to "Android",
-                    "identifierType" to identifierType,
-                    "identifier" to advertisingId,
-                    "deviceData" to deviceDetails
-                )
-                mediaSourceInfo?.let { info ->
-                    info.sub1?.let { fd["sub1"] = it }
-                    info.sub2?.let { fd["sub2"] = it }
-                    info.sub3?.let { fd["sub3"] = it }
-                    info.sub4?.let { fd["sub4"] = it }
-                    info.sub5?.let { fd["sub5"] = it }
-                    info.mediaSourceName?.let { fd["mediaSourceName"] = it }
-                    info.mediaSourceId?.let { fd["mediaSourceId"] = it }
-                    info.mediaSubSourceId?.let { fd["mediaSubSourceId"] = it }
-                    info.incentivized?.let { fd["incentivized"] = it }
-                    info.mediaAdsetName?.let { fd["mediaAdsetName"] = it }
-                    info.mediaAdsetId?.let { fd["mediaAdsetId"] = it }
-                    info.mediaCreativeName?.let { fd["mediaCreativeName"] = it }
-                    info.mediaCreativeId?.let { fd["mediaCreativeId"] = it }
-                    info.mediaCampaignName?.let { fd["mediaCampaignName"] = it }
-                }
+            userInfo?.let { info ->
+                info.email?.let { fd["email"] = it }
+                info.phoneNumber?.let { fd["phoneNumber"] = it }
+                info.userGroup?.let { fd["userGroup"] = it }
+            }
+            val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
+            val encData = AcmoEncrypt.encryptDataAESGCM(fd, encKey)
+            Log.e("Encrypted Data", encData.toString())
+            val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
+                .body(Gson().toJson(if(AcmoConfig.SECURE) encData else fd)).response()
 
-                userInfo?.let { info ->
-                    info.email?.let { fd["email"] = it }
-                    info.phoneNumber?.let { fd["phoneNumber"] = it }
-                    info.userGroup?.let { fd["userGroup"] = it }
-                }
+            when (result) {
+                is Result.Success -> {
+                    log("User login successful", Log.INFO)
+                    val jsonString = String(response.data)
+                    loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
+                    publisherUserID = loginData.data.user.publisherUserId
+                    preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
+                    newUser = loginData.data.newRegisteredUser
 
-                val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
-                    .body(Gson().toJson(fd))
-                    .response()
+                    // check for empty
+                    mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                    premiumColor =
+                        loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                    headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
 
-                when (result) {
-                    is Result.Success -> {
-                        log("User login successful", Log.INFO)
-                        val jsonString = String(response.data)
-                        loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
-                        publisherUserID = loginData.data.user.publisherUserId
-                        preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
-                        newUser = loginData.data.newRegisteredUser
-
-                        // check for empty
-                        mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
-                        premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
-                        headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
-
-                        if (preferences.getBoolean(
-                                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
-                                false
-                            )
-                        ) {
-                            val usageStatsController = AcmoUsageStatsController()
-                            usageStatsController.saveUsageStats()
-                        }
-
-                        track(TyradsActivity.initialized)
+                    if (preferences.getBoolean(
+                            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID, false
+                        )
+                    ) {
+                        val usageStatsController = AcmoUsageStatsController()
+                        usageStatsController.saveUsageStats()
                     }
 
-                    is Result.Failure -> {
-                        log("User login failed", Log.ERROR, force = true)
-                        val error = result.getException()
-                        val errorMessage = String(response.data)
-                        log("Error: ${error.message}")
-                        log("Server Message: $errorMessage")
-                    }
+                    track(TyradsActivity.initialized)
+                    return@withContext true
+                }
+
+                is Result.Failure -> {
+                    log("User login failed", Log.ERROR, force = true)
+                    val error = result.getException()
+                    val errorMessage = String(response.data)
+                    log("Error: ${error.message}")
+                    log("Server Message: $errorMessage")
+                    return@withContext false
                 }
             }
         } catch (e: Exception) {
             log("Exception during login: ${e.message}", Log.ERROR)
+            return@withContext false
         }
     }
 
-    fun showOffers(route: String? = null, campaignID: Int? = null) {
-        tyradScope.launch {
+    suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
+        withContext(Dispatchers.Default) {
             log("Preparing to show offers", Log.INFO)
-            if (loginUserWait?.isCompleted == false) {
-                log("Waiting for user initialization to complete", Log.DEBUG, true)
-            }
-            loginUserWait?.join()
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Please try back later", Toast.LENGTH_LONG).show()
                 }
-                return@launch
+                return@withContext
             }
             log("Launching offers", Log.INFO)
-            url = Uri.Builder()
-                .scheme("https")
-                .authority("websdk.tyrads.com")
+            url = Uri.Builder().scheme("https").authority("websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
                 .appendQueryParameter("userID", publisherUserID)
@@ -250,31 +250,31 @@ class Tyrads private constructor() {
                 .appendQueryParameter("campaignID", campaignID?.toString())
                 .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
                 .appendQueryParameter("av", AcmoConfig.AV)
-                .appendQueryParameter("lang", currentLanguageCode)
-                .build()
-                .toString()
+                .appendQueryParameter("lang", currentLanguageCode).build().toString()
             Log.i("url", url.toString())
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
-        }
-    }
 
-    fun changeLanguage(context: Context, languageCode: String){
-        tyradScope.launch {
-            LocalizationHelper.changeLanguage(
-                context, languageCode
-            )
         }
-    }
-//    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
+
+    suspend fun changeLanguage(context: Context, languageCode: String) =
+        withContext(Dispatchers.Default) {
+            tyradScope.launch {
+                LocalizationHelper.changeLanguage(
+                    context, languageCode
+                )
+            }
+        }
+
+    //    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
     @Composable
     fun TopPremiumOffers(
         showMore: Boolean = true,
         showMyOffers: Boolean = true,
         showMyOffersEmptyView: Boolean = false,
         style: Int = 2,
-    ){
+    ) {
         TopOffers(
             showMore = showMore,
             showMyOffers = showMyOffers,
