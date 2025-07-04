@@ -180,7 +180,6 @@ class Tyrads private constructor() {
             }
             val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
             val encData = AcmoEncrypt.encryptDataAESGCM(fd, encKey)
-            Log.e("Encrypted Data", encData.toString())
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if(AcmoConfig.SECURE) encData else fd)).response()
 
