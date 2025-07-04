@@ -48,6 +48,8 @@ class NetworkCommons {
                         sharedPreferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     request.headers["X-SDK-Platform"] = AcmoConfig.SDK_PLATFORM
                     request.headers["X-SDK-Version"] = AcmoConfig.SDK_VERSION
+                    request.headers["X-Secure-Mode"] = AcmoConfig.SECURE_MODE
+                    request.headers["X-Play-Integrity"] = sharedPreferences.getString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, "") ?: ""
                     Tyrads.getInstance().log("Request headers set: ${request}")
                 }
                 next(request)
