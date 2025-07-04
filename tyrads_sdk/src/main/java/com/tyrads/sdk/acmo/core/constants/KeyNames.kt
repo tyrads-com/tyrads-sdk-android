@@ -18,6 +18,7 @@ class AcmoKeyNames {
         const val PLAY_PER_MINUTE_PACKAGES = "${PREFIX}play_per_minute_packages"
         const val PRIVACY_ACCEPTED_FOR_USER_ID = "${PREFIX}privacy_accepted_for_user_id_"
         const val LANGUAGE = "${PREFIX}language"
-
+        const val PLAY_INTEGRITY_TOKEN = "${PREFIX}play_integrity_token"
+        const val ENCRYPTION_KEY = "${PREFIX}encryption_key";
     }
 }
