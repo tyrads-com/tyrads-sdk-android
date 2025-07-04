@@ -15,12 +15,12 @@ if (localPropertiesFile.exists()) {
 
 android {
     namespace = "com.tyrads.sdk.example"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.tyrads.sdk.example"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
