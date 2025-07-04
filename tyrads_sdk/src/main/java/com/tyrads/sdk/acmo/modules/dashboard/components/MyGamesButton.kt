@@ -8,6 +8,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -18,14 +19,18 @@ import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonCornerRadius
 import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonFontSize
 import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonHeight
 import com.tyrads.sdk.acmo.modules.input_models.myGamesButtonPadding
+import kotlinx.coroutines.launch
 
 @Composable
 fun MyGamesButton() {
+    val coroutineScope = rememberCoroutineScope()
     Button(
         onClick = {
-            Tyrads.getInstance().showOffers(
-                route = "campaigns-activated"
-            )
+            coroutineScope.launch {
+                Tyrads.getInstance().showOffers(
+                    route = "campaigns-activated"
+                )
+            }
         },
         modifier = Modifier
             .fillMaxWidth()

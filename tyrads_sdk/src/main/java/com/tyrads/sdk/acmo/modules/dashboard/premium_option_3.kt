@@ -1,6 +1,5 @@
 package com.tyrads.sdk.acmo.modules.dashboard
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -21,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,8 +55,8 @@ import com.tyrads.sdk.acmo.modules.input_models.playButtonCornerRadius
 import com.tyrads.sdk.acmo.modules.input_models.playButtonHeight
 import com.tyrads.sdk.acmo.modules.input_models.pointsFontSize
 import com.tyrads.sdk.acmo.modules.input_models.rewardsFontSize
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OffersScreen3(
     banners: List<BannerData>
@@ -70,15 +70,19 @@ fun OffersScreen3(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameInfoSection3(bannerData: BannerData) {
+    val coroutineScope = rememberCoroutineScope()
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .background(Tyrads.getInstance().premiumColor.toColor())
             .clickable {
-                Tyrads.getInstance().showOffers(route = "campaign-details", campaignID = bannerData.campaignId)
+                coroutineScope.launch {
+
+                    Tyrads.getInstance()
+                        .showOffers(route = "campaign-details", campaignID = bannerData.campaignId)
+                }
             }
             .padding(
                 horizontal = gameInfoPadding,
@@ -140,7 +144,12 @@ fun GameInfoSection3(bannerData: BannerData) {
                             fontSize = pointsFontSize
                         )
                         Text(
-                            text = "  ${bannerData.rewards} ${pluralStringResource(R.plurals.offers_rewards, bannerData.rewards)}",
+                            text = "  ${bannerData.rewards} ${
+                                pluralStringResource(
+                                    R.plurals.offers_rewards,
+                                    bannerData.rewards
+                                )
+                            }",
                             color = Color.White,
                             fontSize = rewardsFontSize
                         )
@@ -149,7 +158,12 @@ fun GameInfoSection3(bannerData: BannerData) {
             }
             Button(
                 onClick = {
-                    Tyrads.getInstance().showOffers(route = "campaign-details", campaignID = bannerData.campaignId)
+                    coroutineScope.launch {
+                        Tyrads.getInstance().showOffers(
+                            route = "campaign-details",
+                            campaignID = bannerData.campaignId
+                        )
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color.White),
                 shape = RoundedCornerShape(playButtonCornerRadius),
