@@ -41,7 +41,6 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -65,6 +64,7 @@ fun Greeting(modifier: Modifier = Modifier) {
     var isLoadingOffers by remember { mutableStateOf(false) }
     var isLoadingWidgets by remember { mutableStateOf(false) }
     var isTyradsInitialized by remember { mutableStateOf(false) }
+    var topOffersLoaded by remember { mutableStateOf(false) }
 
     val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
 
@@ -72,6 +72,7 @@ fun Greeting(modifier: Modifier = Modifier) {
     var apiSecretInput by remember {
         mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "")
     }
+    var encryptionKey by remember { mutableStateOf(sharedPreferences.getString("encryptionKey", "") ?: "") }
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
 
     fun handleButtonClick() {
@@ -87,6 +88,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                 putString("apiKey", apiKeyInput)
                 putString("apiSecret", apiSecretInput)
                 putString("userId", userIdInput)
+                putString("encryptionKey", encryptionKey)
                 apply()
             }
 
@@ -94,7 +96,8 @@ fun Greeting(modifier: Modifier = Modifier) {
                 context,
                 apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
                 apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
-                debugMode = true
+                encryptionKey =  encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
+                debugMode = false
             )
 
             Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
@@ -139,10 +142,13 @@ fun Greeting(modifier: Modifier = Modifier) {
                 context,
                 apiKey = "4f0eaa99e38e49b8b52804116e638a41",
                 apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
+                encryptionKey = "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL",
                 debugMode = true
             )
-           val userData = Tyrads.getInstance().loginUser(userID = "6")
-            delay(1500L)
+           val isSuccess = Tyrads.getInstance().loginUser(userID = "6")
+            if(isSuccess){
+                topOffersLoaded = true
+            }
             isTyradsInitialized = true
         }
     }
@@ -154,7 +160,6 @@ fun Greeting(modifier: Modifier = Modifier) {
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-
     ) {
         Row {
             Text(
@@ -162,7 +167,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                 modifier = modifier
             )
         }
-        if (isTyradsInitialized) {
+        if (topOffersLoaded) {
             Tyrads.getInstance().TopPremiumOffers(style = 2)
         } else {
             CircularProgressIndicator(modifier = Modifier.size(24.dp))
@@ -172,21 +177,28 @@ fun Greeting(modifier: Modifier = Modifier) {
             value = apiKeyInput,
             onValueChange = { apiKeyInput = it },
             label = { Text("Enter API Key") },
-            modifier = Modifier.padding(16.dp)
+            singleLine = true
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = apiSecretInput,
             onValueChange = { apiSecretInput = it },
             label = { Text("Enter API Secret") },
-            modifier = Modifier.padding(16.dp)
+            singleLine = true
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        TextField(
+            value = encryptionKey,
+            onValueChange = { encryptionKey = it },
+            label = { Text("Encryption Key (optional)") },
+            singleLine = true
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = userIdInput,
             onValueChange = { userIdInput = it },
             label = { Text("Enter User ID") },
-            modifier = Modifier.padding(16.dp)
+            singleLine = true
         )
 
         Button(
@@ -199,7 +211,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(16.dp),
                     strokeWidth = 2.dp,
-                    color = Color.Black
+                    color = Color.White
                 )
                 Spacer(modifier = Modifier.width(8.dp))
             }

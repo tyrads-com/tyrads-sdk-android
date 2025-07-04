@@ -1,6 +1,5 @@
 package com.tyrads.sdk.acmo.modules.dashboard
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
@@ -21,6 +20,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +53,6 @@ import com.tyrads.sdk.acmo.modules.input_models.gameListSpacerWidth6
 import com.tyrads.sdk.acmo.modules.input_models.gameListSpacerWidth8
 import com.tyrads.sdk.acmo.modules.input_models.gameListTopRankFontSize
 import com.tyrads.sdk.acmo.modules.input_models.gameListTopRankHorizontalPadding
-import com.tyrads.sdk.acmo.modules.input_models.gameListTopRankVerticalPadding
 import com.tyrads.sdk.acmo.modules.input_models.gameListTopVerticalPadding
 import com.tyrads.sdk.acmo.modules.input_models.gameListVerticalPadding
 import com.tyrads.sdk.acmo.modules.input_models.gameTextFontSize
@@ -63,6 +62,7 @@ import com.tyrads.sdk.acmo.modules.input_models.playButtonCornerRadius
 import com.tyrads.sdk.acmo.modules.input_models.pointsFontSize
 import com.tyrads.sdk.acmo.modules.input_models.rewardsFontSize
 import com.tyrads.sdk.ui.theme.GrayColor
+import kotlinx.coroutines.launch
 
 @Composable
 fun GameOffersScreen(
@@ -75,16 +75,18 @@ fun GameOffersScreen(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameOfferItem(game: BannerData, rank: Int) {
+    val coroutineScope = rememberCoroutineScope()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = gameListVerticalPadding)
             .clickable {
-                Tyrads.getInstance()
-                    .showOffers(route = "campaign-details", campaignID = game.campaignId)
+                coroutineScope.launch {
+                    Tyrads.getInstance()
+                        .showOffers(route = "campaign-details", campaignID = game.campaignId)
+                }
             },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
@@ -121,13 +123,14 @@ fun GameOfferItem(game: BannerData, rank: Int) {
                     modifier = Modifier.padding(vertical = gameListTopVerticalPadding)
                 ) {
                     Box(
-                        modifier = Modifier.height(18.dp)
-                            .clip(RoundedCornerShape(playButtonCornerRadius),)
+                        modifier = Modifier
+                            .height(18.dp)
+                            .clip(RoundedCornerShape(playButtonCornerRadius))
                             .background(Tyrads.getInstance().premiumColor.toColor())
                             .align(Alignment.CenterVertically)
                     ) {
                         Text(
-                            text = stringResource(id= R.string.dashboard_top_ranking, rank),
+                            text = stringResource(id = R.string.dashboard_top_ranking, rank),
                             color = Color.White,
                             fontSize = gameListTopRankFontSize,
                             lineHeight = 18.sp,
@@ -156,7 +159,12 @@ fun GameOfferItem(game: BannerData, rank: Int) {
                         overflow = TextOverflow.Ellipsis
                     )
                     Text(
-                        text = "  ${game.rewards} ${pluralStringResource(R.plurals.offers_rewards, game.rewards)}",
+                        text = "  ${game.rewards} ${
+                            pluralStringResource(
+                                R.plurals.offers_rewards,
+                                game.rewards
+                            )
+                        }",
                         color = GrayColor,
                         fontSize = rewardsFontSize,
                         fontStyle = FontStyle.Italic
@@ -166,8 +174,12 @@ fun GameOfferItem(game: BannerData, rank: Int) {
         }
         Spacer(modifier = Modifier.width(gameListSpacerWidth8))
         Button(
-            onClick = {Tyrads.getInstance()
-                .showOffers(route = "campaign-details", campaignID = game.campaignId) },
+            onClick = {
+                coroutineScope.launch {
+                    Tyrads.getInstance()
+                        .showOffers(route = "campaign-details", campaignID = game.campaignId)
+                }
+            },
             shape = RoundedCornerShape(gameListButtonCornerShape),
             colors = ButtonDefaults.buttonColors(containerColor = Tyrads.getInstance().premiumColor.toColor()),
             contentPadding = PaddingValues(

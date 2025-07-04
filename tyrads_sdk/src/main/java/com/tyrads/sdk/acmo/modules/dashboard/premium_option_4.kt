@@ -1,6 +1,5 @@
 package com.tyrads.sdk.acmo.modules.dashboard
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -23,6 +22,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -69,8 +69,8 @@ import com.tyrads.sdk.acmo.modules.input_models.playButtonCornerRadius
 import com.tyrads.sdk.acmo.modules.input_models.playButtonHeight
 import com.tyrads.sdk.acmo.modules.input_models.pointsFontSize
 import com.tyrads.sdk.acmo.modules.input_models.rewardsFontSize
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OffersScreen4(
     banners: List<BannerData>
@@ -82,13 +82,17 @@ fun OffersScreen4(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun GameBanner4(bannerData: BannerData) {
+    val coroutineScope = rememberCoroutineScope()
     Box(
         modifier = Modifier
-            .clickable { Tyrads.getInstance()
-                .showOffers(route = "campaign-details", campaignID = bannerData.campaignId) }
+            .clickable {
+                coroutineScope.launch {
+                    Tyrads.getInstance()
+                        .showOffers(route = "campaign-details", campaignID = bannerData.campaignId)
+                }
+            }
             .fillMaxWidth()
             .padding(
                 start = bannerPaddingStart,
@@ -118,14 +122,17 @@ fun GameBanner4(bannerData: BannerData) {
             Image(
                 painter = painterResource(id = R.drawable.premium_star),
                 contentDescription = "Star",
-                modifier = Modifier.size(bannerStarIconSize).align(Alignment.Center),
+                modifier = Modifier
+                    .size(bannerStarIconSize)
+                    .align(Alignment.Center),
                 colorFilter = ColorFilter.tint(Tyrads.getInstance().premiumColor.toColor())
             )
             Text(
-                text="$",
-                color= Color.White,
+                text = "$",
+                color = Color.White,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.align(Alignment.Center))
+                modifier = Modifier.align(Alignment.Center)
+            )
         }
 
         Box(
@@ -194,7 +201,12 @@ fun GameBanner4(bannerData: BannerData) {
                                 fontSize = pointsFontSize
                             )
                             Text(
-                                text = " ${bannerData.rewards} ${pluralStringResource(R.plurals.offers_rewards, bannerData.rewards)}",
+                                text = " ${bannerData.rewards} ${
+                                    pluralStringResource(
+                                        R.plurals.offers_rewards,
+                                        bannerData.rewards
+                                    )
+                                }",
                                 color = Color.White.copy(alpha = 0.8f),
                                 fontSize = rewardsFontSize,
                                 fontStyle = FontStyle.Italic
@@ -203,8 +215,15 @@ fun GameBanner4(bannerData: BannerData) {
                     }
                 }
                 Button(
-                    onClick = { Tyrads.getInstance()
-                        .showOffers(route = "campaign-details", campaignID = bannerData.campaignId) },
+                    onClick = {
+                        coroutineScope.launch {
+                            Tyrads.getInstance()
+                                .showOffers(
+                                    route = "campaign-details",
+                                    campaignID = bannerData.campaignId
+                                )
+                        }
+                    },
                     colors = ButtonDefaults.buttonColors(containerColor = Tyrads.getInstance().premiumColor.toColor()),
                     shape = RoundedCornerShape(playButtonCornerRadius),
                     contentPadding = PaddingValues(
