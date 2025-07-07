@@ -48,8 +48,9 @@ class NetworkCommons {
                         sharedPreferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     request.headers["X-SDK-Platform"] = AcmoConfig.SDK_PLATFORM
                     request.headers["X-SDK-Version"] = AcmoConfig.SDK_VERSION
-                    request.headers["X-Secure-Mode"] = AcmoConfig.SECURE_MODE
-                    request.headers["X-Play-Integrity"] = sharedPreferences.getString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, "") ?: ""
+                    request.headers["X-Secure-Mode"] = if(Tyrads.getInstance().isSecure) "BASIC" else "PLAIN"
+                    request.headers["X-Play-Integrity"] =
+                        sharedPreferences.getString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, "") ?: ""
                     Tyrads.getInstance().log("Request headers set: ${request}")
                 }
                 next(request)
@@ -72,7 +73,11 @@ class NetworkCommons {
         }
     }
 
-    fun fetchCampaigns(onSuccess: (List<BannerData>) -> Unit, onError: (Exception) -> Unit, langCode: String) {
+    fun fetchCampaigns(
+        onSuccess: (List<BannerData>) -> Unit,
+        onError: (Exception) -> Unit,
+        langCode: String
+    ) {
         val url = "${AcmoConfig.BASE_URL}campaigns?lang=$langCode"
         Fuel.get(url)
             .responseObject<AcmoOffersModel> { _, _, result ->
