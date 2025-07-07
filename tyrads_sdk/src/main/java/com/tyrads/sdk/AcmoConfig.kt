@@ -6,8 +6,6 @@ object AcmoConfig {
     const val AV = "4";
 
     const val SDK_VERSION = "$API_VERSION.$BUILD_VERSION";
-    const val SECURE = true
-    val SECURE_MODE = if (SECURE) "BASIC" else "PLAIN"
     const val SDK_PLATFORM = "Android";
     const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
     const val TAG = "TyrAds SDK"
