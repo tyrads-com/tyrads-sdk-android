@@ -25,7 +25,6 @@ import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,6 +55,9 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
+
+    private var _isSecure: Boolean = false;
+    val isSecure: Boolean get() = _isSecure;
 
     // need these variables outside
     var premiumColor: String = "#1C90DF"
@@ -106,7 +108,12 @@ class Tyrads private constructor() {
         preferences.edit {
             putString(AcmoKeyNames.API_KEY, apiKey)
             putString(AcmoKeyNames.API_SECRET, apiSecret)
-            putString(AcmoKeyNames.ENCRYPTION_KEY, encryptionKey ?: "")
+        }
+        if (!encryptionKey.isNullOrBlank()) {
+            preferences.edit {
+                putString(AcmoKeyNames.ENCRYPTION_KEY, encryptionKey)
+            }
+            _isSecure = true
         }
 
         NetworkCommons()
@@ -179,9 +186,9 @@ class Tyrads private constructor() {
                 info.userGroup?.let { fd["userGroup"] = it }
             }
             val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
-            val encData = AcmoEncrypt.encryptDataAESGCM(fd, encKey)
+            val encData = AcmoEncrypt(encryptionKey = encKey).encryptDataAESGCM(data = fd)
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
-                .body(Gson().toJson(if(AcmoConfig.SECURE) encData else fd)).response()
+                .body(Gson().toJson(if (isSecure) encData else fd)).response()
 
             when (result) {
                 is Result.Success -> {
@@ -236,9 +243,11 @@ class Tyrads private constructor() {
                 return@withContext
             }
             log("Launching offers", Log.INFO)
-            url = Uri.Builder().scheme("https").authority("websdk.tyrads.com")
+            val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
+            url = Uri.Builder().scheme("https").authority("staging-websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
+                .appendQueryParameter("encKey", encKey)
                 .appendQueryParameter("userID", publisherUserID)
                 .appendQueryParameter("newUser", newUser.toString())
                 .appendQueryParameter("platform", "Android")
