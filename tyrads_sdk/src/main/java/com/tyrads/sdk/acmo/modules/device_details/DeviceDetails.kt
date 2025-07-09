@@ -16,6 +16,10 @@ import android.os.Build
 import android.util.Log
 import android.provider.Settings
 import androidx.annotation.Keep
+import com.tyrads.sdk.acmo.core.utils.getDeviceMetrics
+import com.tyrads.sdk.acmo.core.utils.getNetworkSpeed
+import com.tyrads.sdk.acmo.core.utils.getSystemClockInfo
+import com.tyrads.sdk.acmo.core.utils.isVpnActive
 
 @Keep
 class AcmoDeviceDetailsController {
@@ -25,11 +29,15 @@ class AcmoDeviceDetailsController {
         val context = Tyrads.getInstance().context
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
         val deviceInfo = deviceInfoLazy
+        val deviceMetrics = getDeviceMetrics()
+        val networkSpeed = getNetworkSpeed(context)
+        val systemClockInfo = getSystemClockInfo()
+        val isVpnActive = isVpnActive(context)
         val usageController = AcmoUsageStatsController()
         val androidId =
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
         var deviceDetails = mapOf(
-             "deviceAge" to usageController.getDeviceAgeTime(),
+            "deviceAge" to usageController.getDeviceAgeTime(),
             "deviceId" to androidId,
             "androidId" to androidId,
             "device" to if (acmoIsTablet(context)) "tablet" else "phone",
@@ -65,8 +73,16 @@ class AcmoDeviceDetailsController {
             "rooted" to RootBeer(context).isRooted,
             "virtual" to acmoIsEmulator,
             "sdkVersion" to AcmoConfig.SDK_VERSION,
-            "sdkPlatform" to "Android"
-        )
+            "sdkPlatform" to "Android",
+            "deviceUpTime" to deviceMetrics["device_uptime_hours"],
+            "deviceBootTime" to deviceMetrics["device_boot_time"],
+            "networkSpeed" to "${networkSpeed?.get("download_speed")} KB/s",
+            "systemTime" to systemClockInfo["system_time"],
+            "timeZone" to  systemClockInfo["time_zone"],
+            "locale" to systemClockInfo["locale"],
+            "isVpnActive" to isVpnActive,
+
+            )
         return@withContext deviceDetails
     }
 

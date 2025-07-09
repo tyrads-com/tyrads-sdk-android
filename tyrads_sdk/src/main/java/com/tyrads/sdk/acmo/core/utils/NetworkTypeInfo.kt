@@ -41,5 +41,16 @@ fun getNetworkType(context: Context): String {
         else -> "Unknown"
     }
 }
+fun getNetworkSpeed(context: Context): Map<String, Any>? {
+    val connectivityManager =
+        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    val network = connectivityManager.activeNetwork
+    val capabilities = connectivityManager.getNetworkCapabilities(network)
 
-
+    val downloadSpeed = capabilities?.linkDownstreamBandwidthKbps ?: 0
+    val uploadSpeed = capabilities?.linkUpstreamBandwidthKbps ?: 0
+    return mapOf(
+        "download_speed" to downloadSpeed/8,
+        "upload_speed" to uploadSpeed/8
+    )
+}
