@@ -33,7 +33,7 @@ private fun getCurrentSystemTime(): Long {
 private fun getCurrentTimeZoneOffset(): Int {
     val timeZone = TimeZone.getDefault()
     val rawOffset = timeZone.rawOffset
-    return rawOffset
+    return rawOffset/1000
 }
 
 private fun getCurrentTimeZoneName(): String {
