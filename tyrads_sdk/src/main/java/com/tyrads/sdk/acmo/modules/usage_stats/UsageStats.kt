@@ -20,12 +20,12 @@ object UsageStats {
 
         for (config in configs) {
             var c: Map<String, String> = mapOf(
-                    "activationCount" to config.activationCount.toString(),
-                    "totalTimeActive" to config.totalTimeActive.toString(),
-                    "configuration" to config.configuration.toString(),
-                    "lastTimeActive" to config.lastTimeActive.toString(),
-                    "firstTimeStamp" to config.firstTimeStamp.toString(),
-                    "lastTimeStamp" to config.lastTimeStamp.toString()
+                "activationCount" to config.activationCount.toString(),
+                "totalTimeActive" to config.totalTimeActive.toString(),
+                "configuration" to config.configuration.toString(),
+                "lastTimeActive" to config.lastTimeActive.toString(),
+                "firstTimeStamp" to config.firstTimeStamp.toString(),
+                "lastTimeStamp" to config.lastTimeStamp.toString()
             )
             configList.add(c)
         }
@@ -41,10 +41,10 @@ object UsageStats {
             var event: UsageEvents.Event = UsageEvents.Event()
             events.getNextEvent(event)
             var e: Map<String, String> = mapOf(
-                    "eventType" to event.eventType.toString(),
-                    "timeStamp" to event.timeStamp.toString(),
-                    "packageName" to event.packageName.toString(),
-                    "className" to event.className
+                "eventType" to event.eventType.toString(),
+                "timeStamp" to event.timeStamp.toString(),
+                "packageName" to event.packageName.toString(),
+                "className" to event.className
             )
 
             eventsList.add(e)
@@ -62,12 +62,12 @@ object UsageStats {
 
         for (event in eventStats) {
             var u: Map<String, String> = mapOf(
-                    "firstTimeStamp" to event.firstTimeStamp.toString(),
-                    "lastTimeStamp" to event.lastTimeStamp.toString(),
-                    "totalTime" to event.totalTime.toString(),
-                    "lastEventTime" to event.lastEventTime.toString(),
-                    "eventType" to event.eventType.toString(),
-                    "count" to event.count.toString()
+                "firstTimeStamp" to event.firstTimeStamp.toString(),
+                "lastTimeStamp" to event.lastTimeStamp.toString(),
+                "totalTime" to event.totalTime.toString(),
+                "lastEventTime" to event.lastEventTime.toString(),
+                "eventType" to event.eventType.toString(),
+                "count" to event.count.toString()
             )
             eventList.add(u)
         }
@@ -83,11 +83,11 @@ object UsageStats {
 
         for (usage in usageStats) {
             var u: Map<String, String> = mapOf(
-                    "firstTimeStamp" to usage.firstTimeStamp.toString(),
-                    "lastTimeStamp" to usage.lastTimeStamp.toString(),
-                    "lastTimeUsed" to usage.lastTimeUsed.toString(),
-                    "packageName" to usage.packageName.toString(),
-                    "totalTimeInForeground" to usage.totalTimeInForeground.toString()
+                "firstTimeStamp" to usage.firstTimeStamp.toString(),
+                "lastTimeStamp" to usage.lastTimeStamp.toString(),
+                "lastTimeUsed" to usage.lastTimeUsed.toString(),
+                "packageName" to usage.packageName.toString(),
+                "totalTimeInForeground" to usage.totalTimeInForeground.toString()
             )
             usageList.add(u)
         }
@@ -104,11 +104,11 @@ object UsageStats {
         for (packageName in usageStats.keys) {
             var packageUsage = usageStats[packageName]
             usageList[packageName] = mapOf(
-                    "firstTimeStamp" to packageUsage?.firstTimeStamp.toString(),
-                    "lastTimeStamp" to packageUsage?.lastTimeStamp.toString(),
-                    "lastTimeUsed" to packageUsage?.lastTimeUsed.toString(),
-                    "packageName" to packageUsage?.packageName.toString(),
-                    "totalTimeInForeground" to packageUsage?.totalTimeInForeground.toString()
+                "firstTimeStamp" to packageUsage?.firstTimeStamp.toString(),
+                "lastTimeStamp" to packageUsage?.lastTimeStamp.toString(),
+                "lastTimeUsed" to packageUsage?.lastTimeUsed.toString(),
+                "packageName" to packageUsage?.packageName.toString(),
+                "totalTimeInForeground" to packageUsage?.totalTimeInForeground.toString()
             )
         }
         return usageList

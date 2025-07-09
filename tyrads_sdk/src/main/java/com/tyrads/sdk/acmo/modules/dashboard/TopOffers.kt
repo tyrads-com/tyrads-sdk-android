@@ -90,12 +90,12 @@ fun TopOffers(
         }
 
         campaigns.isEmpty() -> {
-           if(showMyOffersEmptyView) {Text(
+            if(showMyOffersEmptyView) {Text(
                 text = "No campaigns available",
                 modifier = Modifier.padding(noCampaignPadding)
             )}else{
                 Box{}
-           }
+            }
         }
 
         else -> {

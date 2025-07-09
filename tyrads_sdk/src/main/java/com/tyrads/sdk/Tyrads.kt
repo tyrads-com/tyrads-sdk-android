@@ -1,9 +1,7 @@
 package com.tyrads.sdk
 
-
 import AcmoConfig
 import AcmoEndpointNames
-import AcmoInitModel
 import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
@@ -32,8 +30,11 @@ import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
 import android.widget.Toast
+import androidx.core.content.edit
+import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
+import com.tyrads.sdk.acmo.modules.users.models.AcmoInitModel
 import kotlinx.coroutines.coroutineScope
 
 @Keep
@@ -57,6 +58,9 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
+
+    private var _isSecure: Boolean = false;
+    val isSecure: Boolean get() = _isSecure;
 
     var premiumColor:  String = "#1C90DF"
     var headerColor:  String? = null
@@ -88,7 +92,7 @@ class Tyrads private constructor() {
         }
     }
 
-    fun init(context: Context, apiKey: String, apiSecret: String, debugMode: Boolean = false) {
+    suspend fun init(context: Context, apiKey: String, apiSecret: String, debugMode: Boolean = false) {
         this.context = context.applicationContext
         this.apiKey = apiKey.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API key cannot be blank")
@@ -109,6 +113,12 @@ class Tyrads private constructor() {
             )
             log("Tyrads SDK initialized", Log.INFO)
         }
+        NetworkCommons()
+        currentLanguageCode = LocalizationHelper.getLanguageCode(context)
+        val integrityToken = getPlayIntegrityToken(context)
+        log("Integrity Token: $integrityToken")
+        preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        log("Tyrads SDK initialized", Log.INFO)
     }
 
     suspend fun loginUser(userID: String? = null): ApiHeaders? {
@@ -147,6 +157,7 @@ class Tyrads private constructor() {
 
                 val deviceDetailsController = AcmoDeviceDetailsController()
                 val deviceDetails = deviceDetailsController.getDeviceDetails()
+                log("Device Details: $deviceDetails")
 
                 val fd = mutableMapOf(
                     "publisherUserId" to userId,
