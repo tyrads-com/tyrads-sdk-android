@@ -122,6 +122,7 @@ class Tyrads private constructor() {
         log("Integrity Token: $integrityToken")
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         log("Tyrads SDK initialized", Log.INFO)
+
     }
 
     suspend fun loginUser(userID: String? = null): Boolean = withContext(Dispatchers.Default) {
@@ -155,6 +156,7 @@ class Tyrads private constructor() {
 
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
+            log("Device Details: $deviceDetails")
 
             val fd = mutableMapOf(
                 "publisherUserId" to userId,
@@ -185,10 +187,12 @@ class Tyrads private constructor() {
                 info.phoneNumber?.let { fd["phoneNumber"] = it }
                 info.userGroup?.let { fd["userGroup"] = it }
             }
+            log("Initialization Data : $fd")
             val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
             val encData = AcmoEncrypt(encryptionKey = encKey).encryptDataAESGCM(data = fd)
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
+
 
             when (result) {
                 is Result.Success -> {
