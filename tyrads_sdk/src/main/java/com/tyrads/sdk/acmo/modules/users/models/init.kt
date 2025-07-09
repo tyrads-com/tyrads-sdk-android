@@ -1,3 +1,5 @@
+package com.tyrads.sdk.acmo.modules.users.models
+
 import androidx.annotation.Keep
 import com.google.android.gms.common.annotation.KeepForSdkWithFieldsAndMethods
 import com.google.gson.annotations.SerializedName

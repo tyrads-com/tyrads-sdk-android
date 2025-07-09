@@ -1,6 +1,5 @@
 package com.tyrads.sdk.acmo.modules.dashboard.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -17,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,12 +39,13 @@ import com.tyrads.sdk.acmo.modules.input_models.headerTextSpacing
 import com.tyrads.sdk.acmo.modules.input_models.moreOffersFontSize
 import com.tyrads.sdk.acmo.modules.input_models.moreOffersIconSize
 import com.tyrads.sdk.acmo.modules.input_models.starIconSize
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun PremiumHeaderSection(
     showMore: Boolean
 ) {
+    val coroutineScope = rememberCoroutineScope()
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -62,7 +63,8 @@ fun PremiumHeaderSection(
             modifier = Modifier.weight(1f)
         ) {
             Box(
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier
+                    .size(20.dp)
                     .clip(RoundedCornerShape(100))
                     .background(Tyrads.getInstance().premiumColor.toColor())
                     .align(Alignment.CenterVertically)
@@ -70,7 +72,8 @@ fun PremiumHeaderSection(
                 Image(
                     painter = painterResource(id = R.drawable.ic_star),
                     contentDescription = "Star",
-                    modifier = Modifier.size(starIconSize)
+                    modifier = Modifier
+                        .size(starIconSize)
                         .align(Alignment.Center)
                 )
             }
@@ -83,11 +86,13 @@ fun PremiumHeaderSection(
                 overflow = TextOverflow.Ellipsis
             )
         }
-        if(showMore) {
+        if (showMore) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clickable {
-                    Tyrads.getInstance().showOffers()
+                    coroutineScope.launch {
+                        Tyrads.getInstance().showOffers()
+                    }
                 }
             ) {
                 Text(

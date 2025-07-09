@@ -15,7 +15,7 @@ class AcmoTrackingController {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val fd = hashMapOf<String, Any>("activity" to activity)
-                 repository.track(fd)
+                repository.track(fd)
                 submitting = false
             } catch (e: Exception) {
                 submitting = false

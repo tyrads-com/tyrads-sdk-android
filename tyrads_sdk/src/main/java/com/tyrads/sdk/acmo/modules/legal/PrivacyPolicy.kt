@@ -46,33 +46,33 @@ fun AcmoPrivacyPolicyPage() {
         containerColor = Color.White
     ) { innerPadding ->
 
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
+            CloseonTap()
+            Body()
             Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
+                    .weight(1f)
+                    .height((LocalConfiguration.current.screenHeightDp - 600).dp)
+                    .verticalScroll(scrollState)
+                    .padding(horizontal = 36.dp)
             ) {
-                CloseonTap()
-                Body()
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height((LocalConfiguration.current.screenHeightDp - 600).dp)
-                        .verticalScroll(scrollState)
-                        .padding(horizontal = 30.dp)
-                ) {
-                    Info()
-                }
-
-                TwoButtonsWithInfo2(
-                    acceptOnTap = {
-                        Tyrads.getInstance().navController.navigate("usage-permissions")
-
-                    },
-                    rejectOntap = {
-                        activityContext?.finish()
-                    },
-                )
+                Info()
             }
+
+            TwoButtonsWithInfo2(
+                acceptOnTap = {
+                    Tyrads.getInstance().navController.navigate("usage-permissions")
+
+                },
+                rejectOntap = {
+                    activityContext?.finish()
+                },
+            )
+        }
 
 
     }
@@ -140,7 +140,7 @@ fun Body() {
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",
             modifier = Modifier
-                .height(140.dp)
+                .height(160.dp)
                 .fillMaxWidth()
                 .wrapContentSize(Alignment.Center)
         )
@@ -264,7 +264,7 @@ fun Info2() {
     ClickableText(
         text = annotatedString,
         style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
     ) { offset ->
         annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { annotation ->
             when (annotation.tag) {
@@ -283,7 +283,9 @@ fun TwoButtonsWithInfo2(
 ) {
     Column(
         modifier = modifier
-            .padding(bottom = 20.dp)
+            .padding(
+                bottom = 50.dp,
+                top = 20.dp,)
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {

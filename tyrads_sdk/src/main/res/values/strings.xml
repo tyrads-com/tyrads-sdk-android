@@ -111,4 +111,12 @@
     <string name="ticket_submitted_subheader">We know what we’re doing</string>
 
     <string name="language">Language</string>
+
+    <!-- Additional strings for age/gender selection page -->
+    <string name="gender_title" translatable="false">Choose Your Gender</string>
+    <string name="male" translatable="false">Male</string>
+    <string name="female" translatable="false">Female</string>
+    <string name="age_title" translatable="false">Choose Your Age</string>
+    <string name="continue_button" translatable="false">Continue</string>
+    <string name="age_gender_title" translatable="false">Tell us about yourself</string>
 </resources>

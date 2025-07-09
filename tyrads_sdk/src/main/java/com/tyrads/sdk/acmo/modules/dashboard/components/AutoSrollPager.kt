@@ -1,6 +1,5 @@
 package com.tyrads.sdk.acmo.modules.dashboard.components
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,7 +28,6 @@ import com.tyrads.sdk.acmo.modules.input_models.autoScrollDelay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AutoScrollPagerWithIndicators(
     totalPages: Int,

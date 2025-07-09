@@ -79,6 +79,39 @@ dependencies {
     implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
     implementation( "androidx.compose.animation:animation:1.3.0")
 
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
+    implementation(libs.androidx.preference.ktx)
+
+    // Lifecycle & Activity
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.activity)
+    implementation(libs.androidx.activity.compose)
+
+    // Compose (version managed via BOM)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.navigation.compose)
+ 
+    // Networking
+    implementation(libs.fuel)
+    implementation(libs.fuel.gson)
+    implementation(libs.gson)
+
+    // Google Play Services
+    implementation(libs.play.services.home)
+    implementation(libs.play.services.ads.identifier)
+
+    // Root detection
+    implementation(libs.rootbeer.lib)
+
+    // Play Integrity
+    implementation("com.google.android.play:integrity:1.4.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

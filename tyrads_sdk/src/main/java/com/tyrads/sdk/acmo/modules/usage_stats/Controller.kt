@@ -28,8 +28,8 @@ import java.util.concurrent.TimeUnit
 class AcmoUsageStatsController() {
     private val repository = AcmoUsageStatRepository()
 
-     @Composable
-     fun CheckUsageStats(packageName: String? = null) {
+    @Composable
+    fun CheckUsageStats(packageName: String? = null) {
 
         val status =
             checkUsagePermission() ?: false
