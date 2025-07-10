@@ -38,7 +38,7 @@ private fun getCurrentTimeZoneOffset(): Int {
 
 private fun getCurrentTimeZoneName(): String {
     val timeZone = TimeZone.getDefault()
-    return timeZone.getDisplayName(false, TimeZone.SHORT, Locale.getDefault())
+    return timeZone.getDisplayName(false, TimeZone.SHORT, Locale.ENGLISH)
 }
 
 private fun getCurrentTimeZone(): String {
