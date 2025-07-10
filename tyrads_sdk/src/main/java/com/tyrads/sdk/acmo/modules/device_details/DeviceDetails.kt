@@ -6,20 +6,24 @@ import com.scottyab.rootbeer.RootBeer
 import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
 import DeviceInfo
 import VersionInfo
+import android.Manifest
 import android.app.ActivityManager
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
-import android.util.Log
 import android.provider.Settings
 import androidx.annotation.Keep
+import androidx.core.content.ContextCompat
 import com.tyrads.sdk.acmo.core.utils.getDeviceMetrics
+import com.tyrads.sdk.acmo.core.utils.getInstallerPackageName
 import com.tyrads.sdk.acmo.core.utils.getNetworkSpeed
+import com.tyrads.sdk.acmo.core.utils.getNetworkType
 import com.tyrads.sdk.acmo.core.utils.getSystemClockInfo
 import com.tyrads.sdk.acmo.core.utils.isVpnActive
+import com.tyrads.sdk.acmo.core.utils.getTrackingInfo
 
 @Keep
 class AcmoDeviceDetailsController {
@@ -33,9 +37,17 @@ class AcmoDeviceDetailsController {
         val networkSpeed = getNetworkSpeed(context)
         val systemClockInfo = getSystemClockInfo()
         val isVpnActive = isVpnActive(context)
+        val trackingInfo = getTrackingInfo(context)
+        val installerPackageName = getInstallerPackageName(context)
+        val networkType = if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_BASIC_PHONE_STATE) == PackageManager.PERMISSION_GRANTED))  {
+            getNetworkType(context)
+        } else {
+            null
+        }
         val usageController = AcmoUsageStatsController()
         val androidId =
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
         var deviceDetails = mapOf(
             "deviceAge" to usageController.getDeviceAgeTime(),
             "deviceId" to androidId,
@@ -62,13 +74,8 @@ class AcmoDeviceDetailsController {
             "package" to packageInfo.packageName,
             "platform" to AcmoConfig.SDK_PLATFORM,
             "apiVersion" to AcmoConfig.API_VERSION,
-
-            "installerPackageName" to (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                context.packageManager.getInstallSourceInfo(context.packageName).installingPackageName
-            } else {
-                @Suppress("DEPRECATION")
-                context.packageManager.getInstallerPackageName(context.packageName)
-            }),
+            "installerPackageName" to installerPackageName,
+            "installerStore" to installerPackageName,
             "osLang" to context.resources.configuration.locales[0].language,
             "rooted" to RootBeer(context).isRooted,
             "virtual" to acmoIsEmulator,
@@ -78,13 +85,57 @@ class AcmoDeviceDetailsController {
             "deviceBootTime" to deviceMetrics["device_boot_time"],
             "networkSpeed" to "${networkSpeed?.get("download_speed")} KB/s",
             "systemTime" to systemClockInfo["system_time"],
-            "timeZone" to  systemClockInfo["time_zone"],
+            "timeZone" to systemClockInfo["time_zone_name"],
+            "timeZoneOffset" to systemClockInfo["time_zone_offset"],
             "locale" to systemClockInfo["locale"],
             "isVpnActive" to isVpnActive,
+            "connectionType" to networkType,
 
-            )
+            // Tracking Info - Telephony
+            "carrierName" to trackingInfo["carrier_name"],
+            "mccMnc" to trackingInfo["mcc_mnc"],
+            "mcc" to trackingInfo["mcc"],
+            "mnc" to trackingInfo["mnc"],
+            "countryIso" to trackingInfo["country_iso"],
+            "isRoaming" to trackingInfo["is_roaming"],
+            "simOperatorName" to trackingInfo["sim_operator_name"],
+            "simOperator" to trackingInfo["sim_operator"],
+            "simCountryIso" to trackingInfo["sim_country_iso"],
+            "phoneType" to trackingInfo["phone_type"],
+            "supportedAbis" to trackingInfo["supported_abis"],
+
+            // Tracking Info - CPU Information
+            "cpuCores" to trackingInfo["cpu_cores"],
+            "cpuType" to trackingInfo["supported_abis"],
+            "supported32BitAbis" to trackingInfo["supported_32_bit_abis"],
+            "supported64BitAbis" to trackingInfo["supported_64_bit_abis"],
+            "cpuHardware" to trackingInfo["cpu_hardware"],
+            "cpuModel" to trackingInfo["cpu_model"],
+            "maxMemory" to trackingInfo["max_memory"],
+            "totalMemory" to trackingInfo["total_memory"],
+            "freeMemory" to trackingInfo["free_memory"],
+            "osArch" to trackingInfo["os_arch"],
+
+            // Tracking Info - Device Information
+            "deviceManufacturer" to trackingInfo["device_manufacturer"],
+            "deviceModel" to trackingInfo["device_model"],
+            "deviceBrand" to trackingInfo["device_brand"],
+            "deviceBoard" to trackingInfo["device_board"],
+            "deviceHardware" to trackingInfo["device_hardware"],
+            "deviceFingerprint" to trackingInfo["device_fingerprint"],
+            "androidVersion" to trackingInfo["android_version"],
+            "androidSdkInt" to trackingInfo["android_sdk_int"],
+            "buildType" to trackingInfo["build_type"],
+            "buildTags" to trackingInfo["build_tags"],
+
+            // Tracking Info - Screen Metrics
+            "screenDensity" to trackingInfo["screen_density"],
+            "screenWidth" to trackingInfo["screen_width"],
+            "screenHeight" to trackingInfo["screen_height"]
+        )
         return@withContext deviceDetails
     }
+
 
     private fun acmoGetDeviceInfo(context: Context): DeviceInfo {
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
@@ -171,9 +222,6 @@ class AcmoDeviceDetailsController {
             serialNumber = build["serialNumber"] as String
         )
     }
-
-
-
     // New implementation using screen size
     private fun acmoIsTablet(context: Context): Boolean {
         val screenSizeType =
@@ -196,6 +244,4 @@ class AcmoDeviceDetailsController {
                 || Build.PRODUCT.contains("vbox86p")
                 || Build.PRODUCT.contains("emulator")
                 || Build.PRODUCT.contains("simulator"))
-
-
 }

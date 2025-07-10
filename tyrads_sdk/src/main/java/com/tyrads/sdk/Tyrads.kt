@@ -166,6 +166,7 @@ class Tyrads private constructor() {
                     "identifier" to advertisingId,
                     "deviceData" to deviceDetails
                 )
+                log("Initialization Data of rn-v3.0.x: $fd")
                 mediaSourceInfo?.let { info ->
                     info.sub1?.let { fd["sub1"] = it }
                     info.sub2?.let { fd["sub2"] = it }
