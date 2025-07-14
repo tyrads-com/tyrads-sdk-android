@@ -35,6 +35,7 @@ import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
 import androidx.core.content.edit
+import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 
 @Keep
 class Tyrads private constructor() {
@@ -75,6 +76,11 @@ class Tyrads private constructor() {
                     instance = it
                 }
             }
+        }
+
+        @JvmStatic
+        fun getTyradsView(): TyradsViewHelper {
+            return TyradsViewHelper
         }
     }
 

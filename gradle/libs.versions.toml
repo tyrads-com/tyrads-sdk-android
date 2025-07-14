@@ -1,5 +1,5 @@
 [versions]
-agp = "8.10.1"
+agp = "8.9.1"
 coilCompose = "2.7.0"
 converterGson = "2.9.0"
 fuel = "2.3.1"
