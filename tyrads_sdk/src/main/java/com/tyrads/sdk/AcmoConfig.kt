@@ -1,12 +1,12 @@
 import android.graphics.Color
 
 object AcmoConfig {
-   const val API_VERSION = "2.0";
-   const val BUILD_VERSION = "12";
-   const val AV = "3";
+   const val API_VERSION = "3.0";
+   const val BUILD_VERSION = "0";
+   const val AV = "4";
 
    const val SDK_VERSION = "$API_VERSION.$BUILD_VERSION";
-   const val SDK_PLATFORM = "ReactNative";
+   const val SDK_PLATFORM = "React Native";
    const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
     const val TAG = "TyrAds SDK"
 
