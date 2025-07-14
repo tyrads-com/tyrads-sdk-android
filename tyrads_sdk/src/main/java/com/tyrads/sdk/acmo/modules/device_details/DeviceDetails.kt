@@ -1,4 +1,4 @@
-package com.example.tyrads_sdk_gitlab.acmo.modules.device_details
+package com.tyrads.sdk.acmo.modules.device_details
 
 import AcmoConfig
 import AcmoUsageStatsController

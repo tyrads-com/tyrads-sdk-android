@@ -15,7 +15,7 @@ import android.util.Log
 import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
-import com.example.tyrads_sdk_gitlab.acmo.modules.device_details.AcmoDeviceDetailsController
+import com.tyrads.sdk.acmo.modules.device_details.AcmoDeviceDetailsController
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
@@ -248,7 +248,7 @@ class Tyrads private constructor() {
             }
             log("Launching offers", Log.INFO)
             val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
-            url = Uri.Builder().scheme("https").authority("staging-websdk.tyrads.com")
+            url = Uri.Builder().scheme("https").authority("websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
                 .appendQueryParameter("encKey", encKey)
