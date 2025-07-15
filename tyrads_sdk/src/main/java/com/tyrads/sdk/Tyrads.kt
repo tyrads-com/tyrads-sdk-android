@@ -41,6 +41,7 @@ import kotlinx.coroutines.coroutineScope
 class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null
+    internal var encKey: String? = null
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
@@ -62,8 +63,8 @@ class Tyrads private constructor() {
     private var _isSecure: Boolean = false;
     val isSecure: Boolean get() = _isSecure;
 
-    var premiumColor:  String = "#1C90DF"
-    var headerColor:  String? = null
+    var premiumColor: String = "#1C90DF"
+    var headerColor: String? = null
     var mainColor: String? = null
 
     companion object {
@@ -92,26 +93,37 @@ class Tyrads private constructor() {
         }
     }
 
-    suspend fun init(context: Context, apiKey: String, apiSecret: String, debugMode: Boolean = false) {
-        this.context = context.applicationContext
-        this.apiKey = apiKey.takeIf { it.isNotBlank() }
+    suspend fun init(
+        context: Context,
+        apiKey: String,
+        apiSecret: String,
+        encKey: String? = null,
+        debugMode: Boolean = false
+    ) = withContext(Dispatchers.Default) {
+        this@Tyrads.context = context.applicationContext
+        this@Tyrads.apiKey = apiKey.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API key cannot be blank")
-        this.apiSecret = apiSecret.takeIf { it.isNotBlank() }
+        this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
-        this.debugMode = debugMode
-        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
-        initWait = tyradScope.launch {
-            preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
-            preferences.edit().putString(AcmoKeyNames.API_KEY, apiKey).apply()
-            preferences.edit().putString(AcmoKeyNames.API_SECRET, apiSecret).apply()
-            NetworkCommons()
-            currentLanguageCode  = LocalizationHelper.getLanguageCode(context)
+        this@Tyrads.encKey = encKey
+        this@Tyrads.debugMode = debugMode
 
-            log(
-                "Warning: debugMode is set to true. This should not be used in production.",
-                Log.WARN
-            )
-            log("Tyrads SDK initialized", Log.INFO)
+        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
+        preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
+        preferences.edit {
+            putString(AcmoKeyNames.API_KEY, apiKey)
+            putString(AcmoKeyNames.API_SECRET, apiSecret)
+        }
+        NetworkCommons()
+        currentLanguageCode = LocalizationHelper.getLanguageCode(context)
+
+        log(
+            "Warning: debugMode is set to true. This should not be used in production.",
+            Log.WARN
+        )
+        log("Tyrads SDK initialized", Log.INFO)
+        if (encKey.isNullOrBlank()) {
+            _isSecure = true
         }
         NetworkCommons()
         currentLanguageCode = LocalizationHelper.getLanguageCode(context)
@@ -121,9 +133,8 @@ class Tyrads private constructor() {
         log("Tyrads SDK initialized", Log.INFO)
     }
 
-    suspend fun loginUser(userID: String? = null): ApiHeaders? {
-        return try {
-            coroutineScope {
+    suspend fun loginUser(userID: String? = null): ApiHeaders? = withContext(Dispatchers.Default) {
+         try {
                 // Wait for initialization to complete
                 if (initWait?.isCompleted == false) {
                     log("Waiting for init setup to complete", Log.DEBUG, true)
@@ -131,7 +142,7 @@ class Tyrads private constructor() {
                 initWait?.join()
                 if (!::preferences.isInitialized) {
                     log("loginUser: init setup error", Log.ERROR)
-                    return@coroutineScope null
+                    return@withContext null
                 }
                 log("Starting user login process", Log.INFO)
                 val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
@@ -139,7 +150,8 @@ class Tyrads private constructor() {
                 var identifierType = ""
                 try {
                     if (isGooglePlayServicesAvailable(context)) {
-                        advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                        advertisingId =
+                            AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
                         identifierType = "GAID"
                     }
                 } catch (e: Exception) {
@@ -204,7 +216,8 @@ class Tyrads private constructor() {
                         newUser = loginData.data.newRegisteredUser
 
                         mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
-                        premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                        premiumColor =
+                            loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
                         headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
 
                         if (preferences.getBoolean(
@@ -224,7 +237,7 @@ class Tyrads private constructor() {
                         val sdkVersion = AcmoConfig.SDK_VERSION
                         val userAgent = "Android"
 
-                        ApiHeaders(
+                        return@withContext ApiHeaders(
                             xApiKey = apiKey,
                             xApiSecret = apiSecret,
                             xUserId = userId,
@@ -244,29 +257,26 @@ class Tyrads private constructor() {
                         val errorMessage = String(response.data)
                         log("Error: ${error.message}")
                         log("Server Message: $errorMessage")
-                        null
+                        return@withContext null
                     }
                 }
-            }
+
         } catch (e: Exception) {
             log("Exception during login: ${e.message}", Log.ERROR)
-            null
+            return@withContext null
         }
     }
 
-    fun showOffers(route: String? = null, campaignID: Int? = null) {
-        tyradScope.launch {
+    suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
+        withContext(Dispatchers.Default) {
             log("Preparing to show offers", Log.INFO)
-            if (loginUserWait?.isCompleted == false) {
-                log("Waiting for user initialization to complete", Log.DEBUG, true)
-            }
             loginUserWait?.join()
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Please try back later", Toast.LENGTH_LONG).show()
                 }
-                return@launch
+                return@withContext
             }
             log("Launching offers", Log.INFO)
             url = Uri.Builder()
@@ -274,6 +284,7 @@ class Tyrads private constructor() {
                 .authority("websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
+                .appendQueryParameter("encKey", encKey)
                 .appendQueryParameter("userID", publisherUserID)
                 .appendQueryParameter("newUser", newUser.toString())
                 .appendQueryParameter("platform", "Android")
@@ -292,23 +303,23 @@ class Tyrads private constructor() {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         }
-    }
 
-    fun changeLanguage(context: Context, languageCode: String){
+    fun changeLanguage(context: Context, languageCode: String) {
         tyradScope.launch {
             LocalizationHelper.changeLanguage(
                 context, languageCode
             )
         }
     }
-//    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
+
+    //    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
     @Composable
     fun TopPremiumOffers(
         showMore: Boolean = true,
         showMyOffers: Boolean = true,
         showMyOffersEmptyView: Boolean = false,
         style: Int = 2,
-    ){
+    ) {
         TopOffers(
             showMore = showMore,
             showMyOffers = showMyOffers,
