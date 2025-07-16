@@ -1,2 +1,9 @@
 jdk:
   - openjdk17
+
+before_install:
+  - export LINT_PRINT_STACKTRACE=true
+  - ./gradlew --stop
+
+script:
+  - ./gradlew clean build -x lintVitalAnalyzeRelease -x lint
