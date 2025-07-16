@@ -134,132 +134,132 @@ class Tyrads private constructor() {
     }
 
     suspend fun loginUser(userID: String? = null): ApiHeaders? = withContext(Dispatchers.Default) {
-         try {
-                // Wait for initialization to complete
-                if (initWait?.isCompleted == false) {
-                    log("Waiting for init setup to complete", Log.DEBUG, true)
+        try {
+            // Wait for initialization to complete
+            if (initWait?.isCompleted == false) {
+                log("Waiting for init setup to complete", Log.DEBUG, true)
+            }
+            initWait?.join()
+            if (!::preferences.isInitialized) {
+                log("loginUser: init setup error", Log.ERROR)
+                return@withContext null
+            }
+            log("Starting user login process", Log.INFO)
+            val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
+            var advertisingId: String? = ""
+            var identifierType = ""
+            try {
+                if (isGooglePlayServicesAvailable(context)) {
+                    advertisingId =
+                        AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                    identifierType = "GAID"
                 }
-                initWait?.join()
-                if (!::preferences.isInitialized) {
-                    log("loginUser: init setup error", Log.ERROR)
+            } catch (e: Exception) {
+                log("Error getting advertising id", Log.ERROR)
+            }
+
+            if (advertisingId.isNullOrBlank()) {
+                advertisingId = preferences.getString("uuid", null) ?: run {
+                    val newUuid = UUID.randomUUID().toString()
+                    preferences.edit().putString("uuid", newUuid).apply()
+                    newUuid
+                }
+                identifierType = "OTHER"
+            }
+
+            val deviceDetailsController = AcmoDeviceDetailsController()
+            val deviceDetails = deviceDetailsController.getDeviceDetails()
+            log("Device Details: $deviceDetails")
+
+            val fd = mutableMapOf(
+                "publisherUserId" to userId,
+                "platform" to "Android",
+                "identifierType" to identifierType,
+                "identifier" to advertisingId,
+                "deviceData" to deviceDetails
+            )
+            log("Initialization Data of rn-v3.0.x: $fd")
+            mediaSourceInfo?.let { info ->
+                info.sub1?.let { fd["sub1"] = it }
+                info.sub2?.let { fd["sub2"] = it }
+                info.sub3?.let { fd["sub3"] = it }
+                info.sub4?.let { fd["sub4"] = it }
+                info.sub5?.let { fd["sub5"] = it }
+                info.mediaSourceName?.let { fd["mediaSourceName"] = it }
+                info.mediaSourceId?.let { fd["mediaSourceId"] = it }
+                info.mediaSubSourceId?.let { fd["mediaSubSourceId"] = it }
+                info.incentivized?.let { fd["incentivized"] = it }
+                info.mediaAdsetName?.let { fd["mediaAdsetName"] = it }
+                info.mediaAdsetId?.let { fd["mediaAdsetId"] = it }
+                info.mediaCreativeName?.let { fd["mediaCreativeName"] = it }
+                info.mediaCreativeId?.let { fd["mediaCreativeId"] = it }
+                info.mediaCampaignName?.let { fd["mediaCampaignName"] = it }
+            }
+
+            userInfo?.let { info ->
+                info.email?.let { fd["email"] = it }
+                info.phoneNumber?.let { fd["phoneNumber"] = it }
+                info.userGroup?.let { fd["userGroup"] = it }
+            }
+
+            val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
+                .body(Gson().toJson(fd))
+                .response()
+
+            when (result) {
+                is Result.Success -> {
+                    log("User login successful", Log.INFO)
+                    val jsonString = String(response.data)
+                    loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
+                    publisherUserID = loginData.data.user.publisherUserId
+                    preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
+                    newUser = loginData.data.newRegisteredUser
+
+                    mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                    premiumColor =
+                        loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                    headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+
+                    if (preferences.getBoolean(
+                            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+                            false
+                        )
+                    ) {
+                        val usageStatsController = AcmoUsageStatsController()
+                        usageStatsController.saveUsageStats()
+                    }
+
+                    track(TyradsActivity.initialized)
+
+                    val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
+                    val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
+                    val sdkPlatform = AcmoConfig.SDK_PLATFORM
+                    val sdkVersion = AcmoConfig.SDK_VERSION
+                    val userAgent = "Android"
+
+                    return@withContext ApiHeaders(
+                        xApiKey = apiKey,
+                        xApiSecret = apiSecret,
+                        xUserId = userId,
+                        xSdkPlatform = sdkPlatform,
+                        xSdkVersion = sdkVersion,
+                        userAgent = userAgent,
+                        languageCode = currentLanguageCode,
+                        premiumColor = loginData.data.publisherApp.premiumColor,
+                        headerColor = loginData.data.publisherApp.headerColor,
+                        mainColor = loginData.data.publisherApp.mainColor,
+                    )
+                }
+
+                is Result.Failure -> {
+                    log("User login failed", Log.ERROR, force = true)
+                    val error = result.getException()
+                    val errorMessage = String(response.data)
+                    log("Error: ${error.message}")
+                    log("Server Message: $errorMessage")
                     return@withContext null
                 }
-                log("Starting user login process", Log.INFO)
-                val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
-                var advertisingId: String? = ""
-                var identifierType = ""
-                try {
-                    if (isGooglePlayServicesAvailable(context)) {
-                        advertisingId =
-                            AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
-                        identifierType = "GAID"
-                    }
-                } catch (e: Exception) {
-                    log("Error getting advertising id", Log.ERROR)
-                }
-
-                if (advertisingId.isNullOrBlank()) {
-                    advertisingId = preferences.getString("uuid", null) ?: run {
-                        val newUuid = UUID.randomUUID().toString()
-                        preferences.edit().putString("uuid", newUuid).apply()
-                        newUuid
-                    }
-                    identifierType = "OTHER"
-                }
-
-                val deviceDetailsController = AcmoDeviceDetailsController()
-                val deviceDetails = deviceDetailsController.getDeviceDetails()
-                log("Device Details: $deviceDetails")
-
-                val fd = mutableMapOf(
-                    "publisherUserId" to userId,
-                    "platform" to "Android",
-                    "identifierType" to identifierType,
-                    "identifier" to advertisingId,
-                    "deviceData" to deviceDetails
-                )
-                log("Initialization Data of rn-v3.0.x: $fd")
-                mediaSourceInfo?.let { info ->
-                    info.sub1?.let { fd["sub1"] = it }
-                    info.sub2?.let { fd["sub2"] = it }
-                    info.sub3?.let { fd["sub3"] = it }
-                    info.sub4?.let { fd["sub4"] = it }
-                    info.sub5?.let { fd["sub5"] = it }
-                    info.mediaSourceName?.let { fd["mediaSourceName"] = it }
-                    info.mediaSourceId?.let { fd["mediaSourceId"] = it }
-                    info.mediaSubSourceId?.let { fd["mediaSubSourceId"] = it }
-                    info.incentivized?.let { fd["incentivized"] = it }
-                    info.mediaAdsetName?.let { fd["mediaAdsetName"] = it }
-                    info.mediaAdsetId?.let { fd["mediaAdsetId"] = it }
-                    info.mediaCreativeName?.let { fd["mediaCreativeName"] = it }
-                    info.mediaCreativeId?.let { fd["mediaCreativeId"] = it }
-                    info.mediaCampaignName?.let { fd["mediaCampaignName"] = it }
-                }
-
-                userInfo?.let { info ->
-                    info.email?.let { fd["email"] = it }
-                    info.phoneNumber?.let { fd["phoneNumber"] = it }
-                    info.userGroup?.let { fd["userGroup"] = it }
-                }
-
-                val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
-                    .body(Gson().toJson(fd))
-                    .response()
-
-                when (result) {
-                    is Result.Success -> {
-                        log("User login successful", Log.INFO)
-                        val jsonString = String(response.data)
-                        loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
-                        publisherUserID = loginData.data.user.publisherUserId
-                        preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
-                        newUser = loginData.data.newRegisteredUser
-
-                        mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
-                        premiumColor =
-                            loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
-                        headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
-
-                        if (preferences.getBoolean(
-                                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
-                                false
-                            )
-                        ) {
-                            val usageStatsController = AcmoUsageStatsController()
-                            usageStatsController.saveUsageStats()
-                        }
-
-                        track(TyradsActivity.initialized)
-
-                        val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
-                        val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
-                        val sdkPlatform = AcmoConfig.SDK_PLATFORM
-                        val sdkVersion = AcmoConfig.SDK_VERSION
-                        val userAgent = "Android"
-
-                        return@withContext ApiHeaders(
-                            xApiKey = apiKey,
-                            xApiSecret = apiSecret,
-                            xUserId = userId,
-                            xSdkPlatform = sdkPlatform,
-                            xSdkVersion = sdkVersion,
-                            userAgent = userAgent,
-                            languageCode = currentLanguageCode,
-                            premiumColor = loginData.data.publisherApp.premiumColor,
-                            headerColor = loginData.data.publisherApp.headerColor,
-                            mainColor = loginData.data.publisherApp.mainColor,
-                        )
-                    }
-
-                    is Result.Failure -> {
-                        log("User login failed", Log.ERROR, force = true)
-                        val error = result.getException()
-                        val errorMessage = String(response.data)
-                        log("Error: ${error.message}")
-                        log("Server Message: $errorMessage")
-                        return@withContext null
-                    }
-                }
+            }
 
         } catch (e: Exception) {
             log("Exception during login: ${e.message}", Log.ERROR)

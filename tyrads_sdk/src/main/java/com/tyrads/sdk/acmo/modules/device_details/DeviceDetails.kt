@@ -87,7 +87,6 @@ class AcmoDeviceDetailsController {
             "systemTime" to systemClockInfo["system_time"],
             "timeZone" to systemClockInfo["time_zone_name"],
             "timeZoneOffset" to systemClockInfo["time_zone_offset"],
-            "locale" to systemClockInfo["locale"],
             "isVpnActive" to isVpnActive,
             "connectionType" to networkType,
 
@@ -122,7 +121,6 @@ class AcmoDeviceDetailsController {
             "deviceBrand" to trackingInfo["device_brand"],
             "deviceBoard" to trackingInfo["device_board"],
             "deviceHardware" to trackingInfo["device_hardware"],
-            "deviceFingerprint" to trackingInfo["device_fingerprint"],
             "androidVersion" to trackingInfo["android_version"],
             "androidSdkInt" to trackingInfo["android_sdk_int"],
             "buildType" to trackingInfo["build_type"],
