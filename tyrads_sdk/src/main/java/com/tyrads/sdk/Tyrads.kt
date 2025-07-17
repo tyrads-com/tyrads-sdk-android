@@ -169,7 +169,7 @@ class Tyrads private constructor() {
 
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
-            log("Device Details: $deviceDetails")
+            Log.i("DeviceDetails:", deviceDetails.toString())
 
             val fd = mutableMapOf(
                 "publisherUserId" to userId,

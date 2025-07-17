@@ -17,6 +17,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.Keep
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.PackageInfoCompat
 import com.tyrads.sdk.acmo.core.utils.getDeviceMetrics
 import com.tyrads.sdk.acmo.core.utils.getInstallerPackageName
 import com.tyrads.sdk.acmo.core.utils.getNetworkSpeed
@@ -68,7 +69,7 @@ class AcmoDeviceDetailsController {
             "type" to deviceInfo.type,
             "tags" to deviceInfo.tags,
             "fingerprint" to deviceInfo.fingerprint,
-            "build" to packageInfo.versionCode.toString(),
+            "build" to PackageInfoCompat.getLongVersionCode(packageInfo).toString(),
             "buildSign" to packageInfo.signatures?.joinToString { it.toCharsString() },
             "version" to packageInfo.versionName,
             "package" to packageInfo.packageName,
