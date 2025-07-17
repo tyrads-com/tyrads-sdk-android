@@ -8,21 +8,22 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-suspend fun getPlayIntegrityToken(context: Context): String = suspendCancellableCoroutine { continuation ->
-    val integrityManager = IntegrityManagerFactory.create(context)
-    val nonce = UUID.randomUUID().toString()
-    val cloudProjectNumber = 986245594258;
-    val request = IntegrityTokenRequest.builder()
-        .setNonce(nonce)
-        .setCloudProjectNumber(cloudProjectNumber)
-        .build()
+suspend fun getPlayIntegrityToken(context: Context): String =
+    suspendCancellableCoroutine { continuation ->
+        val integrityManager = IntegrityManagerFactory.create(context)
+        val nonce = UUID.randomUUID().toString()
+        val cloudProjectNumber = 986245594258;
+        val request = IntegrityTokenRequest.builder()
+            .setNonce(nonce)
+            .setCloudProjectNumber(cloudProjectNumber)
+            .build()
 
-    integrityManager.requestIntegrityToken(request)
-        .addOnSuccessListener { response ->
-            continuation.resume(response.token())
-        }
-        .addOnFailureListener { exception ->
-            continuation.resumeWithException(exception)
-        }
-}
+        integrityManager.requestIntegrityToken(request)
+            .addOnSuccessListener { response ->
+                continuation.resume(response.token())
+            }
+            .addOnFailureListener { exception ->
+                continuation.resumeWithException(exception)
+            }
+    }
 
