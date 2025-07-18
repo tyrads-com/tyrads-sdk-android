@@ -41,6 +41,7 @@ import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null
+    internal var encKey: String? = null
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
@@ -106,6 +107,7 @@ class Tyrads private constructor() {
         this@Tyrads.context = context.applicationContext
         this@Tyrads.apiKey = apiKey.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API key cannot be blank")
+        this@Tyrads.encKey = encryptionKey
         this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this@Tyrads.debugMode = debugMode
@@ -116,9 +118,6 @@ class Tyrads private constructor() {
             putString(AcmoKeyNames.API_SECRET, apiSecret)
         }
         if (!encryptionKey.isNullOrBlank()) {
-            preferences.edit {
-                putString(AcmoKeyNames.ENCRYPTION_KEY, encryptionKey)
-            }
             _isSecure = true
         }
 
@@ -194,8 +193,8 @@ class Tyrads private constructor() {
                 info.userGroup?.let { fd["userGroup"] = it }
             }
             log("Initialization Data : $fd")
-            val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
-            val encData = AcmoEncrypt(encryptionKey = encKey).encryptDataAESGCM(data = fd)
+            val encData =
+                if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(data = fd) else emptyMap()
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
 
@@ -253,7 +252,6 @@ class Tyrads private constructor() {
                 return@withContext
             }
             log("Launching offers", Log.INFO)
-            val encKey = preferences.getString(AcmoKeyNames.ENCRYPTION_KEY, "") ?: ""
             url = Uri.Builder().scheme("https").authority("websdk.tyrads.com")
                 .appendQueryParameter("apiKey", apiKey)
                 .appendQueryParameter("apiSecret", apiSecret)
