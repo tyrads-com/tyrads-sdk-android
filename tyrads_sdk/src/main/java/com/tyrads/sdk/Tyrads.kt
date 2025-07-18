@@ -204,7 +204,7 @@ class Tyrads private constructor() {
             }
 
             val encData =
-                if (Tyrads.getInstance().isSecure) AcmoEncrypt(encryptionKey = Tyrads.getInstance().encKey!!).encryptDataAESGCM(
+                if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(
                     data = fd
                 ) else emptyMap()
 
