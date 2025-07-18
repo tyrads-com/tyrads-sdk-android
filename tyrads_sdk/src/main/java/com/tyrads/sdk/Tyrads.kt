@@ -32,6 +32,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
+import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
 import com.tyrads.sdk.acmo.modules.users.models.AcmoInitModel
@@ -202,8 +203,13 @@ class Tyrads private constructor() {
                 info.userGroup?.let { fd["userGroup"] = it }
             }
 
+            val encData =
+                if (Tyrads.getInstance().isSecure) AcmoEncrypt(encryptionKey = Tyrads.getInstance().encKey!!).encryptDataAESGCM(
+                    data = fd
+                ) else emptyMap()
+
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
-                .body(Gson().toJson(fd))
+                .body(Gson().toJson(if (_isSecure) encData else fd))
                 .response()
 
             when (result) {
