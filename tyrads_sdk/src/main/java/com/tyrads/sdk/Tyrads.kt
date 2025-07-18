@@ -122,7 +122,7 @@ class Tyrads private constructor() {
             Log.WARN
         )
         log("Tyrads SDK initialized", Log.INFO)
-        if (encKey.isNullOrBlank()) {
+        if (!encKey.isNullOrBlank()) {
             _isSecure = true
         }
         NetworkCommons()
