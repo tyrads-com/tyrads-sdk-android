@@ -295,8 +295,7 @@ class Tyrads private constructor() {
             showMore = showMore,
             showMyOffers = showMyOffers,
             showMyOffersEmptyView = showMyOffersEmptyView,
-            style = style,
-        )
+         )
     }
 
     @Composable
