@@ -1,0 +1,8 @@
+<resources>
+    <declare-styleable name="TopPremiumOffersView">
+        <attr name="showMore" format="boolean" />
+        <attr name="showMyOffers" format="boolean" />
+        <attr name="showMyOffersEmptyView" format="boolean" />
+        <attr name="style" format="integer" />
+    </declare-styleable>
+</resources>
