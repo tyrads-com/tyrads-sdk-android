@@ -1,4 +1,4 @@
-package com.example.tyrads_sdk_gitlab.acmo.modules.device_details
+package com.tyrads.sdk.acmo.modules.device_details
 
 import AcmoConfig
 import AcmoUsageStatsController
@@ -17,6 +17,7 @@ import android.os.Build
 import android.provider.Settings
 import androidx.annotation.Keep
 import androidx.core.content.ContextCompat
+import androidx.core.content.pm.PackageInfoCompat
 import com.tyrads.sdk.acmo.core.utils.getDeviceMetrics
 import com.tyrads.sdk.acmo.core.utils.getInstallerPackageName
 import com.tyrads.sdk.acmo.core.utils.getNetworkSpeed
@@ -68,7 +69,7 @@ class AcmoDeviceDetailsController {
             "type" to deviceInfo.type,
             "tags" to deviceInfo.tags,
             "fingerprint" to deviceInfo.fingerprint,
-            "build" to packageInfo.versionCode.toString(),
+            "build" to PackageInfoCompat.getLongVersionCode(packageInfo).toString(),
             "buildSign" to packageInfo.signatures?.joinToString { it.toCharsString() },
             "version" to packageInfo.versionName,
             "package" to packageInfo.packageName,
@@ -87,7 +88,6 @@ class AcmoDeviceDetailsController {
             "systemTime" to systemClockInfo["system_time"],
             "timeZone" to systemClockInfo["time_zone_name"],
             "timeZoneOffset" to systemClockInfo["time_zone_offset"],
-            "locale" to systemClockInfo["locale"],
             "isVpnActive" to isVpnActive,
             "connectionType" to networkType,
 
@@ -122,7 +122,6 @@ class AcmoDeviceDetailsController {
             "deviceBrand" to trackingInfo["device_brand"],
             "deviceBoard" to trackingInfo["device_board"],
             "deviceHardware" to trackingInfo["device_hardware"],
-            "deviceFingerprint" to trackingInfo["device_fingerprint"],
             "androidVersion" to trackingInfo["android_version"],
             "androidSdkInt" to trackingInfo["android_sdk_int"],
             "buildType" to trackingInfo["build_type"],
