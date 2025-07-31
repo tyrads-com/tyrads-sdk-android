@@ -10,10 +10,14 @@ import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.FuelManager
 import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
-import com.github.kittinunf.fuel.gson.responseObject
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
-import com.tyrads.sdk.acmo.modules.input_models.BannerData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import com.github.kittinunf.fuel.coroutines.awaitObject
+import com.github.kittinunf.fuel.core.ResponseDeserializable
+import com.google.gson.Gson
+import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersResponseModel
 
 @Keep
 class NetworkCommons {
@@ -73,43 +77,24 @@ class NetworkCommons {
         }
     }
 
-    fun fetchCampaigns(
-        onSuccess: (List<BannerData>) -> Unit,
-        onError: (Exception) -> Unit,
-        langCode: String
-    ) {
+    suspend fun fetchCampaigns(langCode: String): List<AcmoOffersModel> = withContext(Dispatchers.IO) {
         val url = "${AcmoConfig.BASE_URL}campaigns?lang=$langCode"
-        Fuel.get(url)
-            .responseObject<AcmoOffersModel> { _, _, result ->
-                result.fold(
-                    success = { response ->
-                        Log.i("offers response", response.data.toString())
-                        val banners = response.data.map { campaign ->
-                            BannerData(
-                                campaignId = campaign.campaignId,
-                                appId = campaign.app.id,
-                                title = campaign.app.title,
-                                creativePackName = campaign.creative.creativePacks.firstOrNull()?.creativePackName
-                                    ?: "",
-                                fileUrl = campaign.creative.creativePacks.firstOrNull()?.creatives?.firstOrNull()?.fileUrl
-                                    ?: "",
-                                points = campaign.campaignPayout.totalPayoutConverted,
-                                rewards = campaign.campaignPayout.totalEvents,
-                                currency = campaign.currency,
-                                thumbnail = campaign.app.thumbnail,
-                                premium = campaign.premium,
-                                sortingScore = campaign.sortingScore
-                            )
-                        }
-                        val hotOffers = banners
-                            .sortedWith(compareByDescending<BannerData> { it.premium }.thenByDescending { it.sortingScore })
-                            .filter { it.points > 0 }
-                            .take(5)
 
-                        onSuccess(hotOffers)
-                    },
-                    failure = { error -> onError(error) }
-                )
-            }
+        try {
+            val result = Fuel.get(url)
+                .awaitObject(object : ResponseDeserializable<AcmoOffersResponseModel> {
+                    override fun deserialize(content: String): AcmoOffersResponseModel {
+                        return Gson().fromJson(content, AcmoOffersResponseModel::class.java)
+                    }
+                })
+
+            result.data
+                .sortedWith(compareByDescending<AcmoOffersModel> { it.premium }
+                    .thenByDescending { it.sortingScore })
+                .filter { it.campaignPayout.totalPlayablePayoutConverted > 0 }
+                .take(5)
+        } catch (e: Exception) {
+            throw e
+        }
     }
 }

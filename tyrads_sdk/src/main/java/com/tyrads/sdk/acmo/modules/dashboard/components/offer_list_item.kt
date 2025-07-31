@@ -1,5 +1,6 @@
 package com.tyrads.sdk.acmo.modules.dashboard.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,22 +18,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import java.text.DecimalFormat
 import com.tyrads.sdk.R
-
-// Data Models (for context)
-data class AcmoOffersModel(
-    val campaignId: String, val app: AppDetails,
-    val campaignPayout: CampaignPayout, val currency: CurrencyInfo
-)
-data class AppDetails(val title: String, val thumbnail: String)
-data class CampaignPayout(val totalPlayablePayoutConverted: Double)
-data class CurrencyInfo(val adUnitCurrencyIcon: String)
-data class CurrencySales(val multiplier: Double)
+import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
+import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 
 
 @Composable
@@ -47,42 +39,44 @@ fun AcmoOfferListItem(
     val premiumColor = MaterialTheme.colorScheme.primary
     val premiumFgColor = MaterialTheme.colorScheme.onPrimary
 
-    Box(modifier = modifier.padding(start = 10.dp)) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onItemTap)
-                .padding(vertical = 8.dp, horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onItemTap)
+            .padding(vertical = 8.dp, horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(modifier = Modifier.size(54.dp)) {
             OfferThumbnail(
-                thumbnailUrl = offer.app.thumbnail,
-                title = offer.app.title
+                thumbnailUrl = offer.app.thumbnail, title = offer.app.title
             )
-
-            Spacer(modifier = Modifier.width(12.dp))
-
-            OfferDetails(
-                modifier = Modifier.weight(1f),
-                offer = offer,
-                currencySales = currencySales,
-                premiumColor = premiumColor
-            )
-
-            Spacer(modifier = Modifier.width(8.dp))
-
-            PlayButton(
-                onButtonTap = onButtonTap,
-                premiumColor = premiumColor,
-                premiumFgColor = premiumFgColor
+            RankIcon(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 4.dp, y = (-4).dp),
+                index = index
             )
         }
 
-        RankIcon(index = index)
+        Spacer(modifier = Modifier.width(12.dp))
+
+        OfferDetails(
+            modifier = Modifier.weight(1f),
+            offer = offer,
+            currencySales = currencySales,
+            premiumColor = premiumColor
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        PlayButton(
+            onButtonTap = onButtonTap, premiumColor = premiumColor, premiumFgColor = premiumFgColor
+        )
     }
 }
+
 @Composable
-private fun RankIcon(index: Int) {
+private fun RankIcon(modifier: Modifier, index: Int) {
     val rankAssets: List<Int> = listOf(
         R.drawable.rank_1,
         R.drawable.rank_2,
@@ -95,8 +89,7 @@ private fun RankIcon(index: Int) {
         Image(
             painter = painterResource(id = rankAssets[index]),
             contentDescription = "Rank ${index + 1}",
-            modifier = Modifier
-                .offset(x = (-10).dp, y = 3.dp)
+            modifier = modifier
                 .size(24.dp)
         )
     }
@@ -122,13 +115,11 @@ private fun OfferDetails(
     premiumColor: Color
 ) {
     Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         currencySales?.let {
             BonusLabel(
-                multiplier = it.multiplier,
-                premiumColor = premiumColor
+                multiplier = it.multiplier ?: 1.0, premiumColor = premiumColor
             )
         }
 
@@ -140,8 +131,7 @@ private fun OfferDetails(
         )
 
         OfferPayout(
-            offer = offer,
-            currencySales = currencySales
+            offer = offer, currencySales = currencySales
         )
     }
 }
@@ -151,8 +141,7 @@ private fun BonusLabel(multiplier: Double, premiumColor: Color) {
     Box(
         modifier = Modifier
             .background(
-                color = premiumColor.copy(alpha = 0.2f),
-                shape = CircleShape
+                color = premiumColor.copy(alpha = 0.2f), shape = CircleShape
             )
             .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
@@ -167,7 +156,8 @@ private fun BonusLabel(multiplier: Double, premiumColor: Color) {
 
 @Composable
 private fun OfferPayout(offer: AcmoOffersModel, currencySales: CurrencySales?) {
-    val numberFormat = DecimalFormat("#,##0.##")
+
+    Log.i("currencyUrl: ", offer.currency.adUnitCurrencyIcon)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -175,7 +165,7 @@ private fun OfferPayout(offer: AcmoOffersModel, currencySales: CurrencySales?) {
     ) {
         currencySales?.let {
             Text(
-                text = numberFormat.format(offer.campaignPayout.totalPlayablePayoutConverted),
+                text = offer.campaignPayout.totalPlayablePayoutConverted.numeral(),
                 color = Color(0xFF323434),
                 textDecoration = TextDecoration.LineThrough,
                 fontSize = 12.sp,
@@ -190,11 +180,8 @@ private fun OfferPayout(offer: AcmoOffersModel, currencySales: CurrencySales?) {
         )
 
         Text(
-            text = numberFormat.format(
-                offer.campaignPayout.totalPlayablePayoutConverted * (currencySales?.multiplier ?: 1.0)
-            ),
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Bold
+            text = (offer.campaignPayout.totalPlayablePayoutConverted * (currencySales?.multiplier
+                ?: 1.0)).numeral(), fontSize = 12.sp, fontWeight = FontWeight.Bold
         )
     }
 }
@@ -209,34 +196,7 @@ private fun PlayButton(onButtonTap: () -> Unit, premiumColor: Color, premiumFgCo
         contentPadding = PaddingValues(horizontal = 12.dp)
     ) {
         Text(
-            text = "Play",
-            fontWeight = FontWeight.SemiBold,
-            color = premiumFgColor
+            text = "Play", fontWeight = FontWeight.SemiBold, color = premiumFgColor
         )
     }
-}
-
-//================================================================
-// PREVIEW FUNCTION
-//================================================================
-@Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
-@Composable
-fun AcmoOfferListItemPreview() {
-    val sampleOffer = AcmoOffersModel(
-        campaignId = "123",
-        app = AppDetails(
-            title = "Lords Mobile: Kingdom Wars",
-            thumbnail = ""
-        ),
-        campaignPayout = CampaignPayout(totalPlayablePayoutConverted = 1200.50),
-        currency = CurrencyInfo(adUnitCurrencyIcon = "")
-    )
-
-    AcmoOfferListItem(
-        offer = sampleOffer,
-        currencySales = CurrencySales(multiplier = 1.5),
-        onItemTap = { },
-        onButtonTap = { },
-        index = 0
-    )
 }
