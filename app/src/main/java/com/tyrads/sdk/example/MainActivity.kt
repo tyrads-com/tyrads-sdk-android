@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
@@ -46,6 +47,20 @@ import kotlinx.coroutines.launch
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        lifecycleScope.launch {
+            Tyrads.getInstance().init(
+                context = this@MainActivity,
+                apiKey = "4f0eaa99e38e49b8b52804116e638a41",
+                apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
+                encryptionKey = "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL",
+                debugMode = true
+            )
+
+            val isSuccess = Tyrads.getInstance().loginUser(userID = "456")
+            if (isSuccess) {
+                Log.d("Tyrads", "Top offers loaded")
+            }
+        }
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
@@ -56,15 +71,14 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
     }
 }
+
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var isLoadingOffers by remember { mutableStateOf(false) }
-    var isLoadingWidgets by remember { mutableStateOf(false) }
-    var isTyradsInitialized by remember { mutableStateOf(false) }
-    var topOffersLoaded by remember { mutableStateOf(false) }
 
     val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
 
@@ -72,7 +86,11 @@ fun Greeting(modifier: Modifier = Modifier) {
     var apiSecretInput by remember {
         mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "")
     }
-    var encryptionKey by remember { mutableStateOf(sharedPreferences.getString("encryptionKey", "") ?: "") }
+    var encryptionKey by remember {
+        mutableStateOf(
+            sharedPreferences.getString("encryptionKey", "") ?: ""
+        )
+    }
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
 
     fun handleButtonClick() {
@@ -96,7 +114,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                 context,
                 apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
                 apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
-                encryptionKey =  encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
+                encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
                 debugMode = false
             )
 
@@ -106,57 +124,11 @@ fun Greeting(modifier: Modifier = Modifier) {
         }
     }
 
-    fun handleWidgetsClick() {
-        if (apiKeyInput.isBlank() || apiSecretInput.isBlank() || userIdInput.isBlank()) {
-            // Show a message to the user
-            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        isLoadingWidgets = true
-        CoroutineScope(Dispatchers.Main).launch {
-            sharedPreferences.edit().apply {
-                putString("apiKey", apiKeyInput)
-                putString("apiSecret", apiSecretInput)
-                putString("userId", userIdInput)
-                apply()
-            }
-
-            Tyrads.getInstance().init(
-                context,
-                apiKey = apiKeyInput,
-                apiSecret = apiSecretInput,
-                debugMode = true
-            )
-
-            val data = Tyrads.getInstance().loginUser(userID = userIdInput)
-            Log.i("bmd", data.toString());
-            context.startActivity(Intent(context, PremiumLayoutsActivity::class.java))
-            isLoadingWidgets = false
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.Default).launch {
-            Tyrads.getInstance().init(
-                context,
-                apiKey = "4f0eaa99e38e49b8b52804116e638a41",
-                apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
-                encryptionKey = "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL",
-                debugMode = true
-            )
-           val isSuccess = Tyrads.getInstance().loginUser(userID = "6")
-            if(isSuccess){
-                topOffersLoaded = true
-            }
-            isTyradsInitialized = true
-        }
-    }
-
     Column(
         modifier = modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.Center)
+            .padding(horizontal = 16.dp)
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -167,11 +139,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                 modifier = modifier
             )
         }
-        if (topOffersLoaded) {
-            Tyrads.getInstance().TopPremiumOffers(style = 2)
-        } else {
-            CircularProgressIndicator(modifier = Modifier.size(24.dp))
-        }
+        Tyrads.getInstance().TopPremiumOffers(style = 1)
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = apiKeyInput,

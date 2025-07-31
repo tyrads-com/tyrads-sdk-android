@@ -3,6 +3,7 @@ agp = "8.9.1"
 coilCompose = "2.7.0"
 converterGson = "2.9.0"
 fuel = "2.3.1"
+fuelCoroutines = "2.3.1"
 gson = "2.13.1"
 integrity = "1.4.0"
 kotlin = "1.9.0"
@@ -33,6 +34,7 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 fuel = { module = "com.github.kittinunf.fuel:fuel", version.ref = "fuel" }
+fuel-coroutines = { module = "com.github.kittinunf.fuel:fuel-coroutines", version.ref = "fuelCoroutines" }
 fuel-gson = { module = "com.github.kittinunf.fuel:fuel-gson", version.ref = "fuel" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 integrity = { module = "com.google.android.play:integrity", version.ref = "integrity" }

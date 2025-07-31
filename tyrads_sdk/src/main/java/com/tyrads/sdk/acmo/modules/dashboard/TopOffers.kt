@@ -1,6 +1,7 @@
 package com.tyrads.sdk.acmo.modules.dashboard
 
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -25,6 +25,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,32 +39,24 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.modules.dashboard.components.AcmoCarouselSlider
 import com.tyrads.sdk.acmo.modules.dashboard.components.ActiveOfferButton
 import com.tyrads.sdk.acmo.modules.dashboard.components.AcmoOfferListItem
-import com.tyrads.sdk.acmo.modules.dashboard.components.AcmoOffersModel
-import com.tyrads.sdk.acmo.modules.dashboard.components.AppDetails
-import com.tyrads.sdk.acmo.modules.dashboard.components.CampaignPayout
-import com.tyrads.sdk.acmo.modules.dashboard.components.CurrencyInfo
 import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumWidgetLoading
 import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumWidgetStyles
-import com.tyrads.sdk.acmo.modules.input_models.BannerData
+import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomEnd
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomStart
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopEnd
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopStart
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
 import com.tyrads.sdk.acmo.modules.input_models.cardGameListSpacing
-import com.tyrads.sdk.acmo.modules.input_models.cardPaddingHorizontal
-import com.tyrads.sdk.acmo.modules.input_models.cardPaddingVertical
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
 import com.tyrads.sdk.acmo.modules.input_models.headerTextSpacing
-import com.tyrads.sdk.acmo.modules.input_models.loaderSize
-import com.tyrads.sdk.acmo.modules.input_models.noCampaignPadding
 import com.tyrads.sdk.ui.theme.RedColor
 import com.tyrads.sdk.ui.theme.WhiteColor
+import kotlinx.coroutines.launch
 
 @Composable
 fun TopOffers(
@@ -73,31 +66,27 @@ fun TopOffers(
     widgetStyle: PremiumWidgetStyles = PremiumWidgetStyles.LIST,
 ) {
     val context: Context = LocalContext.current
-    var cachedHotOffers by remember { mutableStateOf<List<BannerData>>(emptyList()) }
+    val coroutineScope = rememberCoroutineScope()
+    var cachedHotOffers by remember { mutableStateOf<List<AcmoOffersModel>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var activeOffersCount by remember { mutableIntStateOf(1) }
-    var privacyAccepted by remember { mutableStateOf(true) } // This should come from actual privacy settings
+    var privacyAccepted by remember { mutableStateOf(true) }
 
     val networkCommons = remember { NetworkCommons() }
 
     LaunchedEffect(Unit) {
-        loadData(
-            networkCommons = networkCommons,
-            context = context,
-            onSuccess = { campaigns ->
-                cachedHotOffers = campaigns
+        coroutineScope.launch {
+            try {
+                isLoading = true
+                cachedHotOffers = networkCommons.fetchCampaigns("en")
                 isLoading = false
-                activeOffersCount = campaigns.size
-            },
-            onError = { errorMessage ->
-                error = errorMessage
-                isLoading = false
+            } catch (e: Exception) {
+                Log.e("FetchCampaigns", "Error: ${e.message}", e)
             }
-        )
+        }
     }
 
-    // Loading state
     if (isLoading && cachedHotOffers.isEmpty()) {
         PremiumWidgetLoading(
             widgetStyle = widgetStyle
@@ -105,7 +94,6 @@ fun TopOffers(
         return
     }
 
-    // Error state
     if (error != null && cachedHotOffers.isEmpty()) {
         Text(
             text = "Error: $error",
@@ -115,21 +103,15 @@ fun TopOffers(
         return
     }
 
-    // Empty state or forced empty view
     if (cachedHotOffers.isEmpty() || showMyOffersEmptyView) {
         EmptyOffersView()
         return
     }
 
-    // Main content
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .wrapContentHeight()
-            .padding(
-                horizontal = cardPaddingHorizontal,
-                vertical = cardPaddingVertical
-            ),
+            .wrapContentHeight(),
         shape = RoundedCornerShape(
             topStart = cardCornerTopStart,
             topEnd = cardCornerTopEnd,
@@ -142,6 +124,9 @@ fun TopOffers(
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
+            PremiumHeaderSection(
+                showMore
+            )
             // Header section
             Spacer(modifier = Modifier.height(headerTextSpacing))
 
@@ -152,13 +137,13 @@ fun TopOffers(
                     cachedHotOffers.forEachIndexed { index, offer ->
                         AcmoOfferListItem(
                             modifier = Modifier.padding(horizontal = 16.dp),
-                            offer = convertBannerDataToAcmoOffersModel(offer),
+                            offer = offer,
                             currencySales = null,
                             onItemTap = {
-                                handleOfferClick(offer, privacyAccepted)
+
                             },
                             onButtonTap = {
-                                handleOfferClick(offer, privacyAccepted)
+
                             },
                             index = index
                         )
@@ -176,7 +161,7 @@ fun TopOffers(
                             OfferCardItem(
                                 offer = cachedHotOffers[index],
                                 onOfferClick = {
-                                    handleOfferClick(cachedHotOffers[index], privacyAccepted)
+
                                 }
                             )
                         },
@@ -286,7 +271,7 @@ private fun EmptyOffersView() {
 
 @Composable
 private fun OfferCardItem(
-    offer: BannerData,
+    offer: AcmoOffersModel,
     onOfferClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -306,7 +291,7 @@ private fun OfferCardItem(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = offer.title ?: "Game Offer",
+                text = offer.app.title,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
@@ -322,55 +307,5 @@ private fun OfferCardItem(
                 color = MaterialTheme.colorScheme.primary
             )
         }
-    }
-}
-
-private suspend fun loadData(
-    networkCommons: NetworkCommons,
-    context: Context,
-    onSuccess: (List<BannerData>) -> Unit,
-    onError: (String) -> Unit
-) {
-    try {
-        val currentLanguage = LocalizationHelper.getLanguageCode(context)
-        LocalizationHelper.applySavedLanguage(context = context)
-
-        networkCommons.fetchCampaigns(
-            onSuccess = { campaigns ->
-                onSuccess(campaigns)
-            },
-            onError = { exception ->
-                onError(exception.message ?: "Unknown error occurred")
-            },
-            langCode = currentLanguage
-        )
-    } catch (e: Exception) {
-        onError(e.message ?: "Failed to load data")
-    }
-}
-
-private fun convertBannerDataToAcmoOffersModel(bannerData: BannerData): AcmoOffersModel {
-    return AcmoOffersModel(
-        campaignId = bannerData.campaignId.toString(),
-        app = AppDetails(
-            title = bannerData.title ?: "Unknown Game",
-            thumbnail = bannerData.thumbnail
-        ),
-        campaignPayout = CampaignPayout(
-            totalPlayablePayoutConverted = bannerData.points.toDouble()
-        ),
-        currency = CurrencyInfo(
-            adUnitCurrencyIcon = bannerData.currency.toString()
-        )
-    )
-}
-
-private fun handleOfferClick(offer: BannerData, privacyAccepted: Boolean) {
-    if (privacyAccepted) {
-        // Handle direct offer opening with tracking
-        // This should include the tracking logic similar to Flutter version
-    } else {
-        // Navigate to campaign details
-        // Tyrads.instance.showOffers(context, campaignID, route)
     }
 }

@@ -61,102 +61,6 @@ fun AcmoCustomSkeleton(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun AcmoSkeletonLoading() {
-    val configuration = LocalConfiguration.current
-    val screenWidth = configuration.screenWidthDp.dp
-
-    Scaffold(
-        bottomBar = {
-            // BottomAppBar equivalent
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = Color(0xFFF0F1F3) // Same color as Flutter version
-            ) {
-                AcmoCustomSkeleton(
-                    modifier = Modifier.padding(16.dp),
-                    width = null, // double.maxFinite equivalent
-                    height = 42.dp,
-                    borderRadius = 42.dp
-                )
-            }
-        }
-    ) { paddingValues ->
-        // SingleChildScrollView equivalent
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(paddingValues),
-            horizontalAlignment = Alignment.Start // crossAxisAlignment: CrossAxisAlignment.start
-        ) {
-            // First skeleton with padding
-            AcmoCustomSkeleton(
-                modifier = Modifier.padding(16.dp),
-                height = 18.dp,
-                width = 120.dp
-            )
-
-            // Row with spacing equivalent to Row(spacing: 16)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                AcmoCustomSkeleton(
-                    height = 225.dp,
-                    width = 16.dp
-                )
-                AcmoCustomSkeleton(
-                    height = 247.dp,
-                    width = screenWidth - 64.dp // MediaQuery.of(context).size.width - 64
-                )
-                AcmoCustomSkeleton(
-                    height = 225.dp,
-                    width = 16.dp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp)) // SizedBox(height: 16)
-
-            // Centered skeleton - Align(alignment: Alignment.center)
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
-                AcmoCustomSkeleton(
-                    width = 48.dp,
-                    height = 8.dp
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp)) // SizedBox(height: 16)
-
-            // Padded column with spacing
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.Start, // crossAxisAlignment: CrossAxisAlignment.start
-                verticalArrangement = Arrangement.spacedBy(16.dp) // spacing: 16
-            ) {
-                AcmoCustomSkeleton(
-                    height = 18.dp,
-                    width = 120.dp
-                )
-
-                // List.generate(4, ...) equivalent
-                repeat(4) { index ->
-                    AcmoCustomSkeleton(
-                        height = 270.dp,
-                        width = null // double.maxFinite equivalent
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Preview(showBackground = true, backgroundColor = 0xFFFFFFFF)
 @Composable
 fun AcmoCustomSkeletonPreview() {
@@ -181,13 +85,5 @@ fun AcmoCustomSkeletonPreview() {
             width = null, // Full width
             borderRadius = 8.dp
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun AcmoSkeletonLoadingPreview() {
-    MaterialTheme {
-        AcmoSkeletonLoading()
     }
 }
