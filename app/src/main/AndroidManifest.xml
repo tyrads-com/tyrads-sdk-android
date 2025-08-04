@@ -34,10 +34,5 @@
             </intent-filter>
         </activity>
 
-        <!-- Add the PremiumLayoutsActivity -->
-        <activity
-            android:name=".PremiumLayoutsActivity"
-            android:exported="false"
-            android:theme="@style/Theme.TyradsSdk" />
     </application>
 </manifest>

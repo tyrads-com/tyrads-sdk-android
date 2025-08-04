@@ -25,39 +25,29 @@ fun ActiveOfferButton(
     modifier: Modifier = Modifier,
     activatedCount: Int,
     onTap: () -> Unit = {
-        // Default implementation - navigate to activated campaigns
-        // In actual implementation, this would call:
-        // Tyrads.instance.showOffers(
-        //     context,
-        //     route = TyradsDeepRoutes.CAMPAIGNS_ACTIVATED,
-        //     launchMode = Tyrads.instance.launchMode,
-        // )
     }
 ) {
-    // Get premium color from theme - equivalent to Tyrads.instance.colorPremium ?? Theme.of(context).colorScheme.secondary
     val premiumColor = MaterialTheme.colorScheme.secondary
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
 
-    // InkWell equivalent with padding (Flutter's InkWell + Padding)
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onTap)
             .padding(16.dp)
     ) {
-        // Expanded equivalent - takes full available width
         Box(
             modifier = Modifier
-                .weight(1f) // Equivalent to Expanded
+                .weight(1f)
                 .height(42.dp)
                 .border(
                     width = 2.dp,
                     color = premiumColor,
-                    shape = RoundedCornerShape(42.dp) // Pill shape - BorderRadius.circular(42)
+                    shape = RoundedCornerShape(42.dp)
                 )
                 .clip(RoundedCornerShape(42.dp))
+                .clickable(onClick = onTap)
                 .background(onPrimaryColor),
-            contentAlignment = Alignment.Center // Center equivalent
+            contentAlignment = Alignment.Center
         ) {
             // Row with MainAxisSize.min equivalent
             Row(
@@ -72,13 +62,13 @@ fun ActiveOfferButton(
                     fontSize = 14.sp
                 )
 
-                // Count badge with margin
-                CountBadge(
-                    activatedCount = activatedCount,
-                    modifier = Modifier
-                        .padding(start = 8.dp) // margin: EdgeInsets.only(left: 8) equivalent
-                        .size(20.dp)
-                )
+                if (activatedCount > 0)
+                    CountBadge(
+                        activatedCount = activatedCount,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(20.dp)
+                    )
             }
         }
     }
@@ -98,7 +88,7 @@ private fun CountBadge(
         contentAlignment = Alignment.Center
     ) {
         Text(
-            text = "$activatedCount+",
+            text = if (activatedCount > 0 && activatedCount <= 99) "$activatedCount" else "99+",
             color = Color.White,
             fontSize = 10.sp,
             fontWeight = FontWeight.Bold, // FontWeight.w700 equivalent

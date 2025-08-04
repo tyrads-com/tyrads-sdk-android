@@ -13,7 +13,8 @@ data class Data(
     @SerializedName("user")
     val user: User,
     @SerializedName("publisherApp")
-    val publisherApp: PublisherApp
+    val publisherApp: PublisherApp,
+    val token: String
 )
 @Keep
 data class User(

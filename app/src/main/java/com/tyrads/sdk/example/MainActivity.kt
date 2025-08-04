@@ -1,10 +1,8 @@
 package com.tyrads.sdk.example
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -26,7 +24,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -139,7 +136,9 @@ fun Greeting(modifier: Modifier = Modifier) {
                 modifier = modifier
             )
         }
-        Tyrads.getInstance().TopPremiumOffers(style = 1)
+        Tyrads.getInstance().TopPremiumOffers(
+            widgetStyle = Tyrads.PremiumWidgetStyles.LIST
+        )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = apiKeyInput,
