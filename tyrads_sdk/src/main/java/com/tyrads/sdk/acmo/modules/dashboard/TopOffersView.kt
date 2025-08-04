@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.AbstractComposeView
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
 
 class TopPremiumOffersView @JvmOverloads constructor(
     context: Context,
@@ -16,7 +17,7 @@ class TopPremiumOffersView @JvmOverloads constructor(
     private var _showMore: Boolean = true
     private var _showMyOffers: Boolean = false
     private var _showMyOffersEmptyView: Boolean = false
-    private var _style: Int = 2
+    private var _style: PremiumWidgetStyles = PremiumWidgetStyles.LIST
 
     init {
         if (attrs != null) {
@@ -29,7 +30,11 @@ class TopPremiumOffersView @JvmOverloads constructor(
                     _showMore = getBoolean(R.styleable.TopPremiumOffersView_showMore, true)
                     _showMyOffers = getBoolean(R.styleable.TopPremiumOffersView_showMyOffers, false)
                     _showMyOffersEmptyView = getBoolean(R.styleable.TopPremiumOffersView_showMyOffersEmptyView, false)
-                    _style = getInt(R.styleable.TopPremiumOffersView_style, 2)
+                    val styleOrdinal = getInt(
+                        R.styleable.TopPremiumOffersView_style,
+                        PremiumWidgetStyles.LIST.ordinal
+                    )
+                    _style = PremiumWidgetStyles.entries.toTypedArray().getOrElse(styleOrdinal) { PremiumWidgetStyles.LIST }
                 } finally {
                     recycle()
                 }
@@ -52,7 +57,7 @@ class TopPremiumOffersView @JvmOverloads constructor(
         invalidate()
     }
 
-    fun setStyle(value: Int) {
+    fun setStyle(value: PremiumWidgetStyles) {
         _style = value
         invalidate()
     }
@@ -62,12 +67,12 @@ class TopPremiumOffersView @JvmOverloads constructor(
         showMore: Boolean = this._showMore,
         showMyOffers: Boolean = this._showMyOffers,
         showMyOffersEmptyView: Boolean = this._showMyOffersEmptyView,
-        style: Int = this._style
+        style: PremiumWidgetStyles = this._style
     ) {
-        this._showMore = showMore
-        this._showMyOffers = showMyOffers
-        this._showMyOffersEmptyView = showMyOffersEmptyView
-        this._style = style
+        _showMore = showMore
+        _showMyOffers = showMyOffers
+        _showMyOffersEmptyView = showMyOffersEmptyView
+        _style = style
         invalidate()
     }
 
@@ -77,7 +82,7 @@ class TopPremiumOffersView @JvmOverloads constructor(
             showMore = _showMore,
             showMyOffers = _showMyOffers,
             showMyOffersEmptyView = _showMyOffersEmptyView,
-            style = _style
+            widgetStyle = _style
         )
     }
 }

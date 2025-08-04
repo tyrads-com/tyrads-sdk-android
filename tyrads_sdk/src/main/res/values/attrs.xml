@@ -3,6 +3,9 @@
         <attr name="showMore" format="boolean" />
         <attr name="showMyOffers" format="boolean" />
         <attr name="showMyOffersEmptyView" format="boolean" />
-        <attr name="style" format="integer" />
+        <attr name="style" format="enum">
+            <enum name="slider_cards" value="0" />
+            <enum name="list" value="1" />
+        </attr>
     </declare-styleable>
 </resources>

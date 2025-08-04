@@ -1,6 +1,5 @@
 package com.tyrads.sdk.acmo.modules.dashboard.components
 
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,7 +52,7 @@ fun AcmoOfferListItem(
             RankIcon(
                 modifier = Modifier
                     .align(Alignment.TopStart)
-                    .offset(x = 4.dp, y = (-4).dp),
+                    .offset(x = (-10).dp, y = (-8).dp),
                 index = index
             )
         }
@@ -156,8 +155,6 @@ private fun BonusLabel(multiplier: Double, premiumColor: Color) {
 
 @Composable
 private fun OfferPayout(offer: AcmoOffersModel, currencySales: CurrencySales?) {
-
-    Log.i("currencyUrl: ", offer.currency.adUnitCurrencyIcon)
 
     Row(
         verticalAlignment = Alignment.CenterVertically,

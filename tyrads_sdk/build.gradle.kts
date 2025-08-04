@@ -84,6 +84,9 @@ dependencies {
     // Coil (image loading)
     implementation(libs.coil.compose)
 
+    // Webview
+    implementation(libs.androidx.webkit)
+
     // Networking
     implementation(libs.fuel)
     implementation (libs.fuel.coroutines)

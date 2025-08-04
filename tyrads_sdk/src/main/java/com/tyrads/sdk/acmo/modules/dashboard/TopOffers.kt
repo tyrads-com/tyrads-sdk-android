@@ -39,12 +39,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
 import com.tyrads.sdk.acmo.modules.dashboard.components.AcmoCarouselSlider
 import com.tyrads.sdk.acmo.modules.dashboard.components.ActiveOfferButton
 import com.tyrads.sdk.acmo.modules.dashboard.components.AcmoOfferListItem
 import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumWidgetLoading
-import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumWidgetStyles
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomEnd
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomStart
@@ -53,7 +54,6 @@ import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopStart
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
 import com.tyrads.sdk.acmo.modules.input_models.cardGameListSpacing
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
-import com.tyrads.sdk.acmo.modules.input_models.headerTextSpacing
 import com.tyrads.sdk.ui.theme.RedColor
 import com.tyrads.sdk.ui.theme.WhiteColor
 import kotlinx.coroutines.launch
@@ -128,19 +128,21 @@ fun TopOffers(
                 showMore
             )
             // Header section
-            Spacer(modifier = Modifier.height(headerTextSpacing))
+//            Spacer(modifier = Modifier.height(16.dp))
 
             // Content based on widget style
             when (widgetStyle) {
                 PremiumWidgetStyles.LIST -> {
-                    // List style offers
                     cachedHotOffers.forEachIndexed { index, offer ->
                         AcmoOfferListItem(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             offer = offer,
                             currencySales = null,
                             onItemTap = {
-
+                                coroutineScope.launch {
+                                    Tyrads.getInstance()
+                                        .showOffers(route = "offers/${offer.campaignId}")
+                                }
                             },
                             onButtonTap = {
 
@@ -151,7 +153,6 @@ fun TopOffers(
                 }
 
                 PremiumWidgetStyles.SLIDER_CARDS -> {
-                    // Slider cards style
                     AcmoCarouselSlider(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -172,13 +173,12 @@ fun TopOffers(
                         indicatorActiveColor = MaterialTheme.colorScheme.primary,
                         indicatorInactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         onPageChanged = { index ->
-                            // Handle page changes if needed
                         }
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(cardGameListSpacing))
+//            Spacer(modifier = Modifier.height(cardGameListSpacing))
 
             // Bottom actions
             when {
@@ -186,8 +186,7 @@ fun TopOffers(
                     // Show "See Other Offers" button
                     Button(
                         onClick = {
-                            // Navigate to offers screen
-                            // Tyrads.instance.showOffers(context)
+
                         },
                         colors = ButtonDefaults.textButtonColors(),
                         modifier = Modifier.align(Alignment.CenterHorizontally)
@@ -201,13 +200,14 @@ fun TopOffers(
                     }
                 }
 
-                showMyOffers && activeOffersCount > 0 -> {
+                showMyOffers -> {
                     // Show active offers button
                     ActiveOfferButton(
                         activatedCount = activeOffersCount,
                         onTap = {
-                            // Navigate to active offers screen
-                            // Tyrads.instance.showActiveOffers(context)
+                            coroutineScope.launch {
+                                Tyrads.getInstance().showOffers(route = "active-offers")
+                            }
                         }
                     )
                 }
@@ -218,22 +218,23 @@ fun TopOffers(
 
 @Composable
 private fun EmptyOffersView() {
+    val coroutineScope = rememberCoroutineScope()
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .padding(24.dp),
+            .clip(RoundedCornerShape(16.dp)),
         contentAlignment = Alignment.Center
     ) {
         // Background image
         Image(
-            painter = painterResource(id = R.drawable.diamond),
+            painter = painterResource(id = R.drawable.premium_empty_bg),
             contentDescription = null,
             modifier = Modifier.fillMaxWidth(),
-            contentScale = ContentScale.Crop
+            contentScale = ContentScale.Inside
         )
 
         Column(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -247,8 +248,9 @@ private fun EmptyOffersView() {
 
             Button(
                 onClick = {
-                    // Navigate to offers screen
-                    // Tyrads.instance.showOffers(context)
+                    coroutineScope.launch {
+                        Tyrads.getInstance().showOffers()
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = WhiteColor

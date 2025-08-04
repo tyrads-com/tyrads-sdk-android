@@ -42,6 +42,7 @@ class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null
     internal var encKey: String? = null
+    internal var token: String = ""
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
@@ -53,7 +54,7 @@ class Tyrads private constructor() {
     internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
-    internal var url: String? = null
+    internal var url: String = ""
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
@@ -142,8 +143,7 @@ class Tyrads private constructor() {
             var identifierType = ""
             try {
                 if (isGooglePlayServicesAvailable(context)) {
-                    advertisingId =
-                        AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
+                    advertisingId = AdvertisingIdClient.getAdvertisingIdInfo(context).id.toString()
                     identifierType = "GAID"
                 }
             } catch (e: Exception) {
@@ -207,11 +207,11 @@ class Tyrads private constructor() {
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     newUser = loginData.data.newRegisteredUser
+                    token = loginData.data.token
 
                     // check for empty
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
-                    premiumColor =
-                        loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                    premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
                     headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
 
                     if (preferences.getBoolean(
@@ -252,26 +252,18 @@ class Tyrads private constructor() {
                 return@withContext
             }
             log("Launching offers", Log.INFO)
-            url = Uri.Builder().scheme("https").authority("websdk.tyrads.com")
-                .appendQueryParameter("apiKey", apiKey)
-                .appendQueryParameter("apiSecret", apiSecret)
-                .appendQueryParameter("encKey", encKey)
-                .appendQueryParameter("userID", publisherUserID)
-                .appendQueryParameter("newUser", newUser.toString())
-                .appendQueryParameter("platform", "Android")
-                .appendQueryParameter("hc", loginData.data.publisherApp.headerColor)
-                .appendQueryParameter("mc", loginData.data.publisherApp.mainColor)
-                .appendQueryParameter("pc", loginData.data.publisherApp.premiumColor)
-                .appendQueryParameter("route", route?.toString())
-                .appendQueryParameter("campaignID", campaignID?.toString())
-                .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
-                .appendQueryParameter("av", AcmoConfig.AV)
-                .appendQueryParameter("lang", currentLanguageCode).build().toString()
+            url = Uri
+                .Builder()
+                .scheme("https")
+                .authority("sdk.tyrads.com")
+                .path(route)
+                .appendQueryParameter("token", token)
+                .build()
+                .toString()
             Log.i("url", url.toString())
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
-
         }
 
     suspend fun changeLanguage(context: Context, languageCode: String) =
@@ -283,19 +275,23 @@ class Tyrads private constructor() {
             }
         }
 
-    //    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
+    enum class PremiumWidgetStyles {
+        SLIDER_CARDS,
+        LIST
+    }
     @Composable
     fun TopPremiumOffers(
         showMore: Boolean = true,
         showMyOffers: Boolean = true,
         showMyOffersEmptyView: Boolean = false,
-        style: Int = 2,
+        widgetStyle: PremiumWidgetStyles = PremiumWidgetStyles.LIST,
     ) {
         TopOffers(
             showMore = showMore,
             showMyOffers = showMyOffers,
             showMyOffersEmptyView = showMyOffersEmptyView,
-         )
+            widgetStyle = widgetStyle
+        )
     }
 
     @Composable

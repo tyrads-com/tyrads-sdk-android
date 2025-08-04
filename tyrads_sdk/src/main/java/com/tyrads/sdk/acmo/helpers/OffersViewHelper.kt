@@ -2,6 +2,7 @@ package com.tyrads.sdk.acmo.helpers
 
 import android.content.Context
 import androidx.annotation.Keep
+import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
 import com.tyrads.sdk.acmo.modules.dashboard.TopPremiumOffersView
 
 @Keep
@@ -20,8 +21,17 @@ object TyradsViewHelper {
         showMyOffersEmptyView: Boolean,
         style: Int
     ): TopPremiumOffersView {
+        val enumStyle = PremiumWidgetStyles.entries.toTypedArray().getOrElse(style) {
+            PremiumWidgetStyles.LIST
+        }
+
         return TopPremiumOffersView(context).apply {
-            setConfig(showMore, showMyOffers, showMyOffersEmptyView, style)
+            setConfig(
+                showMore = showMore,
+                showMyOffers = showMyOffers,
+                showMyOffersEmptyView = showMyOffersEmptyView,
+                style = enumStyle
+            )
         }
     }
 }
