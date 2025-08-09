@@ -1,4 +1,4 @@
-package com.tyrads.sdk.acmo.modules.dashboard
+package com.tyrads.sdk.acmo.modules.premium_widgets
 
 import android.content.Context
 import android.util.Log
@@ -41,18 +41,17 @@ import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
-import com.tyrads.sdk.acmo.modules.dashboard.components.AcmoCarouselSlider
-import com.tyrads.sdk.acmo.modules.dashboard.components.ActiveOfferButton
-import com.tyrads.sdk.acmo.modules.dashboard.components.AcmoOfferListItem
-import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumHeaderSection
-import com.tyrads.sdk.acmo.modules.dashboard.components.PremiumWidgetLoading
+import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoCarouselSlider
+import com.tyrads.sdk.acmo.modules.premium_widgets.components.ActiveOfferButton
+import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferListItem
+import com.tyrads.sdk.acmo.modules.premium_widgets.components.PremiumHeaderSection
+import com.tyrads.sdk.acmo.modules.premium_widgets.components.PremiumWidgetLoading
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomEnd
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomStart
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopEnd
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopStart
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
-import com.tyrads.sdk.acmo.modules.input_models.cardGameListSpacing
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
 import com.tyrads.sdk.ui.theme.RedColor
 import com.tyrads.sdk.ui.theme.WhiteColor

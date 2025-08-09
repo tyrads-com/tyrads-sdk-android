@@ -1,4 +1,4 @@
-package com.tyrads.sdk.acmo.modules.dashboard
+package com.tyrads.sdk.acmo.modules.premium_widgets
 
 import android.content.Context
 import android.util.AttributeSet

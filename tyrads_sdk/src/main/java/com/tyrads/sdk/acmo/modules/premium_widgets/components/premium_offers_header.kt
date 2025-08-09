@@ -1,4 +1,4 @@
-package com.tyrads.sdk.acmo.modules.dashboard.components
+package com.tyrads.sdk.acmo.modules.premium_widgets.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
