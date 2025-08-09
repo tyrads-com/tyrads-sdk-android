@@ -1,4 +1,4 @@
-package com.tyrads.sdk.acmo.modules.dashboard.components
+package com.tyrads.sdk.acmo.modules.premium_widgets.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box

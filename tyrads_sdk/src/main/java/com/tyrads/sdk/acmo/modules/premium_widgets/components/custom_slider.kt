@@ -1,11 +1,10 @@
-package com.tyrads.sdk.acmo.modules.dashboard.components
+package com.tyrads.sdk.acmo.modules.premium_widgets.components
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -48,10 +46,8 @@ fun AcmoCarouselSlider(
     val screenHeight = configuration.screenHeightDp.dp
     val screenWidth = configuration.screenWidthDp.dp
 
-    // PagerState equivalent to PageController
     val pagerState = rememberPagerState(
         initialPage = if (infiniteScroll && itemCount > 0) {
-            // Start at a middle position for infinite scroll
             (Int.MAX_VALUE / 2) - ((Int.MAX_VALUE / 2) % itemCount) + (initialPage % itemCount)
         } else {
             initialPage % itemCount

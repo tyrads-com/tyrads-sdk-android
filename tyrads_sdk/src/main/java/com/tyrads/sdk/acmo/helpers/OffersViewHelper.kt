@@ -3,7 +3,7 @@ package com.tyrads.sdk.acmo.helpers
 import android.content.Context
 import androidx.annotation.Keep
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
-import com.tyrads.sdk.acmo.modules.dashboard.TopPremiumOffersView
+import com.tyrads.sdk.acmo.modules.premium_widgets.TopPremiumOffersView
 
 @Keep
 object TyradsViewHelper {

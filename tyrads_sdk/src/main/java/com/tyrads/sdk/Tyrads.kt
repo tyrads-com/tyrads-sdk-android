@@ -33,7 +33,7 @@ import android.net.Uri
 import android.widget.Toast
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
-import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
+import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 
