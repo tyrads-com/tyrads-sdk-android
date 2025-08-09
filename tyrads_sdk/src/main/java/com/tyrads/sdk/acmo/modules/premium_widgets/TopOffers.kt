@@ -53,6 +53,7 @@ import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopEnd
 import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopStart
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
+import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferCard
 import com.tyrads.sdk.ui.theme.RedColor
 import com.tyrads.sdk.ui.theme.WhiteColor
 import kotlinx.coroutines.launch
@@ -158,11 +159,14 @@ fun TopOffers(
                             .height(300.dp),
                         itemCount = cachedHotOffers.size,
                         itemBuilder = { index ->
-                            OfferCardItem(
-                                offer = cachedHotOffers[index],
-                                onOfferClick = {
-
-                                }
+                            AcmoOfferCard(
+                                item = cachedHotOffers[index],
+                                onButtonClick = TODO(),
+                                currencySaleModel = TODO(),
+                                itemScaleFactor = TODO(),
+                                margin = TODO(),
+                                isPremiumWidget = TODO(),
+                                onTap = TODO()
                             )
                         },
                         showIndicator = true,
