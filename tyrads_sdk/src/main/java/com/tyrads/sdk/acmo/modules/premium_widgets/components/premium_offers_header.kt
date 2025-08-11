@@ -35,18 +35,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun PremiumHeaderSection(
+    modifier: Modifier = Modifier,
     showMore: Boolean
 ) {
     val coroutineScope = rememberCoroutineScope()
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                start = headerPaddingStart,
-                end = headerPaddingEnd,
-                top = headerPaddingTop,
-                bottom = headerPaddingBottom
-            ),
+        modifier = modifier
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -54,11 +49,12 @@ fun PremiumHeaderSection(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.weight(1f)
         ) {
-            Image(
+            Icon(
                 painter = painterResource(id = R.drawable.diamond),
                 contentDescription = "Diamond",
                 modifier = Modifier
-                    .size(14.dp)
+                    .size(14.dp),
+                tint = Tyrads.getInstance().premiumColor.toColor()
             )
             Spacer(modifier = Modifier.width(headerTextSpacing))
             Text(
@@ -66,7 +62,8 @@ fun PremiumHeaderSection(
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
+                color = Tyrads.getInstance().premiumColor.toColor()
             )
         }
         if (showMore) {

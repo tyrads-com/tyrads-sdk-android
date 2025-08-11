@@ -7,6 +7,8 @@ object AcmoEndpointNames {
     const val ACTIVE_OFFERS = "activated-campaigns"
     const val UPDATE_USER = "update-user"
     const val DEVICE_DETAILS = "user-device"
+    const val OFFER_SUMMARY = "summary"
+    const val ENGAGEMENT = "engagement"
     const val USAGE_STATS = "usage-stats"
     const val USER_ACTIVITIES = "user-activities";
 }

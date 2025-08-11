@@ -1,11 +1,13 @@
 package com.tyrads.sdk.acmo.modules.premium_widgets
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -41,16 +44,14 @@ import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoCarouselSlider
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.ActiveOfferButton
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferListItem
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.PremiumHeaderSection
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.PremiumWidgetLoading
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
-import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomEnd
-import com.tyrads.sdk.acmo.modules.input_models.cardCornerBottomStart
-import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopEnd
-import com.tyrads.sdk.acmo.modules.input_models.cardCornerTopStart
+import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferCard
@@ -58,6 +59,7 @@ import com.tyrads.sdk.ui.theme.RedColor
 import com.tyrads.sdk.ui.theme.WhiteColor
 import kotlinx.coroutines.launch
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun TopOffers(
     showMore: Boolean = true,
@@ -68,9 +70,10 @@ fun TopOffers(
     val context: Context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     var cachedHotOffers by remember { mutableStateOf<List<AcmoOffersModel>>(emptyList()) }
+    var currencySales by remember { mutableStateOf<CurrencySales?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
-    var activeOffersCount by remember { mutableIntStateOf(1) }
+    var activeOffersCount by remember { mutableIntStateOf(0) }
     var privacyAccepted by remember { mutableStateOf(true) }
 
     val networkCommons = remember { NetworkCommons() }
@@ -80,6 +83,8 @@ fun TopOffers(
             try {
                 isLoading = true
                 cachedHotOffers = networkCommons.fetchCampaigns("en")
+                currencySales = networkCommons.fetchCurrencySale("en")
+                activeOffersCount = networkCommons.fetchActiveOffersSummary("en")
                 isLoading = false
             } catch (e: Exception) {
                 Log.e("FetchCampaigns", "Error: ${e.message}", e)
@@ -112,12 +117,7 @@ fun TopOffers(
         modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight(),
-        shape = RoundedCornerShape(
-            topStart = cardCornerTopStart,
-            topEnd = cardCornerTopEnd,
-            bottomEnd = cardCornerBottomEnd,
-            bottomStart = cardCornerBottomStart
-        ),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = WhiteColor),
         elevation = CardDefaults.cardElevation(defaultElevation = cardElevation)
     ) {
@@ -125,17 +125,19 @@ fun TopOffers(
             modifier = Modifier.fillMaxWidth()
         ) {
             PremiumHeaderSection(
-                showMore
+                modifier = Modifier
+                    .padding(vertical = 16.dp, horizontal = 16.dp),
+                showMore = showMore
             )
-            // Header section
-//            Spacer(modifier = Modifier.height(16.dp))
-
-            // Content based on widget style
             when (widgetStyle) {
                 PremiumWidgetStyles.LIST -> {
                     cachedHotOffers.forEachIndexed { index, offer ->
                         AcmoOfferListItem(
-                            modifier = Modifier.padding(horizontal = 16.dp),
+                            modifier = Modifier.padding(
+                                start = 16.dp,
+                                end = 16.dp,
+                                bottom = if(index != cachedHotOffers.size - 1) 16.dp else 0.dp
+                            ),
                             offer = offer,
                             currencySales = null,
                             onItemTap = {
@@ -153,27 +155,28 @@ fun TopOffers(
                 }
 
                 PremiumWidgetStyles.SLIDER_CARDS -> {
+                    val screenWidth = LocalConfiguration.current.screenWidthDp.dp
+                    val itemScaleFactor = 3.1
+                    val itemHeight = screenWidth.value / itemScaleFactor
                     AcmoCarouselSlider(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(300.dp),
+                            .height((itemHeight + 150).dp)
+                            .padding(bottom = 8.dp),
                         itemCount = cachedHotOffers.size,
                         itemBuilder = { index ->
                             AcmoOfferCard(
                                 item = cachedHotOffers[index],
-                                onButtonClick = TODO(),
-                                currencySaleModel = TODO(),
-                                itemScaleFactor = TODO(),
-                                margin = TODO(),
-                                isPremiumWidget = TODO(),
-                                onTap = TODO()
+                                currencySales = currencySales,
+                                margin = PaddingValues(all = 16.dp),
+                                onButtonClick = {},
+                                onTap = {},
                             )
                         },
                         showIndicator = true,
                         infiniteScroll = true,
-                        viewportFraction = 0.9f,
-                        scaleFactor = 0.94f,
-                        indicatorActiveColor = MaterialTheme.colorScheme.primary,
+                        viewportFraction = 0.88f,
+                        indicatorActiveColor = Tyrads.getInstance().premiumColor.toColor(),
                         indicatorInactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         onPageChanged = { index ->
                         }
@@ -181,30 +184,8 @@ fun TopOffers(
                 }
             }
 
-//            Spacer(modifier = Modifier.height(cardGameListSpacing))
-
-            // Bottom actions
             when {
-                activeOffersCount == 0 -> {
-                    // Show "See Other Offers" button
-                    Button(
-                        onClick = {
-
-                        },
-                        colors = ButtonDefaults.textButtonColors(),
-                        modifier = Modifier.align(Alignment.CenterHorizontally)
-                    ) {
-                        Text(
-                            text = "See Other Offers",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.secondary
-                        )
-                    }
-                }
-
                 showMyOffers -> {
-                    // Show active offers button
                     ActiveOfferButton(
                         activatedCount = activeOffersCount,
                         onTap = {

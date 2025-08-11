@@ -2,9 +2,10 @@ package com.tyrads.sdk.acmo.core.extensions
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.core.graphics.toColorInt
 
 fun String.toColor(): Color {
-    return Color(android.graphics.Color.parseColor(this))
+    return Color(this.toColorInt())
 }
 
 fun Color.contrastingColor(): Color {
