@@ -17,7 +17,11 @@ import kotlinx.coroutines.withContext
 import com.github.kittinunf.fuel.coroutines.awaitObject
 import com.github.kittinunf.fuel.core.ResponseDeserializable
 import com.google.gson.Gson
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
+import com.tyrads.sdk.acmo.modules.input_models.AcmoOfferCurrencySaleModel
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersResponseModel
+import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 
 @Keep
 class NetworkCommons {
@@ -78,7 +82,7 @@ class NetworkCommons {
     }
 
     suspend fun fetchCampaigns(langCode: String): List<AcmoOffersModel> = withContext(Dispatchers.IO) {
-        val url = "${AcmoConfig.BASE_URL}campaigns?lang=$langCode"
+        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.OFFERS}?lang=$langCode"
 
         try {
             val result = Fuel.get(url)
@@ -93,6 +97,50 @@ class NetworkCommons {
                     .thenByDescending { it.sortingScore })
                 .filter { it.campaignPayout.totalPlayablePayoutConverted > 0 }
                 .take(5)
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    suspend fun fetchCurrencySale(langCode: String): CurrencySales? = withContext(Dispatchers.IO) {
+        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ENGAGEMENT}?lang=$langCode"
+
+        try {
+            val result = Fuel.get(url)
+                .awaitObject(object : ResponseDeserializable<AcmoOfferCurrencySaleModel> {
+                    override fun deserialize(content: String): AcmoOfferCurrencySaleModel {
+                        return Gson().fromJson(content, AcmoOfferCurrencySaleModel::class.java)
+                    }
+                })
+
+            result.data?.currencySales
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    suspend fun fetchActiveOffersSummary(langCode: String): Int = withContext(Dispatchers.IO) {
+        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ACTIVE_OFFERS}/${AcmoEndpointNames.OFFER_SUMMARY}?lang=$langCode"
+
+        try {
+            val result = Fuel.get(url)
+                .awaitObject(object : ResponseDeserializable<JsonObject> {
+                    override fun deserialize(content: String): JsonObject {
+                        return JsonParser.parseString(content).asJsonObject
+                    }
+                })
+
+            result["data"].asJsonObject["activeCampaignCount"].asInt
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
+    suspend fun activateOffer(id: String) = withContext(Dispatchers.IO) {
+        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.OFFERS}/active/$id"
+
+        try {
+            val ( _, _, _ ) = Fuel.post(url).response()
         } catch (e: Exception) {
             throw e
         }
