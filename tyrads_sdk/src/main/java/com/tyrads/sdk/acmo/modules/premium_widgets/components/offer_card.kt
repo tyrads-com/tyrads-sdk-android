@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -23,57 +24,52 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import com.tyrads.sdk.R
-import com.tyrads.sdk.acmo.modules.dashboard.components.formatNumeral
-import com.tyrads.sdk.acmo.modules.input_models.AcmoOfferCurrencySaleModel
+import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
+import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 
-// CardContainer Composable
+
 @Composable
 fun CardContainer(
     modifier: Modifier = Modifier,
     padding: PaddingValues? = null,
+    margin: PaddingValues? = null,
     borderRadius: Float? = null,
-    height: Float? = null,
-    width: Float? = null,
-    decoration: androidx.compose.ui.graphics.Shape? = null,
-    content: @Composable BoxScope.() -> Unit = {}
+    height: Dp? = null,
+    width: Dp? = null,
+    decoration: Shape? = null,
+    content: @Composable () -> Unit
 ) {
-    val density = LocalDensity.current
-
-    Box(
+    Card(
         modifier = modifier
-            .then(
-                if (height != null) Modifier.height(with(density) { height.dp })
-                else Modifier
-            )
-            .then(
-                if (width != null) Modifier.width(with(density) { width.dp })
-                else Modifier
-            )
-            .shadow(
-                elevation = 16.dp,
-                shape = decoration ?: RoundedCornerShape((borderRadius ?: 10f).dp),
-                ambientColor = Color.Black.copy(alpha = 0.06f),
-                spotColor = Color.Black.copy(alpha = 0.06f)
-            )
-            .background(
-                color = Color.White,
-                shape = decoration ?: RoundedCornerShape((borderRadius ?: 10f).dp)
-            )
-            .then(
-                if (padding != null) Modifier.padding(padding)
-                else Modifier
-            ),
-        content = content
-    )
+            .then(if (margin != null) Modifier.padding(margin) else Modifier)
+            .then(if (height != null) Modifier.height(height) else Modifier)
+            .then(if (width != null) Modifier.width(width) else Modifier),
+        shape = decoration ?: RoundedCornerShape((borderRadius ?: 10f).dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 8.dp,   // similar to Flutter's blur/shadow
+            pressedElevation = 8.dp
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .then(if (padding != null) Modifier.padding(padding) else Modifier)
+                .fillMaxSize()
+        ) {
+            content()
+        }
+    }
 }
 
-// Triangle Painter equivalent using Canvas
 @Composable
 fun TrianglePainter(
     color: Color,
@@ -100,35 +96,31 @@ fun TrianglePainter(
     }
 }
 
-// Main AcmoOfferCard Composable
 @Composable
 fun AcmoOfferCard(
     item: AcmoOffersModel,
-    onButtonClick: (() -> Unit)?,
-    currencySaleModel: AcmoOfferCurrencySaleModel,
-    itemScaleFactor: Double = 1.93,
+    onButtonClick: () -> Unit,
+    currencySales: CurrencySales?,
+    itemScaleFactor: Double = 3.1,
     margin: PaddingValues? = null,
-    isPremiumWidget: Boolean = false,
-    onTap: (() -> Unit)? = null
+    onTap: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
-    val itemHeight = screenWidth.value / itemScaleFactor.toFloat()
+    val itemHeight = screenWidth.value / itemScaleFactor
 
     Box(
         modifier = Modifier
-            .clickable { onTap?.invoke() }
+            .clickable { onTap.invoke() }
     ) {
-        // Triangle painter positioned at top left
-        if (currencySaleModel.data?.currencySales != null) {
+        if (currencySales != null) {
             Box(
                 modifier = Modifier
                     .offset(x = 8.dp, y = 63.dp)
             ) {
                 TrianglePainter(
                     color = getDarkerShade(
-                        Tyrads.instance.colorPremium
-                            ?: MaterialTheme.colorScheme.secondary
+                        Tyrads.getInstance().premiumColor.toColor()
                     ),
                     size = androidx.compose.ui.geometry.Size(20f, 40f)
                 )
@@ -137,16 +129,8 @@ fun AcmoOfferCard(
 
         // Main card container
         CardContainer(
-            modifier = Modifier.padding(
-                margin ?: PaddingValues(
-                    start = 16.dp,
-                    top = 16.dp,
-                    end = 16.dp,
-                    bottom = 0.dp
-                )
-            ),
             borderRadius = 16f,
-            height = itemHeight + 112f
+            height = (itemHeight + 112).dp
         ) {
             // Main image with rounded top corners
             Box(
@@ -199,7 +183,7 @@ fun AcmoOfferCard(
             ) {
                 CardContainer(
                     borderRadius = 16f,
-                    height = 128f
+                    height = 128.dp
                 ) {
                     Column(
                         modifier = Modifier
@@ -245,10 +229,10 @@ fun AcmoOfferCard(
                                     horizontalAlignment = Alignment.End
                                 ) {
                                     // Strike-through price if currency sales exist
-                                    if (currencySaleModel.data?.currencySales != null) {
+                                    if (currencySales != null) {
                                         Text(
                                             text = item.campaignPayout.totalPlayablePayoutConverted
-                                                .formatNumeral(digits = 2),
+                                                .numeral(),
                                             style = TextStyle(
                                                 color = Color(0xFF454646),
                                                 fontWeight = FontWeight.W300,
@@ -270,8 +254,8 @@ fun AcmoOfferCard(
 
                                         Text(
                                             text = " ${(item.campaignPayout.totalPlayablePayoutConverted *
-                                                    (currencySaleModel.data?.currencySales?.multiplier ?: 1.0))
-                                                .formatNumeral(digits = 2)}",
+                                                    (currencySales?.multiplier ?: 1.0))
+                                                .numeral()}",
                                             style = TextStyle(
                                                 color = Color.Black,
                                                 fontWeight = FontWeight.W700,
@@ -285,7 +269,7 @@ fun AcmoOfferCard(
 
                                 // Info icon
                                 Image(
-                                    painter = painterResource(R.drawable.info), // Replace with actual resource
+                                    painter = painterResource(R.drawable.diamond), // Replace with actual resource
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(16.dp)
@@ -304,19 +288,16 @@ fun AcmoOfferCard(
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp, vertical = 4.5.dp)
                         ) {
-                            AcmoButton3(
+                            AcmoButton(
                                 onTap = onButtonClick,
-                                label = "Offers CTA", // Replace with actual translation
+                                label = "Play Now",
                                 borderRadius = 8.0,
                                 labelStyle = TextStyle(
-                                    color = Tyrads.instance.colorPremiumFg ?: Color.White,
+                                    color = Color.White,
                                     fontWeight = FontWeight.W600,
                                     fontSize = 14.sp
                                 ),
-                                color = if (currencySaleModel.data?.currencySales != null || isPremiumWidget) {
-                                    Tyrads.instance.colorPremium
-                                        ?: MaterialTheme.colorScheme.secondary
-                                } else null,
+                                color = Tyrads.getInstance().premiumColor.toColor(),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(42.dp)
@@ -328,42 +309,29 @@ fun AcmoOfferCard(
         }
 
         // Bonus label if currency sales exist
-        if (currencySaleModel.data?.currencySales != null) {
+        if (currencySales != null) {
             Box(
                 modifier = Modifier
                     .offset(x = 8.dp, y = 32.dp)
                     .height(31.dp)
                     .background(
-                        color = Tyrads.instance.colorPremium
-                            ?: MaterialTheme.colorScheme.secondary,
+                        color = Tyrads.getInstance().premiumColor.toColor(),
                         shape = RoundedCornerShape(
-                            topStart = 50.dp,
+                            topStart = 8.dp,
                             topEnd = 100.dp,
                             bottomStart = 0.dp,
                             bottomEnd = 100.dp
                         )
                     )
-                    .shadow(
-                        elevation = 8.dp,
-                        shape = RoundedCornerShape(
-                            topStart = 50.dp,
-                            topEnd = 100.dp,
-                            bottomStart = 0.dp,
-                            bottomEnd = 100.dp
-                        ),
-                        ambientColor = Color.Black.copy(alpha = 0.3f),
-                        spotColor = Color.Black.copy(alpha = 0.3f)
-                    )
                     .padding(horizontal = 10.dp, vertical = 4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "${currencySaleModel.data?.currencySales?.multiplier?.formatDouble()}x Bonus",
+                    text = "${currencySales.multiplier?.formatDouble()}x Bonus",
                     style = TextStyle(
                         fontWeight = FontWeight.W700,
-                        fontStyle = FontStyle.Italic,
                         fontSize = 12.sp,
-                        color = Tyrads.instance.colorPremiumFg ?: Color.White
+                        color = Color.White
                     )
                 )
             }
@@ -392,7 +360,7 @@ fun getDarkerShade(color: Color): Color {
 
 // AcmoButton3 component - exact conversion of AcmoButton_3
 @Composable
-fun AcmoButton3(
+fun AcmoButton(
     onTap: (() -> Unit)?,
     label: String = "Edit",
     color: Color? = null,
@@ -430,12 +398,3 @@ fun AcmoButton3(
     }
 }
 
-// Placeholder for Tyrads instance (implement based on your actual singleton)
-object Tyrads {
-    val instance = TyradsInstance()
-}
-
-class TyradsInstance {
-    val colorPremium: Color? = Color(0xFF6C5CE7) // Purple color for preview
-    val colorPremiumFg: Color? = Color.White
-}
