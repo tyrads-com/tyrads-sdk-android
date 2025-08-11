@@ -19,6 +19,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 
 @Composable
 fun ActiveOfferButton(
@@ -27,7 +29,7 @@ fun ActiveOfferButton(
     onTap: () -> Unit = {
     }
 ) {
-    val premiumColor = MaterialTheme.colorScheme.secondary
+    val premiumColor = Tyrads.getInstance().premiumColor.toColor()
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
 
     Row(

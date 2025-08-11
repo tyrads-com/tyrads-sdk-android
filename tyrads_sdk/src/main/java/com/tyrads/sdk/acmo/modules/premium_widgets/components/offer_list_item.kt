@@ -21,7 +21,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.numeral
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 
@@ -35,14 +37,13 @@ fun AcmoOfferListItem(
     onButtonTap: () -> Unit,
     index: Int,
 ) {
-    val premiumColor = MaterialTheme.colorScheme.primary
+    val premiumColor = Tyrads.getInstance().premiumColor.toColor()
     val premiumFgColor = MaterialTheme.colorScheme.onPrimary
 
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onItemTap)
-            .padding(vertical = 8.dp, horizontal = 16.dp),
+            .clickable(onClick = onItemTap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.size(54.dp)) {
