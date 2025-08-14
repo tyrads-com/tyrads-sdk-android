@@ -40,11 +40,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.kittinunf.fuel.Fuel
 import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
 import com.tyrads.sdk.acmo.core.extensions.toColor
+import com.tyrads.sdk.acmo.helpers.launchUrlForce
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoCarouselSlider
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.ActiveOfferButton
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferListItem
@@ -57,7 +59,9 @@ import com.tyrads.sdk.acmo.modules.input_models.errorPadding
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferCard
 import com.tyrads.sdk.ui.theme.RedColor
 import com.tyrads.sdk.ui.theme.WhiteColor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
@@ -74,9 +78,56 @@ fun TopOffers(
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
     var activeOffersCount by remember { mutableIntStateOf(0) }
-    var privacyAccepted by remember { mutableStateOf(true) }
 
+    // Loading state management
+    var loadingIndex by remember { mutableStateOf<Int?>(null) }
+
+    val privacyAccepted = remember {
+        Tyrads.getInstance().preferences.getBoolean(
+            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
+            false
+        )
+    }
     val networkCommons = remember { NetworkCommons() }
+
+    suspend fun openOffer(campaign: AcmoOffersModel) = withContext(Dispatchers.Default) {
+        coroutineScope.launch {
+            try {
+                val url = if (campaign.isInstalled) {
+                    campaign.app.previewUrl
+                } else {
+                    // Tyrads.getInstance().track(TyradsActivity.campaignActivated) // Assuming a tracking method
+                    networkCommons.activateOffer(id = campaign.campaignId.toString())
+                    campaign.tracking.clickUrl ?: ""
+                }
+
+                if (!campaign.tracking.s2sClickUrl.isNullOrEmpty()) {
+                    try {
+                        Fuel.get(campaign.tracking.s2sClickUrl)
+                    } catch (e: Exception) {
+                        Log.e(
+                            "S2S_CLICK_ERROR",
+                            "Failed to send S2S click for campaign ${campaign.campaignId}",
+                            e
+                        )
+                    }
+                }
+
+                // Launch the final URL in a browser or app that can handle it.
+                if (url.isNotBlank()) {
+                    launchUrlForce(context, url)
+                } else {
+                    Log.w(
+                        "OpenOffer",
+                        "URL is blank for campaign ${campaign.campaignId}, cannot launch."
+                    )
+                }
+
+            } catch (e: Exception) {
+                Log.e("OPEN_OFFER_ERROR", "Error opening offer: ${e.message}", e)
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         coroutineScope.launch {
@@ -136,10 +187,10 @@ fun TopOffers(
                             modifier = Modifier.padding(
                                 start = 16.dp,
                                 end = 16.dp,
-                                bottom = if(index != cachedHotOffers.size - 1) 16.dp else 0.dp
+                                bottom = if (index != cachedHotOffers.size - 1) 16.dp else 0.dp
                             ),
                             offer = offer,
-                            currencySales = null,
+                            currencySales = currencySales,
                             onItemTap = {
                                 coroutineScope.launch {
                                     Tyrads.getInstance()
@@ -147,9 +198,22 @@ fun TopOffers(
                                 }
                             },
                             onButtonTap = {
-
+                                if (privacyAccepted) {
+                                    coroutineScope.launch {
+                                        openOffer(offer)
+                                    }
+                                } else {
+                                    coroutineScope.launch {
+                                        Tyrads.getInstance()
+                                            .showOffers(route = "offers/${offer.campaignId}")
+                                    }
+                                }
                             },
-                            index = index
+                            index = index,
+                            loadingIndex = loadingIndex,
+                            onLoadingIndexChange = { newLoadingIndex ->
+                                loadingIndex = newLoadingIndex
+                            }
                         )
                     }
                 }
@@ -165,12 +229,29 @@ fun TopOffers(
                             .padding(bottom = 8.dp),
                         itemCount = cachedHotOffers.size,
                         itemBuilder = { index ->
+                            val offer = cachedHotOffers[index]
                             AcmoOfferCard(
-                                item = cachedHotOffers[index],
+                                item = offer,
                                 currencySales = currencySales,
                                 margin = PaddingValues(all = 16.dp),
-                                onButtonClick = {},
-                                onTap = {},
+                                onButtonClick = {
+                                    if (privacyAccepted) {
+                                        coroutineScope.launch {
+                                            openOffer(offer)
+                                        }
+                                    } else {
+                                        coroutineScope.launch {
+                                            Tyrads.getInstance()
+                                                .showOffers(route = "offers/${offer.campaignId}")
+                                        }
+                                    }
+                                },
+                                onTap = {
+                                    coroutineScope.launch {
+                                        Tyrads.getInstance()
+                                            .showOffers(route = "offers/${offer.campaignId}")
+                                    }
+                                },
                             )
                         },
                         showIndicator = true,
