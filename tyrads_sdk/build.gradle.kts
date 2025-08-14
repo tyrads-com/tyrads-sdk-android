@@ -90,6 +90,7 @@ dependencies {
 
     // Networking
     implementation(libs.fuel)
+    implementation (libs.fuel.coroutines)
     implementation(libs.fuel.gson)
     implementation(libs.gson)
 
