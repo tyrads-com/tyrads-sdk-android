@@ -34,7 +34,7 @@ import androidx.core.content.edit
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
-import com.tyrads.sdk.acmo.modules.dashboard.TopOffers
+import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import com.tyrads.sdk.acmo.modules.users.models.AcmoInitModel
 import kotlinx.coroutines.coroutineScope
 
@@ -318,19 +318,19 @@ class Tyrads private constructor() {
         }
     }
 
-    //    enum class TopOfferStyles {ONE, TWO, THREE, FOUR}
+    enum class PremiumWidgetStyles {LIST, SLIDER_CARDS}
     @Composable
     fun TopPremiumOffers(
         showMore: Boolean = true,
         showMyOffers: Boolean = true,
         showMyOffersEmptyView: Boolean = false,
-        style: Int = 2,
+        widgetStyle: PremiumWidgetStyles = PremiumWidgetStyles.LIST,
     ) {
         TopOffers(
             showMore = showMore,
             showMyOffers = showMyOffers,
             showMyOffersEmptyView = showMyOffersEmptyView,
-            style = style,
+            widgetStyle = widgetStyle,
         )
     }
 
