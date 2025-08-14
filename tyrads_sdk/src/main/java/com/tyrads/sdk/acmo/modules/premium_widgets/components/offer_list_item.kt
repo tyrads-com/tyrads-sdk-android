@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -26,7 +27,7 @@ import com.tyrads.sdk.acmo.core.extensions.numeral
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
-
+import kotlinx.coroutines.launch
 
 @Composable
 fun AcmoOfferListItem(
@@ -34,21 +35,32 @@ fun AcmoOfferListItem(
     offer: AcmoOffersModel,
     currencySales: CurrencySales?,
     onItemTap: () -> Unit,
-    onButtonTap: () -> Unit,
+    onButtonTap: suspend () -> Unit,
     index: Int,
+    loadingIndex: Int?,
+    onLoadingIndexChange: (Int?) -> Unit
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val premiumColor = Tyrads.getInstance().premiumColor.toColor()
     val premiumFgColor = MaterialTheme.colorScheme.onPrimary
+
+    // Loading state calculations
+    val isLoading = loadingIndex == index
+    val anyLoading = loadingIndex != null
 
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onItemTap),
+            .clickable(
+                enabled = !anyLoading,  // Disable tap when any item is loading
+                onClick = onItemTap
+            ),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(modifier = Modifier.size(54.dp)) {
             OfferThumbnail(
-                thumbnailUrl = offer.app.thumbnail, title = offer.app.title
+                thumbnailUrl = offer.app.thumbnail,
+                title = offer.app.title
             )
             RankIcon(
                 modifier = Modifier
@@ -70,7 +82,20 @@ fun AcmoOfferListItem(
         Spacer(modifier = Modifier.width(8.dp))
 
         PlayButton(
-            onButtonTap = onButtonTap, premiumColor = premiumColor, premiumFgColor = premiumFgColor
+            onButtonTap = {
+                coroutineScope.launch {
+                    onLoadingIndexChange(index)  // Set this item as loading
+                    try {
+                        onButtonTap()
+                    } finally {
+                        onLoadingIndexChange(null)  // Clear loading state
+                    }
+                }
+            },
+            premiumColor = premiumColor,
+            premiumFgColor = premiumFgColor,
+            isLoading = isLoading,
+            anyLoading = anyLoading
         )
     }
 }
@@ -115,11 +140,13 @@ private fun OfferDetails(
     premiumColor: Color
 ) {
     Column(
-        modifier = modifier, verticalArrangement = Arrangement.spacedBy(2.dp)
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         currencySales?.let {
             BonusLabel(
-                multiplier = it.multiplier ?: 1.0, premiumColor = premiumColor
+                multiplier = it.multiplier ?: 1.0,
+                premiumColor = premiumColor
             )
         }
 
@@ -131,7 +158,8 @@ private fun OfferDetails(
         )
 
         OfferPayout(
-            offer = offer, currencySales = currencySales
+            offer = offer,
+            currencySales = currencySales
         )
     }
 }
@@ -141,7 +169,8 @@ private fun BonusLabel(multiplier: Double, premiumColor: Color) {
     Box(
         modifier = Modifier
             .background(
-                color = premiumColor.copy(alpha = 0.2f), shape = CircleShape
+                color = premiumColor.copy(alpha = 0.2f),
+                shape = CircleShape
             )
             .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
@@ -156,7 +185,6 @@ private fun BonusLabel(multiplier: Double, premiumColor: Color) {
 
 @Composable
 private fun OfferPayout(offer: AcmoOffersModel, currencySales: CurrencySales?) {
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -179,22 +207,49 @@ private fun OfferPayout(offer: AcmoOffersModel, currencySales: CurrencySales?) {
 
         Text(
             text = (offer.campaignPayout.totalPlayablePayoutConverted * (currencySales?.multiplier
-                ?: 1.0)).numeral(), fontSize = 12.sp, fontWeight = FontWeight.Bold
+                ?: 1.0)).numeral(),
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
 @Composable
-private fun PlayButton(onButtonTap: () -> Unit, premiumColor: Color, premiumFgColor: Color) {
+private fun PlayButton(
+    onButtonTap: () -> Unit,
+    premiumColor: Color,
+    premiumFgColor: Color,
+    isLoading: Boolean,
+    anyLoading: Boolean
+) {
     Button(
         onClick = onButtonTap,
+        enabled = !anyLoading,  // Disable when any item is loading
         modifier = Modifier.sizeIn(minWidth = 75.dp, minHeight = 42.dp),
         shape = RoundedCornerShape(8.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = premiumColor),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (anyLoading) Color(0xFFE0E2E7) else premiumColor,
+            disabledContainerColor = Color(0xFFE0E2E7)
+        ),
         contentPadding = PaddingValues(horizontal = 12.dp)
     ) {
-        Text(
-            text = "Play", fontWeight = FontWeight.SemiBold, color = premiumFgColor
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(16.dp),
+                    strokeWidth = 2.2.dp,
+                    color = Color(0xFFA3A9B6)
+                )
+            }
+
+            Text(
+                text = "Play",
+                fontWeight = FontWeight.SemiBold,
+                color = if (anyLoading) Color(0xFFA3A9B6) else premiumFgColor
+            )
+        }
     }
 }
