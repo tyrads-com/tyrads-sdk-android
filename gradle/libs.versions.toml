@@ -23,6 +23,7 @@ playServicesAdsIdentifier = "18.2.0"
 rootbeerLib = "0.1.0"
 navigationCompose = "2.9.0"
 constraintlayout = "2.2.1"
+fuelCoroutines = "2.3.1"
 
 [libraries]
 androidx-animation = { module = "androidx.compose.animation:animation" }
@@ -32,6 +33,7 @@ androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-
 androidx-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-fonts" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 fuel = { module = "com.github.kittinunf.fuel:fuel", version.ref = "fuel" }
+fuel-coroutines = { module = "com.github.kittinunf.fuel:fuel-coroutines", version.ref = "fuelCoroutines" }
 fuel-gson = { module = "com.github.kittinunf.fuel:fuel-gson", version.ref = "fuel" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 integrity = { module = "com.google.android.play:integrity", version.ref = "integrity" }
