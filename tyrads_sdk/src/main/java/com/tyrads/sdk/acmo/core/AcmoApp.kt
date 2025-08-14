@@ -22,7 +22,7 @@ import androidx.navigation.compose.rememberNavController
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.modules.legal.AcmoPrivacyPolicyPage
-import com.tyrads.sdk.acmo.modules.webview.WebViewComposable
+import com.tyrads.sdk.acmo.modules.webview.AcmoWebView
 import com.tyrads.sdk.ui.theme.TyradsSdkTheme
 
 @Keep
@@ -69,9 +69,7 @@ class AcmoApp : ComponentActivity() {
                         startDestination = initPath
                     ) {
                         composable("webview") {
-                            WebViewComposable(
-                                modifier = Modifier.padding(innerPadding)
-                            )
+                            AcmoWebView()
                         }
                         composable("privacy") {
                             AcmoPrivacyPolicyPage(
