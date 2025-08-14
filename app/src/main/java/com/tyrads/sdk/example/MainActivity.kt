@@ -163,7 +163,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             )
         }
         if (isTyradsInitialized) {
-            Tyrads.getInstance().TopPremiumOffers(style = 2)
+            Tyrads.getInstance().TopPremiumOffers(widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS)
         } else {
             CircularProgressIndicator(modifier = Modifier.size(24.dp))
         }
