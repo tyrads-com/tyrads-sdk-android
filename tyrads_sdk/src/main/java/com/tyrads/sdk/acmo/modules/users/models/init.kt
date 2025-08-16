@@ -15,7 +15,9 @@ data class Data(
     @SerializedName("user")
     val user: User,
     @SerializedName("publisherApp")
-    val publisherApp: PublisherApp
+    val publisherApp: PublisherApp,
+    @SerializedName("token")
+    val token: String? = null,
 )
 @Keep
 data class User(

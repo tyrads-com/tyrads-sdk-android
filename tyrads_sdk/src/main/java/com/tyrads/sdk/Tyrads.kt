@@ -43,6 +43,7 @@ class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null
     internal var encKey: String? = null
+    internal var token: String? = null
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
@@ -220,6 +221,7 @@ class Tyrads private constructor() {
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
                     newUser = loginData.data.newRegisteredUser
+                    token = loginData.data.token
 
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
                     premiumColor =
@@ -287,20 +289,9 @@ class Tyrads private constructor() {
             log("Launching offers", Log.INFO)
             url = Uri.Builder()
                 .scheme("https")
-                .authority("websdk.tyrads.com")
-                .appendQueryParameter("apiKey", apiKey)
-                .appendQueryParameter("apiSecret", apiSecret)
-                .appendQueryParameter("encKey", encKey)
-                .appendQueryParameter("userID", publisherUserID)
-                .appendQueryParameter("newUser", newUser.toString())
-                .appendQueryParameter("platform", "Android")
-                .appendQueryParameter("hc", loginData.data.publisherApp.headerColor)
-                .appendQueryParameter("mc", loginData.data.publisherApp.mainColor)
-                .appendQueryParameter("pc", loginData.data.publisherApp.premiumColor)
-                .appendQueryParameter("route", route?.toString())
-                .appendQueryParameter("campaignID", campaignID?.toString())
-                .appendQueryParameter("sdk_version", AcmoConfig.SDK_VERSION)
-                .appendQueryParameter("av", AcmoConfig.AV)
+                .authority("sdk.tyrads.com")
+                .appendQueryParameter("token", token)
+                .appendQueryParameter("to", if (route == null) route else "$route/$campaignID")
                 .appendQueryParameter("lang", currentLanguageCode)
                 .build()
                 .toString()
