@@ -204,24 +204,25 @@ class Tyrads private constructor() {
                 info.userGroup?.let { fd["userGroup"] = it }
             }
 
-            val encData =
+            val body =
                 if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(
                     data = fd
-                ) else emptyMap()
+                ) else fd
 
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
-                .body(Gson().toJson(if (_isSecure) encData else fd))
+                .body(Gson().toJson(body))
                 .response()
 
             when (result) {
                 is Result.Success -> {
-                    log("User login successful", Log.INFO)
+                    log("User login successful ${response.data}", Log.INFO)
                     val jsonString = String(response.data)
+                    Log.e("Data", jsonString)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
                     newUser = loginData.data.newRegisteredUser
-                    token = loginData.data.token
+                    this@Tyrads.token = loginData.data.token
 
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
                     premiumColor =
@@ -291,7 +292,7 @@ class Tyrads private constructor() {
                 .scheme("https")
                 .authority("sdk.tyrads.com")
                 .appendQueryParameter("token", token)
-                .appendQueryParameter("to", if (route == null) route else "$route/$campaignID")
+                .appendQueryParameter("to", if(route == null) "" else if(campaignID == null) route else "$route/$campaignID")
                 .appendQueryParameter("lang", currentLanguageCode)
                 .build()
                 .toString()
