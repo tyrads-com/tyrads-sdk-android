@@ -79,26 +79,44 @@ fun TopOffers(
     var error by remember { mutableStateOf<String?>(null) }
     var activeOffersCount by remember { mutableIntStateOf(0) }
 
-    // Loading state management
     var loadingIndex by remember { mutableStateOf<Int?>(null) }
-
-    val privacyAccepted = remember {
-        Tyrads.getInstance().preferences.getBoolean(
-            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-            false
-        )
-    }
     val networkCommons = remember { NetworkCommons() }
+
+    var privacyAccepted by remember { mutableStateOf(false) }
+
+    fun fetchOffers() {
+        coroutineScope.launch {
+            try {
+                isLoading = true
+                cachedHotOffers = networkCommons.fetchCampaigns("en")
+                currencySales = networkCommons.fetchCurrencySale("en")
+                activeOffersCount = networkCommons.fetchActiveOffersSummary("en")
+                isLoading = false
+                privacyAccepted = Tyrads.getInstance().preferences.getBoolean(
+                    AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
+                    false
+                )
+            } catch (e: Exception) {
+                isLoading = false
+                error = e.message
+                Log.e("FetchCampaigns", "Error: ${e.message}", e)
+            }
+        }
+    }
 
     suspend fun openOffer(campaign: AcmoOffersModel) = withContext(Dispatchers.Default) {
         coroutineScope.launch {
+            var url: String = campaign.tracking.clickUrl ?: ""
             try {
-                val url = if (campaign.isInstalled) {
-                    campaign.app.previewUrl
+                if (campaign.isInstalled) {
+                    url = campaign.app.previewUrl
                 } else {
-                    // Tyrads.getInstance().track(TyradsActivity.campaignActivated) // Assuming a tracking method
+                    if(campaign.isRetryDownload){
+                        // Tyrads.instance.track(TyradsActivity.campaignActivatedRetry); // Assuming a tracking method
+                    }else{
+                        //track Tyrads.instance.track(TyradsActivity.campaignActivated);
+                    }
                     networkCommons.activateOffer(id = campaign.campaignId.toString())
-                    campaign.tracking.clickUrl ?: ""
                 }
 
                 if (!campaign.tracking.s2sClickUrl.isNullOrEmpty()) {
@@ -112,16 +130,10 @@ fun TopOffers(
                         )
                     }
                 }
-
-                // Launch the final URL in a browser or app that can handle it.
                 if (url.isNotBlank()) {
                     launchUrlForce(context, url)
-                } else {
-                    Log.w(
-                        "OpenOffer",
-                        "URL is blank for campaign ${campaign.campaignId}, cannot launch."
-                    )
                 }
+                fetchOffers()
 
             } catch (e: Exception) {
                 Log.e("OPEN_OFFER_ERROR", "Error opening offer: ${e.message}", e)
@@ -129,18 +141,10 @@ fun TopOffers(
         }
     }
 
+
+
     LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            try {
-                isLoading = true
-                cachedHotOffers = networkCommons.fetchCampaigns("en")
-                currencySales = networkCommons.fetchCurrencySale("en")
-                activeOffersCount = networkCommons.fetchActiveOffersSummary("en")
-                isLoading = false
-            } catch (e: Exception) {
-                Log.e("FetchCampaigns", "Error: ${e.message}", e)
-            }
-        }
+        fetchOffers()
     }
 
     if (isLoading && cachedHotOffers.isEmpty()) {
@@ -159,7 +163,7 @@ fun TopOffers(
         return
     }
 
-    if (cachedHotOffers.isEmpty() || showMyOffersEmptyView) {
+    if (cachedHotOffers.isEmpty()) {
         EmptyOffersView()
         return
     }
@@ -314,7 +318,9 @@ private fun EmptyOffersView() {
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        Tyrads.getInstance().showOffers()
+                        Tyrads.getInstance().showOffers(
+                            route = "active-offers"
+                        )
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
