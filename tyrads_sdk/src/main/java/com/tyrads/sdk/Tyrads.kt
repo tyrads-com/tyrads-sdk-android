@@ -124,7 +124,13 @@ class Tyrads private constructor() {
 
         NetworkCommons()
         currentLanguageCode = LocalizationHelper.getLanguageCode(context)
-        val integrityToken = getPlayIntegrityToken(context)
+        var integrityToken: String = ""
+        try {
+            integrityToken = getPlayIntegrityToken(context)
+        }catch (e: Exception){
+            log("Failed to get Integrity Token", Log.ERROR)
+        }
+
         log("Integrity Token: $integrityToken")
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         log("Tyrads SDK initialized", Log.INFO)
