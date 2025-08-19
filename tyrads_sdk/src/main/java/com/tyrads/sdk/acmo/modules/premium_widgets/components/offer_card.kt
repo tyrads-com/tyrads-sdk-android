@@ -111,6 +111,7 @@ fun AcmoOfferCard(
 
     Box(
         modifier = Modifier
+            .padding(margin ?: PaddingValues())
             .clickable { onTap.invoke() }
     ) {
         if (currencySales != null) {

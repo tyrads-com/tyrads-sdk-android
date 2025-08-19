@@ -233,7 +233,7 @@ fun TopOffers(
                             AcmoOfferCard(
                                 item = offer,
                                 currencySales = currencySales,
-                                margin = PaddingValues(all = 16.dp),
+                                margin = PaddingValues(horizontal = 16.dp),
                                 onButtonClick = {
                                     if (privacyAccepted) {
                                         coroutineScope.launch {
@@ -256,7 +256,7 @@ fun TopOffers(
                         },
                         showIndicator = true,
                         infiniteScroll = true,
-                        viewportFraction = 0.88f,
+                        viewportFraction = 1f,
                         indicatorActiveColor = Tyrads.getInstance().premiumColor.toColor(),
                         indicatorInactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         onPageChanged = { index ->
