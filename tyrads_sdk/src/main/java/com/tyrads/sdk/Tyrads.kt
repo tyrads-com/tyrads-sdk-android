@@ -252,14 +252,15 @@ class Tyrads private constructor() {
                 return@withContext
             }
             log("Launching offers", Log.INFO)
-            url = Uri
-                .Builder()
+            url = Uri.Builder()
                 .scheme("https")
                 .authority("sdk.tyrads.com")
-                .path(route)
                 .appendQueryParameter("token", token)
+                .appendQueryParameter("to", if(route == null) "" else if(campaignID == null) route else "$route/$campaignID")
+                .appendQueryParameter("lang", currentLanguageCode)
                 .build()
                 .toString()
+
             Log.i("url", url.toString())
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
