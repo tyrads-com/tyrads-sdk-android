@@ -12,7 +12,9 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.core.view.WindowCompat
@@ -41,7 +43,8 @@ class AcmoApp : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&
-            !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)) {
+            !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)
+        ) {
             Tyrads.getInstance().log("Offerwall closed")
             finish()
             return
@@ -63,7 +66,12 @@ class AcmoApp : ComponentActivity() {
                     initPath = "webview"
                 }
                 Tyrads.getInstance().navController = rememberNavController()
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding()
+                        .statusBarsPadding()
+                ) { innerPadding ->
                     NavHost(
                         navController = Tyrads.getInstance().navController,
                         startDestination = initPath
