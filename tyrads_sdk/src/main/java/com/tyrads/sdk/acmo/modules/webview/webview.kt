@@ -1,5 +1,7 @@
 package com.tyrads.sdk.acmo.modules.webview
 
+import AcmoUsageStatsController
+import AcmoUsageStatsDialog
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
@@ -10,7 +12,9 @@ import android.os.Looper
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
@@ -25,26 +29,44 @@ import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
 
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "ContextCastToActivity")
 @Keep
 @Composable
 fun AcmoWebView() {
     val context = LocalContext.current
     val mUrl = Tyrads.getInstance().url
-    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    val webViewState = rememberWebViewState()
 
-    val fileChooserLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        webViewRef?.let { webView ->
-            val filePathCallback = webView.getFilePathCallback()
-            if (uri != null) {
-                filePathCallback?.onReceiveValue(arrayOf(uri))
-            } else {
-                filePathCallback?.onReceiveValue(null)
-            }
-            webView.clearFilePathCallback()
+    val fileChooserLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            val result = uri?.let { arrayOf(it) }
+            webViewState.filePathCallback?.onReceiveValue(result)
+            webViewState.filePathCallback = null
+        }
+
+    val usageStatsController = AcmoUsageStatsController()
+    var showDialog by remember { mutableStateOf(true) }
+
+    val status = usageStatsController.checkUsagePermission()
+
+    val activityContext = LocalContext.current as? ComponentActivity
+    val activityReference = WeakReference(activityContext)
+    if (!status && showDialog) {
+        Tyrads.getInstance().Dialog {
+            AcmoUsageStatsDialog(
+                dismissible = true,
+                onDismissRequest = {
+                    showDialog = false
+                    CoroutineScope(Dispatchers.IO).launch {
+                        usageStatsController.saveUsageStats()
+                    }
+                }
+            )
         }
     }
 
@@ -56,11 +78,8 @@ fun AcmoWebView() {
             )
             this.webViewClient = AcmoWebViewClient(context)
             this.webChromeClient = AcmoWebChromeClient(
-                onShowFileChooser = { filePathCallback ->
-                    this.setFilePathCallback(filePathCallback)
-                    fileChooserLauncher.launch("*/*")
-                    true
-                }
+                webViewState = webViewState,
+                fileChooserLauncher = fileChooserLauncher
             )
             this.settings.apply {
                 javaScriptEnabled = true
@@ -71,7 +90,7 @@ fun AcmoWebView() {
             this.addJavascriptInterface(WebAppInterface(it), "AndroidInterface")
         }
     }, update = {
-        it.loadUrl(mUrl?: "https://www.acmo.in")
+        it.loadUrl(mUrl)
     })
 }
 
@@ -138,28 +157,22 @@ private class AcmoWebViewClient(private val context: Context) : WebViewClient() 
 }
 
 private class AcmoWebChromeClient(
-    private val onShowFileChooser: (ValueCallback<Array<Uri>>) -> Boolean
+    private val webViewState: WebViewState,
+    private val fileChooserLauncher: ActivityResultLauncher<String>
 ) : WebChromeClient() {
+
     override fun onShowFileChooser(
-        webView: WebView?,
-        filePathCallback: ValueCallback<Array<Uri>>?,
-        fileChooserParams: FileChooserParams?
+        webView: WebView,
+        filePathCallback: ValueCallback<Array<Uri>>,
+        fileChooserParams: FileChooserParams
     ): Boolean {
-        return onShowFileChooser(filePathCallback ?: return false)
+        webViewState.filePathCallback?.onReceiveValue(null) // cancel old request if still open
+        webViewState.filePathCallback = filePathCallback
+        fileChooserLauncher.launch("*/*")
+        return true
     }
 }
 
-private var filePathCallback: ValueCallback<Array<Uri>>? = null
-
-private fun WebView.getFilePathCallback(): ValueCallback<Array<Uri>>? = filePathCallback
-
-private fun WebView.setFilePathCallback(callback: ValueCallback<Array<Uri>>?) {
-    filePathCallback = callback
-}
-
-private fun WebView.clearFilePathCallback() {
-    filePathCallback = null
-}
 
 @Keep
 private class WebAppInterface(private val context: Context) {
@@ -197,4 +210,14 @@ private class WebAppInterface(private val context: Context) {
         }
     }
 }
+
+@Keep
+class WebViewState {
+    var webView: WebView? by mutableStateOf(null)
+    var filePathCallback: ValueCallback<Array<Uri>>? by mutableStateOf(null)
+
+}
+
+@Composable
+fun rememberWebViewState() = remember { WebViewState() }
 
