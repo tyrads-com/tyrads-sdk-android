@@ -57,7 +57,7 @@ class Tyrads private constructor() {
     val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
-    internal var url: String? = null
+    internal var url: String = ""
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
     private lateinit var currentLanguageCode: String
