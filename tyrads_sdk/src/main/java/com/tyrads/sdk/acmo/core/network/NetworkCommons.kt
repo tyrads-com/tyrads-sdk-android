@@ -56,7 +56,8 @@ class NetworkCommons {
                         sharedPreferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     request.headers["X-SDK-Platform"] = AcmoConfig.SDK_PLATFORM
                     request.headers["X-SDK-Version"] = AcmoConfig.SDK_VERSION
-                    request.headers["X-Secure-Mode"] = if(Tyrads.getInstance().isSecure) "BASIC" else "PLAIN"
+                    request.headers["X-Secure-Mode"] =
+                        if (Tyrads.getInstance().isSecure) "BASIC" else "PLAIN"
                     request.headers["X-Play-Integrity"] =
                         sharedPreferences.getString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, "") ?: ""
                     Tyrads.getInstance().log("Request headers set: ${request}")
@@ -81,26 +82,24 @@ class NetworkCommons {
         }
     }
 
-    suspend fun fetchCampaigns(langCode: String): List<AcmoOffersModel> = withContext(Dispatchers.IO) {
-        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.OFFERS}?lang=$langCode"
+    suspend fun fetchCampaigns(langCode: String): List<AcmoOffersModel> =
+        withContext(Dispatchers.IO) {
+            val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.OFFERS}?lang=$langCode"
 
-        try {
-            val result = Fuel.get(url)
-                .awaitObject(object : ResponseDeserializable<AcmoOffersResponseModel> {
-                    override fun deserialize(content: String): AcmoOffersResponseModel {
-                        return Gson().fromJson(content, AcmoOffersResponseModel::class.java)
-                    }
-                })
+            try {
+                val result = Fuel.get(url)
+                    .awaitObject(object : ResponseDeserializable<AcmoOffersResponseModel> {
+                        override fun deserialize(content: String): AcmoOffersResponseModel {
+                            return Gson().fromJson(content, AcmoOffersResponseModel::class.java)
+                        }
+                    })
 
-            result.data
-                .sortedWith(compareByDescending<AcmoOffersModel> { it.premium }
-                    .thenByDescending { it.sortingScore })
-                .filter { it.campaignPayout.totalPlayablePayoutConverted > 0 }
-                .take(5)
-        } catch (e: Exception) {
-            throw e
+                result.data.sortedWith(compareByDescending<AcmoOffersModel> { it.premium }.thenByDescending { it.sortingScore })
+                    .filter { it.campaignPayout.totalPlayablePayoutConverted > 0 }.take(5)
+            } catch (e: Exception) {
+                throw e
+            }
         }
-    }
 
     suspend fun fetchCurrencySale(langCode: String): CurrencySales? = withContext(Dispatchers.IO) {
         val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ENGAGEMENT}?lang=$langCode"
@@ -120,11 +119,11 @@ class NetworkCommons {
     }
 
     suspend fun fetchActiveOffersSummary(langCode: String): Int = withContext(Dispatchers.IO) {
-        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ACTIVE_OFFERS}/${AcmoEndpointNames.OFFER_SUMMARY}?lang=$langCode"
+        val url =
+            "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ACTIVE_OFFERS}/${AcmoEndpointNames.OFFER_SUMMARY}?lang=$langCode"
 
         try {
-            val result = Fuel.get(url)
-                .awaitObject(object : ResponseDeserializable<JsonObject> {
+            val result = Fuel.get(url).awaitObject(object : ResponseDeserializable<JsonObject> {
                     override fun deserialize(content: String): JsonObject {
                         return JsonParser.parseString(content).asJsonObject
                     }
@@ -140,9 +139,22 @@ class NetworkCommons {
         val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.OFFERS}/active/$id"
 
         try {
-            val ( _, _, _ ) = Fuel.post(url).response()
+            val (_, _, _) = Fuel.post(url).response()
         } catch (e: Exception) {
             throw e
+        }
+    }
+
+    suspend fun track(activity: String) = withContext(Dispatchers.IO) {
+        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.USER_ACTIVITIES}"
+
+        try {
+            val fd = mapOf(
+                "activity" to activity
+            )
+            val (_, _, _) = Fuel.post(url).body(Gson().toJson(fd)).response()
+        } catch (e: Exception) {
+            Log.e("Activity Error", e.toString())
         }
     }
 }

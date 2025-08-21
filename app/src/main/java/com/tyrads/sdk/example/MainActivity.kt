@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 debugMode = true
             )
 
-            val isSuccess = Tyrads.getInstance().loginUser(userID = "456")
+            val isSuccess = Tyrads.getInstance().loginUser(userID = "4560")
             if (isSuccess) {
                 Log.d("Tyrads", "Top offers loaded")
             }

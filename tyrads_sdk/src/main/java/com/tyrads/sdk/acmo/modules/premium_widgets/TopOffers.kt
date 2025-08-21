@@ -45,6 +45,7 @@ import com.tyrads.sdk.NetworkCommons
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
+import com.tyrads.sdk.acmo.core.constants.TyradsActivities
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.helpers.launchUrlForce
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoCarouselSlider
@@ -96,6 +97,7 @@ fun TopOffers(
                     AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
                     false
                 )
+                Log.e("Privacy", privacyAccepted.toString())
             } catch (e: Exception) {
                 isLoading = false
                 error = e.message
@@ -111,10 +113,10 @@ fun TopOffers(
                 if (campaign.isInstalled) {
                     url = campaign.app.previewUrl
                 } else {
-                    if(campaign.isRetryDownload){
-                        // Tyrads.instance.track(TyradsActivity.campaignActivatedRetry); // Assuming a tracking method
-                    }else{
-                        //track Tyrads.instance.track(TyradsActivity.campaignActivated);
+                    if (campaign.isRetryDownload) {
+                        networkCommons.track(TyradsActivities.CAMPAIGN_ACTIVATED_RETRY)
+                    } else {
+                        networkCommons.track(TyradsActivities.CAMPAIGN_ACTIVATED)
                     }
                     networkCommons.activateOffer(id = campaign.campaignId.toString())
                 }
