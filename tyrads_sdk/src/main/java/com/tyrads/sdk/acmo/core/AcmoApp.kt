@@ -23,7 +23,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tyrads.sdk.Tyrads
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.modules.legal.AcmoPrivacyPolicyPage
 import com.tyrads.sdk.acmo.modules.webview.AcmoWebView
 import com.tyrads.sdk.ui.theme.TyradsSdkTheme
@@ -36,9 +35,6 @@ class AcmoApp : ComponentActivity() {
 
     }
 
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(LocalizationHelper.wrapContext(newBase))
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +48,6 @@ class AcmoApp : ComponentActivity() {
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
         }
-        LocalizationHelper.applySavedLanguage(this)
 
         enableEdgeToEdge()
         setContent {
