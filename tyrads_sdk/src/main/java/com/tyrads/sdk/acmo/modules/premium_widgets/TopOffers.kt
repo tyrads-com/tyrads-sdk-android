@@ -46,6 +46,7 @@ import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
 import com.tyrads.sdk.acmo.core.extensions.toColor
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.launchUrlForce
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoCarouselSlider
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.ActiveOfferButton
@@ -82,6 +83,9 @@ fun TopOffers(
     // Loading state management
     var loadingIndex by remember { mutableStateOf<Int?>(null) }
 
+    // LocalizationService instance
+    val localizationService = remember { LocalizationService.getInstance() }
+
     val privacyAccepted = remember {
         Tyrads.getInstance().preferences.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
@@ -89,6 +93,14 @@ fun TopOffers(
         )
     }
     val networkCommons = remember { NetworkCommons() }
+
+    // Initialize localization service when the composable is first created
+    LaunchedEffect(Unit) {
+        // Initialize localization service with current locale
+        // You can get the current locale from system or user preferences
+        val currentLocale = java.util.Locale.getDefault().language
+        localizationService.init(currentLocale)
+    }
 
     suspend fun openOffer(campaign: AcmoOffersModel) = withContext(Dispatchers.Default) {
         coroutineScope.launch {
@@ -160,7 +172,7 @@ fun TopOffers(
     }
 
     if (cachedHotOffers.isEmpty() || showMyOffersEmptyView) {
-        EmptyOffersView()
+        EmptyOffersView(localizationService = localizationService)
         return
     }
 
@@ -256,7 +268,7 @@ fun TopOffers(
                         },
                         showIndicator = true,
                         infiniteScroll = true,
-                        viewportFraction = 0.88f,
+                        viewportFraction = 1.0f,
                         indicatorActiveColor = Tyrads.getInstance().premiumColor.toColor(),
                         indicatorInactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
                         onPageChanged = { index ->
@@ -282,7 +294,9 @@ fun TopOffers(
 }
 
 @Composable
-private fun EmptyOffersView() {
+private fun EmptyOffersView(
+    localizationService: LocalizationService
+) {
     val coroutineScope = rememberCoroutineScope()
     Box(
         modifier = Modifier
@@ -304,7 +318,7 @@ private fun EmptyOffersView() {
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "Keep Playing!\nExciting Rewards Await!",
+                text = localizationService.translate("data.widget.empty.noOffers"),
                 textAlign = TextAlign.Center,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -325,12 +339,14 @@ private fun EmptyOffersView() {
                     .height(34.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
+                val translatedText = localizationService.translate("data.widget.button.continuePlaying")
                 Text(
-                    text = "Continue Playing",
+                    text = translatedText,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.secondary
                 )
+                Log.d("TopOffers", "Localized continue playing text: $translatedText")
             }
         }
     }

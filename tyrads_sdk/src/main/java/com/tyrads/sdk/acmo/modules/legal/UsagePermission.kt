@@ -8,8 +8,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -17,10 +15,14 @@ import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.CloseonTap
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.launch
 
 @Composable
 fun AcmoUsagePermissionsPage() {
+    // Initialize LocalizationService similar to Flutter implementation
+    val localizationService = LocalizationService.getInstance()
+
     Scaffold (
         containerColor = Color.White
     ){ innerPadding ->
@@ -36,20 +38,30 @@ fun AcmoUsagePermissionsPage() {
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Body()
+                Body(localizationService)
                 Spacer(modifier = Modifier.height(40.dp))
                 UsageStatsCard(
                     onGrant = {
+                        // Save privacy acceptance preference
                         Tyrads.getInstance().preferences.edit().putBoolean(
                             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
                             true
                         ).apply()
+
+                        // Save usage stats
                         Tyrads.getInstance().tyradScope.launch {
                             val usageStatsController = AcmoUsageStatsController()
                             usageStatsController.saveUsageStats()
                         }
 
-                        Tyrads.getInstance().navController.navigate("webview") {
+                        // Navigate based on user status - matching Flutter logic
+                        val destination = if (Tyrads.getInstance().newUser) {
+                            "users-update" // Navigate to AcmoUsersUpdatePage equivalent
+                        } else {
+                            "webview" // Navigate to AcmoWebSdk equivalent
+                        }
+
+                        Tyrads.getInstance().navController.navigate(destination) {
                             popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -61,12 +73,12 @@ fun AcmoUsagePermissionsPage() {
     }
 }
 
-
 @Composable
-fun Body() {
+fun Body(localizationService: LocalizationService) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Title using localization - matching Flutter implementation
         Text(
-            text = stringResource(id = R.string.usage_permissions_title),
+            text = localizationService.translate("data.initialization.usagePermission.title"),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
@@ -76,6 +88,7 @@ fun Body() {
             modifier = Modifier.padding(top = 10.dp)
         )
 
+        // Privacy banner image - matching Flutter sizing
         Image(
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",

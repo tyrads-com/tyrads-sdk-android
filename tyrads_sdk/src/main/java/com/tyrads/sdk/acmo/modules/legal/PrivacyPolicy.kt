@@ -18,7 +18,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -34,12 +33,15 @@ import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.helpers.acmoLaunchURL
-import com.tyrads.sdk.acmo.modules.legal.settings.LanguageDropdownMenu
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 
 @Composable
 fun AcmoPrivacyPolicyPage() {
     val scrollState = rememberScrollState()
-    val activityContext = LocalContext.current as? ComponentActivity // Get the current context
+    val activityContext = LocalContext.current as? ComponentActivity
+
+    // Initialize LocalizationService similar to Flutter implementation
+    val localizationService = LocalizationService.getInstance()
 
     val context = LocalContext.current
     Scaffold(
@@ -52,7 +54,7 @@ fun AcmoPrivacyPolicyPage() {
                 .padding(innerPadding)
         ) {
             CloseonTap()
-            Body()
+            Body(localizationService)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -60,27 +62,25 @@ fun AcmoPrivacyPolicyPage() {
                     .verticalScroll(scrollState)
                     .padding(horizontal = 36.dp)
             ) {
-                Info()
+                Info(localizationService)
             }
 
             TwoButtonsWithInfo2(
+                localizationService = localizationService,
                 acceptOnTap = {
                     Tyrads.getInstance().navController.navigate("usage-permissions")
-
                 },
                 rejectOntap = {
                     activityContext?.finish()
                 },
             )
         }
-
-
     }
 }
 
 @Composable
 fun CloseonTap() {
-    val activityContext = LocalContext.current as? ComponentActivity // Get the current context
+    val activityContext = LocalContext.current as? ComponentActivity
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -102,8 +102,7 @@ fun CloseonTap() {
 }
 
 @Composable
-fun Body() {
-
+fun Body(localizationService: LocalizationService) {
     val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
         providerPackage = "com.google.android.gms",
@@ -117,13 +116,14 @@ fun Body() {
         Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Medium),
         Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Bold)
     )
-    val context = LocalContext.current
+
     Column(
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Title using localization
         Text(
-            text = stringResource(id = R.string.privacy_policy_title),
+            text = localizationService.translate("data.initialization.intro.title"),
             style = TextStyle(
                 fontFamily = lexendFontFamily,
                 fontSize = 16.sp,
@@ -131,11 +131,11 @@ fun Body() {
                 lineHeight = 22.sp,
                 textAlign = TextAlign.Center,
                 color = Color.Black
-
             )
         )
-//        LanguageDropdownMenu()
+
         Spacer(modifier = Modifier.height(25.dp))
+
         Image(
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",
@@ -144,18 +144,18 @@ fun Body() {
                 .fillMaxWidth()
                 .wrapContentSize(Alignment.Center)
         )
+
         Spacer(modifier = Modifier.height(18.dp))
+
+        // Subtitle using localization
         Text(
-//            text = "Play Your Favorite Games!\nAnd Earn Your Rewards!",
-            text = stringResource(id = R.string.privacy_policy_subtitle),
+            text = localizationService.translate("data.initialization.intro.subtitle"),
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = lexendFontFamily,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.W400,
                 textAlign = TextAlign.Center,
                 color = Color.Black
-
-
             ),
             textAlign = TextAlign.Center,
             lineHeight = 22.4.sp
@@ -164,8 +164,8 @@ fun Body() {
 }
 
 @Composable
-fun Info() {
-    val context = LocalContext.current  // Get the current context
+fun Info(localizationService: LocalizationService) {
+    val context = LocalContext.current
 
     val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
@@ -179,6 +179,11 @@ fun Info() {
         Font(googleFont = openSansFontName, fontProvider = provider, weight = FontWeight.Medium),
         Font(googleFont = openSansFontName, fontProvider = provider, weight = FontWeight.Bold)
     )
+
+    // Get the localized text which should contain the URL links
+    val localizedText = localizationService.translate("data.initialization.legal.explanation")
+
+    // Create clickable text with the localized content
     val annotatedString = buildAnnotatedString {
         withStyle(
             style = SpanStyle(
@@ -188,24 +193,20 @@ fun Info() {
                 color = Color(0x9B000000)
             )
         ) {
-            append(
-                text = stringResource(id = R.string.privacy_policy_consent_info)
+            append(localizedText)
+        }
+
+        // Add URL annotations for clickable links
+        // This would need to be adapted based on how your localized text contains URLs
+        val urlPattern = "https://[\\w.-]+(?:\\.[a-zA-Z]{2,})+(?:/[\\w.-]*)*/?".toRegex()
+        urlPattern.findAll(localizedText).forEach { matchResult ->
+            addStringAnnotation(
+                tag = "URL",
+                annotation = matchResult.value,
+                start = matchResult.range.first,
+                end = matchResult.range.last + 1
             )
         }
-        withStyle(
-            style = SpanStyle(
-                color = Color.Blue,
-                textDecoration = TextDecoration.Underline
-            )
-        ) {
-            append(" https://tyrads.com/tyrsdk-privacy-policy/")
-        }
-        addStringAnnotation(
-            tag = "URL",
-            annotation = "https://tyrads.com/tyrsdk-privacy-policy/",
-            start = length - "https://tyrads.com/tyrsdk-privacy-policy/".length,
-            end = length
-        )
     }
 
     ClickableText(
@@ -222,10 +223,9 @@ fun Info() {
     )
 }
 
-
 @Composable
-fun Info2() {
-    val context = LocalContext.current  // Get the current context
+fun Info2(localizationService: LocalizationService) {
+    val context = LocalContext.current
     val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
         providerPackage = "com.google.android.gms",
@@ -238,26 +238,55 @@ fun Info2() {
         Font(googleFont = interFontName, fontProvider = provider, weight = FontWeight.Medium),
         Font(googleFont = interFontName, fontProvider = provider, weight = FontWeight.Bold)
     )
+
+    // Get the localized text which should contain styled tags
+    val localizedText = localizationService.translate("data.initialization.intro.label.iHaveRead")
+
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(fontFamily = interFontFamily)) {
-            append(stringResource(id = R.string.privacy_policy_agreement_prefix))
-            pushStringAnnotation(
-                tag = "TOS",
-                annotation = "https://tyrads.com/tyrsdk-terms-of-service/"
-            )
-            withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
-                append(stringResource(id = R.string.privacy_policy_terms_text))
+            // Parse the localized text and handle <tos> and <pp> tags
+            var currentIndex = 0
+            val tosPattern = "<tos>(.*?)</tos>".toRegex()
+            val ppPattern = "<pp>(.*?)</pp>".toRegex()
+
+            var processedText = localizedText
+
+            // Handle TOS tags
+            tosPattern.findAll(localizedText).forEach { matchResult ->
+                val beforeMatch = processedText.substring(currentIndex, matchResult.range.first)
+                append(beforeMatch)
+
+                pushStringAnnotation(
+                    tag = "TOS",
+                    annotation = "https://tyrads.com/tyrsdk-terms-of-service/"
+                )
+                withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
+                    append(matchResult.groupValues[1])
+                }
+                pop()
+
+                currentIndex = matchResult.range.last + 1
             }
-            pop()
-            append(stringResource(id = R.string.privacy_policy_and))
-            pushStringAnnotation(
-                tag = "PP",
-                annotation = "https://tyrads.com/tyrsdk-privacy-policy/"
-            )
-            withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
-                append(stringResource(id = R.string.privacy_policy_privacy_text))
+
+            // Handle PP tags similarly
+            ppPattern.findAll(localizedText).forEach { matchResult ->
+                pushStringAnnotation(
+                    tag = "PP",
+                    annotation = "https://tyrads.com/tyrsdk-privacy-policy/"
+                )
+                withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
+                    append(matchResult.groupValues[1])
+                }
+                pop()
             }
-            pop()
+
+            // For now, use the cleaned text without tags
+            val cleanText = localizedText
+                .replace("<tos>", "")
+                .replace("</tos>", "")
+                .replace("<pp>", "")
+                .replace("</pp>", "")
+            append(cleanText)
         }
     }
 
@@ -277,6 +306,7 @@ fun Info2() {
 
 @Composable
 fun TwoButtonsWithInfo2(
+    localizationService: LocalizationService,
     acceptOnTap: () -> Unit,
     rejectOntap: () -> Unit,
     modifier: Modifier = Modifier
@@ -285,11 +315,13 @@ fun TwoButtonsWithInfo2(
         modifier = modifier
             .padding(
                 bottom = 50.dp,
-                top = 20.dp,)
+                top = 20.dp,
+            )
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Info2()
+        Info2(localizationService)
+
         Button(
             onClick = acceptOnTap,
             modifier = Modifier
@@ -298,11 +330,14 @@ fun TwoButtonsWithInfo2(
             shape = RoundedCornerShape(8.dp),
             colors = ButtonDefaults.buttonColors(containerColor = Color(AcmoConfig.SECONDARY_COLOR))
         ) {
-            Text(stringResource(id = R.string.privacy_policy_accept))
+            // Accept button using localization
+            Text(localizationService.translate("data.initialization.intro.cta.accept"))
         }
+
         TextButton(onClick = rejectOntap) {
+            // Reject button using localization
             Text(
-                stringResource(id = R.string.privacy_policy_reject),
+                localizationService.translate("data.initialization.intro.cta.reject"),
                 color = Color(0xFFB32C2C),
                 style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium)
             )
