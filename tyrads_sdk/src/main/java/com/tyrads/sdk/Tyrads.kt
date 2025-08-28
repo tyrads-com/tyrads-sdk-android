@@ -1,6 +1,5 @@
 package com.tyrads.sdk
 
-
 import AcmoConfig
 import AcmoEndpointNames
 import AcmoInitModel
@@ -8,6 +7,7 @@ import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
 import TyradsActivity
+import android.app.LocaleManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -21,21 +21,23 @@ import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
+import java.util.Locale
 
 @Keep
 class Tyrads private constructor() {
@@ -57,7 +59,10 @@ class Tyrads private constructor() {
     internal var url: String = ""
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
+
+    // Language management - similar to Dart implementation
     private lateinit var currentLanguageCode: String
+    private val localizationService = LocalizationService.getInstance()
 
     private var _isSecure: Boolean = false;
     val isSecure: Boolean get() = _isSecure;
@@ -123,12 +128,27 @@ class Tyrads private constructor() {
         }
 
         NetworkCommons()
-        currentLanguageCode = LocalizationHelper.getLanguageCode(context)
+
+        // Initialize language similar to Dart implementation
+        var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
+
+        if(currentLanguage.isNullOrBlank()) {
+            currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()?.split("-")?.first() ?: "en"
+            } else {
+                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first() ?: "en"
+            }
+        }
+        currentLanguageCode = currentLanguage
+        log("Selected Language: $currentLanguageCode")
+
+        // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
+        localizationService.init(currentLanguageCode)
+
         val integrityToken = getPlayIntegrityToken(context)
         log("Integrity Token: $integrityToken")
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         log("Tyrads SDK initialized", Log.INFO)
-
     }
 
     suspend fun loginUser(userID: String? = null): Boolean = withContext(Dispatchers.Default) {
@@ -198,7 +218,6 @@ class Tyrads private constructor() {
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
 
-
             when (result) {
                 is Result.Success -> {
                     log("User login successful", Log.INFO)
@@ -266,19 +285,48 @@ class Tyrads private constructor() {
             context.startActivity(intent)
         }
 
-    suspend fun changeLanguage(context: Context, languageCode: String) =
-        withContext(Dispatchers.Default) {
-            tyradScope.launch {
-                LocalizationHelper.changeLanguage(
-                    context, languageCode
-                )
+    /**
+     * Changes the language of the SDK - similar to Dart implementation
+     *
+     * This method is used to change the language of the SDK.
+     *
+     * The [languageCode] parameter is the language code of the language
+     * to be used. For example, "en" for English, or "es" for Spanish.
+     *
+     * The method is asynchronous and returns when the language has been changed.
+     *
+     * The Tyrads SDK supports the following languages:
+     * - English (en)
+     * - Spanish (es)
+     * - Indonesian (id)
+     * - Japanese (ja)
+     * - Korean (ko)
+     * - Chinese (China, Simplified) (zh-Hans-CN)
+     *
+     * Note that the language change is persisted in the app's preferences,
+     * so the next time the app is started, the SDK will use the new language.
+     */
+    suspend fun changeLanguage(languageCode: String) = withContext(Dispatchers.Default) {
+        try {
+            currentLanguageCode = languageCode
+
+            preferences.edit {
+                putString(AcmoKeyNames.LANGUAGE, languageCode)
             }
+
+            localizationService.changeLanguage(languageCode)
+
+            log("Language changed to: $languageCode")
+        } catch (e: Exception) {
+            log("Error changing language: ${e.message}", Log.ERROR)
         }
+    }
 
     enum class PremiumWidgetStyles {
         SLIDER_CARDS,
         LIST
     }
+
     @Composable
     fun TopPremiumOffers(
         showMore: Boolean = true,
@@ -310,5 +358,4 @@ class Tyrads private constructor() {
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
     }
-
 }
