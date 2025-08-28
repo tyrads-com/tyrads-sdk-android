@@ -25,6 +25,7 @@ import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.numeral
 import com.tyrads.sdk.acmo.core.extensions.toColor
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 import kotlinx.coroutines.launch
@@ -43,6 +44,7 @@ fun AcmoOfferListItem(
     val coroutineScope = rememberCoroutineScope()
     val premiumColor = Tyrads.getInstance().premiumColor.toColor()
     val premiumFgColor = MaterialTheme.colorScheme.onPrimary
+    val localizationService = LocalizationService.getInstance()
 
     // Loading state calculations
     val isLoading = loadingIndex == index
@@ -52,7 +54,7 @@ fun AcmoOfferListItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable(
-                enabled = !anyLoading,  // Disable tap when any item is loading
+                enabled = !anyLoading,
                 onClick = onItemTap
             ),
         verticalAlignment = Alignment.CenterVertically,
@@ -76,7 +78,8 @@ fun AcmoOfferListItem(
             modifier = Modifier.weight(1f),
             offer = offer,
             currencySales = currencySales,
-            premiumColor = premiumColor
+            premiumColor = premiumColor,
+            localizationService = localizationService
         )
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -84,18 +87,19 @@ fun AcmoOfferListItem(
         PlayButton(
             onButtonTap = {
                 coroutineScope.launch {
-                    onLoadingIndexChange(index)  // Set this item as loading
+                    onLoadingIndexChange(index)
                     try {
                         onButtonTap()
                     } finally {
-                        onLoadingIndexChange(null)  // Clear loading state
+                        onLoadingIndexChange(null)
                     }
                 }
             },
             premiumColor = premiumColor,
             premiumFgColor = premiumFgColor,
             isLoading = isLoading,
-            anyLoading = anyLoading
+            anyLoading = anyLoading,
+            localizationService = localizationService
         )
     }
 }
@@ -137,7 +141,8 @@ private fun OfferDetails(
     modifier: Modifier = Modifier,
     offer: AcmoOffersModel,
     currencySales: CurrencySales?,
-    premiumColor: Color
+    premiumColor: Color,
+    localizationService: LocalizationService
 ) {
     Column(
         modifier = modifier,
@@ -146,7 +151,8 @@ private fun OfferDetails(
         currencySales?.let {
             BonusLabel(
                 multiplier = it.multiplier ?: 1.0,
-                premiumColor = premiumColor
+                premiumColor = premiumColor,
+                localizationService = localizationService
             )
         }
 
@@ -165,7 +171,11 @@ private fun OfferDetails(
 }
 
 @Composable
-private fun BonusLabel(multiplier: Double, premiumColor: Color) {
+private fun BonusLabel(
+    multiplier: Double,
+    premiumColor: Color,
+    localizationService: LocalizationService
+) {
     Box(
         modifier = Modifier
             .background(
@@ -175,7 +185,10 @@ private fun BonusLabel(multiplier: Double, premiumColor: Color) {
             .padding(horizontal = 8.dp, vertical = 2.dp)
     ) {
         Text(
-            text = "${multiplier}x BONUS",
+            text = localizationService.translate(
+                "data.widget.bonus.multiplier",
+                mapOf("multiplier" to multiplier)
+            ),
             color = premiumColor,
             fontWeight = FontWeight.Bold,
             fontSize = 10.sp
@@ -220,11 +233,12 @@ private fun PlayButton(
     premiumColor: Color,
     premiumFgColor: Color,
     isLoading: Boolean,
-    anyLoading: Boolean
+    anyLoading: Boolean,
+    localizationService: LocalizationService
 ) {
     Button(
         onClick = onButtonTap,
-        enabled = !anyLoading,  // Disable when any item is loading
+        enabled = !anyLoading,
         modifier = Modifier.sizeIn(minWidth = 75.dp, minHeight = 42.dp),
         shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
@@ -246,7 +260,7 @@ private fun PlayButton(
             }
 
             Text(
-                text = "Play",
+                text = localizationService.translate("data.widget.button.play"),
                 fontWeight = FontWeight.SemiBold,
                 color = if (anyLoading) Color(0xFFA3A9B6) else premiumFgColor
             )

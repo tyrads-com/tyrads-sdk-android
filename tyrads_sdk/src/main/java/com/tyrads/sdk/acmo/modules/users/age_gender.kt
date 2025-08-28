@@ -13,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -25,6 +24,7 @@ import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentGenderSelector
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentAgeSelector
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 
 
 @Composable
@@ -32,6 +32,9 @@ fun AcmoUsersUpdatePage() {
     var selectedGender by remember { mutableStateOf<Int?>(null) }
     var selectedAge by remember { mutableStateOf(18) }
     var isSubmitting by remember { mutableStateOf(false) }
+
+    // Initialize LocalizationService similar to Flutter implementation
+    val localizationService = LocalizationService.getInstance()
 
     Scaffold { innerPadding ->
         Box(
@@ -47,7 +50,7 @@ fun AcmoUsersUpdatePage() {
                     .fillMaxWidth(),
                 contentScale = ContentScale.FillWidth
             )
-             Column(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 18.dp)
@@ -58,9 +61,9 @@ fun AcmoUsersUpdatePage() {
 
                 Spacer(modifier = Modifier.height(65.dp))
 
-                // Title section
+                // Title section - using localization
                 Text(
-                    text = stringResource(id = R.string.user_profile_title, "User Profile"),
+                    text = localizationService.translate("data.initialization.userInfo.title"),
                     style = MaterialTheme.typography.titleLarge.copy(
                         color = Color(0xFF2CB388),
                         fontWeight = FontWeight.Medium
@@ -70,17 +73,16 @@ fun AcmoUsersUpdatePage() {
 
                 Spacer(modifier = Modifier.height(80.dp))
 
-                // Gender section
+                // Gender section - using localization
                 Text(
-                    text = stringResource(id = R.string.gender_title, "Your Gender"),
+                    text = localizationService.translate("data.initialization.userInfo.chooseGender.label"),
                     style = TextStyle(
-//                        color = MaterialTheme.colorScheme.secondary,
                         color = Color(0xFF2CB388),
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
                     ),
                     textAlign = TextAlign.Center
                 )
-
 
                 Spacer(modifier = Modifier.height(30.dp))
 
@@ -95,18 +97,20 @@ fun AcmoUsersUpdatePage() {
                 }
 
                 Spacer(modifier = Modifier.height(70.dp))
-                // Age section
+
+                // Age section - using localization
                 Text(
-                    text = stringResource(id = R.string.age_title, "Your Age"),
+                    text = localizationService.translate("data.initialization.userInfo.chooseAge.label"),
                     style = TextStyle(
-//                        color = MaterialTheme.colorScheme.secondary,
                         color = Color(0xFF2CB388),
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 16.sp
                     ),
                     textAlign = TextAlign.Center
                 )
 
                 Spacer(modifier = Modifier.height(36.dp))
+
                 // Age selection component
                 AcmoComponentAgeSelector(
                     onChanged = { selectedAge = it },
@@ -119,6 +123,12 @@ fun AcmoUsersUpdatePage() {
                 Button(
                     onClick = {
                         if (!isSubmitting) {
+                            // Add validation similar to Flutter implementation
+                            if (selectedGender == null) {
+                                // Show snackbar or toast: "Please select gender and age to proceed."
+                                return@Button
+                            }
+
                             isSubmitting = true
 
                             Tyrads.getInstance().navController.navigate("offers") {
@@ -145,7 +155,7 @@ fun AcmoUsersUpdatePage() {
                         )
                     } else {
                         Text(
-                            text = stringResource(id = R.string.continue_button, "Continue"),
+                            text = localizationService.translate("data.initialization.userInfo.cta.continue"),
                             style = TextStyle(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 16.sp
@@ -165,7 +175,6 @@ fun CloseonTap() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-//            .padding(end = 10.dp)
     ) {
         IconButton(
             onClick = {
