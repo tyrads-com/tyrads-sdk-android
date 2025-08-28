@@ -114,9 +114,9 @@ fun TopOffers(
                     url = campaign.app.previewUrl
                 } else {
                     if (campaign.isRetryDownload) {
-                        networkCommons.track(TyradsActivities.CAMPAIGN_ACTIVATED_RETRY)
+                        Tyrads.getInstance().track(TyradsActivities.CAMPAIGN_ACTIVATED_RETRY)
                     } else {
-                        networkCommons.track(TyradsActivities.CAMPAIGN_ACTIVATED)
+                        Tyrads.getInstance().track(TyradsActivities.CAMPAIGN_ACTIVATED)
                     }
                     networkCommons.activateOffer(id = campaign.campaignId.toString())
                 }

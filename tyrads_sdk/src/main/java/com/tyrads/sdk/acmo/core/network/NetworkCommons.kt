@@ -144,17 +144,4 @@ class NetworkCommons {
             throw e
         }
     }
-
-    suspend fun track(activity: String) = withContext(Dispatchers.IO) {
-        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.USER_ACTIVITIES}"
-
-        try {
-            val fd = mapOf(
-                "activity" to activity
-            )
-            val (_, _, _) = Fuel.post(url).body(Gson().toJson(fd)).response()
-        } catch (e: Exception) {
-            Log.e("Activity Error", e.toString())
-        }
-    }
 }
