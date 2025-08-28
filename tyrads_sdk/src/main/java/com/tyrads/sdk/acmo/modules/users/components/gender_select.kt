@@ -15,71 +15,107 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
+import com.tyrads.sdk.acmo.core.services.LocalizationService
+
+data class Gender(
+    val name: String,
+    val isSelected: Boolean,
+    val isMale: Boolean = false,
+    val isFemale: Boolean = false
+)
 
 @Composable
 fun AcmoComponentGenderSelector(
     selectedGender: Int?,
     onGenderSelected: (Int) -> Unit
 ) {
+    // Initialize LocalizationService similar to Flutter implementation
+    val localizationService = LocalizationService.getInstance()
+
+    // Create genders list with localized names
+    val genders = listOf(
+        Gender(
+            name = localizationService.translate("data.initialization.userInfo.gender.male"),
+            isSelected = selectedGender == 1,
+            isMale = true
+        ),
+        Gender(
+            name = localizationService.translate("data.initialization.userInfo.gender.female"),
+            isSelected = selectedGender == 2,
+            isFemale = true
+        )
+    )
+
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
         contentPadding = PaddingValues(horizontal = 16.dp)
     ) {
-        items(2) { index ->
+        items(genders.size) { index ->
+            val gender = genders[index]
             val genderValue = if (index == 0) 1 else 2 // Male = 1, Female = 2
-            val isSelected = selectedGender == genderValue
 
-            Card(
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .clickable { onGenderSelected(genderValue) },
-                colors = CardDefaults.cardColors(
-                    containerColor = if (isSelected)
-                        MaterialTheme.colorScheme.secondary
-                    else
-                        Color.White
-                ),
-                shape = RoundedCornerShape(8.dp),
-                elevation = CardDefaults.cardElevation(
-                    defaultElevation = 4.dp
-                )
+            GenderListItem(
+                gender = gender,
+                onClick = { onGenderSelected(genderValue) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun GenderListItem(
+    gender: Gender,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 8.dp)
+            .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = if (gender.isSelected)
+                MaterialTheme.colorScheme.secondary
+            else
+                Color.White
+        ),
+        shape = RoundedCornerShape(8.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 4.dp
+        )
+    ) {
+        Box(
+            modifier = Modifier
+                .size(100.dp)
+                .padding(5.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(100.dp)
-                        .padding(5.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-                        Image(
-                            painter = painterResource(
-                                id = if (index == 0) R.drawable.male else R.drawable.female
-                            ),
-                            contentDescription = if (index == 0) "Male" else "Female",
-                            modifier = Modifier.size(30.dp),
-                            colorFilter = ColorFilter.tint(
-                                if (isSelected) Color.White else Color.Gray
-                            )
-                        )
+                Image(
+                    painter = painterResource(
+                        id = if (gender.isMale) R.drawable.male else R.drawable.female
+                    ),
+                    contentDescription = gender.name,
+                    modifier = Modifier.size(40.dp),
+                    colorFilter = ColorFilter.tint(
+                        if (gender.isSelected) Color.White else Color.Gray
+                    )
+                )
 
-                        Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
-                        Text(
-                            text = stringResource(
-                                id = if (index == 0) R.string.male else R.string.female,
-                                if (index == 0) "Male" else "Female"
-                            ),
-                            color = if (isSelected) Color.White else Color.Gray
-                        )
-                    }
-                }
+                Text(
+                    text = gender.name,
+                    color = if (gender.isSelected) Color.White else Color(0xFF667085),
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
             }
         }
     }
