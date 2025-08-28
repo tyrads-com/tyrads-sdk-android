@@ -81,6 +81,7 @@ class AcmoApp : ComponentActivity() {
                         startDestination = initPath
                     ) {
                         composable("webview") {
+                            Tyrads.getInstance().track(TyradsActivity.OPENED)
                             AcmoWebView()
                         }
                         composable("privacy") {

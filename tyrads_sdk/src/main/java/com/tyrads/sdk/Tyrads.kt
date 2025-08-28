@@ -228,7 +228,7 @@ class Tyrads private constructor() {
                         usageStatsController.saveUsageStats()
                     }
 
-                    track(TyradsActivity.initialized)
+                    track(TyradsActivity.INITIALIZED)
                     return@withContext true
                 }
 
