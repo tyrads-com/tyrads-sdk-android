@@ -17,14 +17,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.tyrads.sdk.Tyrads
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
+import com.tyrads.sdk.acmo.core.services.LocalizationService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 @SuppressLint("SetJavaScriptEnabled")
 @Keep
@@ -32,6 +35,7 @@ import androidx.core.net.toUri
 fun AcmoWebView() {
     val context = LocalContext.current
     val mUrl = Tyrads.getInstance().url
+    val coroutineScope = rememberCoroutineScope()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
     val fileChooserLauncher = rememberLauncherForActivityResult(
@@ -68,7 +72,7 @@ fun AcmoWebView() {
                 allowFileAccess = true
                 allowContentAccess = true
             }
-            this.addJavascriptInterface(WebAppInterface(it), "AndroidInterface")
+            this.addJavascriptInterface(WebAppInterface(it, coroutineScope), "AndroidInterface")
         }
     }, update = {
         it.loadUrl(mUrl)
@@ -162,10 +166,10 @@ private fun WebView.clearFilePathCallback() {
 }
 
 @Keep
-private class WebAppInterface(private val context: Context) {
+private class WebAppInterface(private val context: Context, private val coroutineScope: CoroutineScope) {
     private val mainHandler = Handler(Looper.getMainLooper())
-
-    @JavascriptInterface
+    private val localizationService = LocalizationService.getInstance()
+     @JavascriptInterface
     fun postMessage(jsonMessage: String) {
         try {
             Log.d("WebAppInterface", "Received message: $jsonMessage")
@@ -180,10 +184,12 @@ private class WebAppInterface(private val context: Context) {
                 }
 
                 "changeLanguage" -> {
-                    val langCode = json.optString("languageCode")
+                    val langCode = json.optString("value")
                     if (langCode.isNotEmpty()) {
                         mainHandler.post {
-                            LocalizationHelper.changeLanguage(context, langCode, false)
+                            coroutineScope.launch {
+                                localizationService.changeLanguage(  langCode, false)
+                            }
                         }
                     }
                 }
