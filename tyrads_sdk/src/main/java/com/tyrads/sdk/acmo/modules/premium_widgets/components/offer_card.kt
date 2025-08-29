@@ -20,19 +20,18 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.numeral
 import com.tyrads.sdk.acmo.core.extensions.toColor
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 
@@ -48,6 +47,7 @@ fun CardContainer(
     decoration: Shape? = null,
     content: @Composable () -> Unit
 ) {
+
     Card(
         modifier = modifier
             .then(if (margin != null) Modifier.padding(margin) else Modifier)
@@ -109,6 +109,7 @@ fun AcmoOfferCard(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val itemHeight = screenWidth.value / itemScaleFactor
+    val localizationService = LocalizationService.getInstance()
 
     Box(
         modifier = Modifier
@@ -295,7 +296,7 @@ fun AcmoOfferCard(
                         ) {
                             AcmoButton(
                                 onTap = onButtonClick,
-                                label = "Play Now",
+                                label = localizationService.translate("data.widget.button.play"), // Updated this line
                                 borderRadius = 8.0,
                                 labelStyle = TextStyle(
                                     color = Color.White,
@@ -362,7 +363,6 @@ fun getDarkerShade(color: Color): Color {
     )
 }
 
-// AcmoButton3 component - exact conversion of AcmoButton_3
 @Composable
 fun AcmoButton(
     onTap: (() -> Unit)?,
@@ -370,8 +370,9 @@ fun AcmoButton(
     color: Color? = null,
     borderRadius: Double? = null,
     labelStyle: TextStyle? = null,
-    modifier: Modifier = Modifier
-) {
+    modifier: Modifier = Modifier,
+
+    ) {
     Box(
         modifier = modifier
             .clickable { onTap?.invoke() }
