@@ -53,7 +53,7 @@ class MainActivity : ComponentActivity() {
                 debugMode = true
             )
 
-            val isSuccess = Tyrads.getInstance().loginUser(userID = "456")
+            val isSuccess = Tyrads.getInstance().loginUser(userID = "14560")
             if (isSuccess) {
                 Log.d("Tyrads", "Top offers loaded")
             }
@@ -137,7 +137,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             )
         }
         Tyrads.getInstance().TopPremiumOffers(
-            widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS
+            widgetStyle = Tyrads.PremiumWidgetStyles.LIST
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(

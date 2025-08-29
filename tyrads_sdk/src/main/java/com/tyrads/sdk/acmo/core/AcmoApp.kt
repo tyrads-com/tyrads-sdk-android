@@ -3,6 +3,7 @@ package com.tyrads.sdk.acmo.core
 
 import AcmoKeyNames
 import AcmoUsagePermissionsPage
+import AcmoUsersUpdatePage
 import android.content.Context
 import android.os.Bundle
 import android.util.Log
@@ -39,6 +40,8 @@ class AcmoApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        Tyrads.getInstance().initializePrivacyStatus()
+
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&
             !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)) {
             Tyrads.getInstance().log("Offerwall closed")
@@ -53,6 +56,7 @@ class AcmoApp : ComponentActivity() {
         setContent {
             TyradsSdkTheme {
                 var initPath = "privacy"
+                Log.e("Privacy", Tyrads.getInstance().privacyAccepted.value.toString())
                 if (Tyrads.getInstance().preferences.getBoolean(
                         AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
                         false
@@ -75,6 +79,9 @@ class AcmoApp : ComponentActivity() {
                         composable("privacy") {
                             AcmoPrivacyPolicyPage(
                             )
+                        }
+                        composable("users-update") {
+                            AcmoUsersUpdatePage()
                         }
                         composable("usage-permissions") {
                             AcmoUsagePermissionsPage(

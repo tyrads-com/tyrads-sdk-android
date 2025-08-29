@@ -17,6 +17,7 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.CloseonTap
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 @Composable
 fun AcmoUsagePermissionsPage() {
@@ -43,10 +44,13 @@ fun AcmoUsagePermissionsPage() {
                 UsageStatsCard(
                     onGrant = {
                         // Save privacy acceptance preference
-                        Tyrads.getInstance().preferences.edit().putBoolean(
-                            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-                            true
-                        ).apply()
+                        Tyrads.getInstance().setPrivacyAccepted(true)
+//                        Tyrads.getInstance().preferences.edit {
+//                            putBoolean(
+//                                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
+//                                true
+//                            )
+//                        }
 
                         // Save usage stats
                         Tyrads.getInstance().tyradScope.launch {
@@ -54,11 +58,10 @@ fun AcmoUsagePermissionsPage() {
                             usageStatsController.saveUsageStats()
                         }
 
-                        // Navigate based on user status - matching Flutter logic
                         val destination = if (Tyrads.getInstance().newUser) {
-                            "users-update" // Navigate to AcmoUsersUpdatePage equivalent
+                            "users-update"
                         } else {
-                            "webview" // Navigate to AcmoWebSdk equivalent
+                            "webview"
                         }
 
                         Tyrads.getInstance().navController.navigate(destination) {

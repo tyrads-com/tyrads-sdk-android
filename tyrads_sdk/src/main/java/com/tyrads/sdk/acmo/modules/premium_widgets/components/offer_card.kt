@@ -1,5 +1,6 @@
 package com.tyrads.sdk.acmo.modules.premium_widgets.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -96,6 +96,7 @@ fun TrianglePainter(
     }
 }
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun AcmoOfferCard(
     item: AcmoOffersModel,
@@ -129,6 +130,8 @@ fun AcmoOfferCard(
 
         // Main card container
         CardContainer(
+            modifier = Modifier
+                .padding(margin ?: PaddingValues()),
             borderRadius = 16f,
             height = (itemHeight + 112).dp
         ) {
@@ -214,7 +217,7 @@ fun AcmoOfferCard(
                                 text = item.app.title,
                                 style = TextStyle(
                                     fontSize = 14.sp,
-                                    lineHeight = (18f/14f * 14).sp,
+                                    lineHeight = (18f / 14f * 14).sp,
                                 ),
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
@@ -253,9 +256,11 @@ fun AcmoOfferCard(
                                         )
 
                                         Text(
-                                            text = " ${(item.campaignPayout.totalPlayablePayoutConverted *
-                                                    (currencySales?.multiplier ?: 1.0))
-                                                .numeral()}",
+                                            text = " ${
+                                                (item.campaignPayout.totalPlayablePayoutConverted *
+                                                        (currencySales?.multiplier ?: 1.0))
+                                                    .numeral()
+                                            }",
                                             style = TextStyle(
                                                 color = Color.Black,
                                                 fontWeight = FontWeight.W700,
@@ -269,7 +274,7 @@ fun AcmoOfferCard(
 
                                 // Info icon
                                 Image(
-                                    painter = painterResource(R.drawable.diamond), // Replace with actual resource
+                                    painter = painterResource(R.drawable.info), // Replace with actual resource
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(16.dp)
@@ -340,7 +345,6 @@ fun AcmoOfferCard(
 }
 
 
-
 fun Double.formatDouble(): String {
     return if (this == this.toLong().toDouble()) {
         this.toLong().toString()
@@ -397,4 +401,3 @@ fun AcmoButton(
         }
     }
 }
-

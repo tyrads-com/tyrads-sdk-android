@@ -25,6 +25,7 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentGenderSelector
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentAgeSelector
 import com.tyrads.sdk.acmo.core.services.LocalizationService
+import kotlinx.coroutines.launch
 
 
 @Composable
@@ -32,6 +33,7 @@ fun AcmoUsersUpdatePage() {
     var selectedGender by remember { mutableStateOf<Int?>(null) }
     var selectedAge by remember { mutableStateOf(18) }
     var isSubmitting by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
 
     // Initialize LocalizationService similar to Flutter implementation
     val localizationService = LocalizationService.getInstance()
@@ -123,19 +125,20 @@ fun AcmoUsersUpdatePage() {
                 Button(
                     onClick = {
                         if (!isSubmitting) {
-                            // Add validation similar to Flutter implementation
                             if (selectedGender == null) {
-                                // Show snackbar or toast: "Please select gender and age to proceed."
                                 return@Button
                             }
 
                             isSubmitting = true
-
-                            Tyrads.getInstance().navController.navigate("offers") {
-                                popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
-                                    inclusive = true
-                                }
+                            coroutineScope.launch {
+                                Tyrads.getInstance().showOffers()
                             }
+
+//                            Tyrads.getInstance().navController.navigate("offers") {
+//                                popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
+//                                    inclusive = true
+//                                }
+//                            }
                         }
                     },
                     modifier = Modifier

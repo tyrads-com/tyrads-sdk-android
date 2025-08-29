@@ -188,7 +188,7 @@ private class WebAppInterface(private val context: Context, private val coroutin
                     if (langCode.isNotEmpty()) {
                         mainHandler.post {
                             coroutineScope.launch {
-                                localizationService.changeLanguage(  langCode, false)
+                                Tyrads.getInstance().changeLanguage(  langCode)
                             }
                         }
                     }
