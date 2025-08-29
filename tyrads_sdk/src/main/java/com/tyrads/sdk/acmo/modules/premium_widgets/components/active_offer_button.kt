@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.toColor
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 
 @Composable
 fun ActiveOfferButton(
@@ -31,6 +32,7 @@ fun ActiveOfferButton(
 ) {
     val premiumColor = Tyrads.getInstance().premiumColor.toColor()
     val onPrimaryColor = MaterialTheme.colorScheme.onPrimary
+    val localizationService = LocalizationService.getInstance()
 
     Row(
         modifier = modifier
@@ -51,14 +53,13 @@ fun ActiveOfferButton(
                 .background(onPrimaryColor),
             contentAlignment = Alignment.Center
         ) {
-            // Row with MainAxisSize.min equivalent
             Row(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Main text
                 Text(
-                    text = stringResource(id = R.string.offers_active_offers_cta), // t.offers.activeOffersCta equivalent
+                    text = localizationService.translate("data.offers.button.activeOffers"),
                     color = premiumColor,
                     fontWeight = FontWeight.SemiBold, // FontWeight.w600 equivalent
                     fontSize = 14.sp
@@ -84,7 +85,7 @@ private fun CountBadge(
     Box(
         modifier = modifier
             .background(
-                color = Color(0xFFFF554A), // Same color as Flutter version
+                color = Color(0xFFFF554A),
                 shape = CircleShape // BoxShape.circle equivalent
             ),
         contentAlignment = Alignment.Center

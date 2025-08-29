@@ -1,5 +1,6 @@
 package com.tyrads.sdk.acmo.modules.premium_widgets.components
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -39,7 +40,7 @@ fun AcmoOfferListItem(
     onButtonTap: suspend () -> Unit,
     index: Int,
     loadingIndex: Int?,
-    onLoadingIndexChange: (Int?) -> Unit
+//    onLoadingIndexChange: (Int?) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val premiumColor = Tyrads.getInstance().premiumColor.toColor()
@@ -49,6 +50,8 @@ fun AcmoOfferListItem(
     // Loading state calculations
     val isLoading = loadingIndex == index
     val anyLoading = loadingIndex != null
+
+    Log.e("privacy", "$index load:$loadingIndex")
 
     Row(
         modifier = modifier
@@ -87,11 +90,11 @@ fun AcmoOfferListItem(
         PlayButton(
             onButtonTap = {
                 coroutineScope.launch {
-                    onLoadingIndexChange(index)
+//                    onLoadingIndexChange(index)
                     try {
                         onButtonTap()
                     } finally {
-                        onLoadingIndexChange(null)
+//                        onLoadingIndexChange(null)
                     }
                 }
             },
@@ -146,7 +149,7 @@ private fun OfferDetails(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(2.dp)
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
         currencySales?.let {
             BonusLabel(
@@ -182,11 +185,11 @@ private fun BonusLabel(
                 color = premiumColor.copy(alpha = 0.2f),
                 shape = CircleShape
             )
-            .padding(horizontal = 8.dp, vertical = 2.dp)
+            .padding(horizontal = 8.dp, vertical = 1.dp)
     ) {
         Text(
             text = localizationService.translate(
-                "data.widget.bonus.multiplier",
+                "data.shared.label.bonusTagCaps",
                 mapOf("multiplier" to multiplier)
             ),
             color = premiumColor,
@@ -257,13 +260,13 @@ private fun PlayButton(
                     strokeWidth = 2.2.dp,
                     color = Color(0xFFA3A9B6)
                 )
+            } else {
+                Text(
+                    text = localizationService.translate("data.widget.button.play"),
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (anyLoading) Color(0xFFA3A9B6) else premiumFgColor
+                )
             }
-
-            Text(
-                text = localizationService.translate("data.widget.button.play"),
-                fontWeight = FontWeight.SemiBold,
-                color = if (anyLoading) Color(0xFFA3A9B6) else premiumFgColor
-            )
         }
     }
 }

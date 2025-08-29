@@ -37,7 +37,9 @@ import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
-import java.util.Locale
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Keep
 class Tyrads private constructor() {
@@ -60,8 +62,9 @@ class Tyrads private constructor() {
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
 
-    // Language management - similar to Dart implementation
-    private lateinit var currentLanguageCode: String
+    private val _currentLanguageCode = MutableStateFlow("en")
+    val currentLanguageCode: StateFlow<String>
+        get() = _currentLanguageCode
     private val localizationService = LocalizationService.getInstance()
 
     private var _isSecure: Boolean = false;
@@ -71,6 +74,25 @@ class Tyrads private constructor() {
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
     var mainColor: String? = null
+    private val _privacyAccepted = MutableStateFlow(false)
+    val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
+
+    internal fun initializePrivacyStatus() {
+        _privacyAccepted.value = preferences.getBoolean(
+            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+            false
+        )
+    }
+
+    internal fun setPrivacyAccepted(isAccepted: Boolean) {
+        preferences.edit {
+            putBoolean(
+                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+                isAccepted
+            )
+        }
+        _privacyAccepted.value = isAccepted
+    }
 
     companion object {
         @Volatile
@@ -129,21 +151,22 @@ class Tyrads private constructor() {
 
         NetworkCommons()
 
-        // Initialize language similar to Dart implementation
         var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
 
-        if(currentLanguage.isNullOrBlank()) {
+        if (currentLanguage.isNullOrBlank()) {
             currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()?.split("-")?.first() ?: "en"
+                context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
+                    ?.split("-")?.first() ?: "en"
             } else {
-                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first() ?: "en"
+                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first()
+                    ?: "en"
             }
         }
-        currentLanguageCode = currentLanguage
-        log("Selected Language: $currentLanguageCode")
+        _currentLanguageCode.value = currentLanguage
+        log("Selected Language: ${currentLanguageCode.value}")
 
         // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
-        localizationService.init(currentLanguageCode)
+        localizationService.init(currentLanguageCode.value)
 
         val integrityToken = getPlayIntegrityToken(context)
         log("Integrity Token: $integrityToken")
@@ -232,16 +255,14 @@ class Tyrads private constructor() {
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
                     premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
                     headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+                    initializePrivacyStatus()
 
-                    if (preferences.getBoolean(
-                            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID, false
-                        )
-                    ) {
+                    if (privacyAccepted.value) {
                         val usageStatsController = AcmoUsageStatsController()
                         usageStatsController.saveUsageStats()
                     }
 
-                    track(TyradsActivity.initialized)
+                    track(TyradsActivity.INITIALIZED)
                     return@withContext true
                 }
 
@@ -308,7 +329,7 @@ class Tyrads private constructor() {
      */
     suspend fun changeLanguage(languageCode: String) = withContext(Dispatchers.Default) {
         try {
-            currentLanguageCode = languageCode
+            _currentLanguageCode.value = languageCode
 
             preferences.edit {
                 putString(AcmoKeyNames.LANGUAGE, languageCode)
@@ -329,15 +350,9 @@ class Tyrads private constructor() {
 
     @Composable
     fun TopPremiumOffers(
-        showMore: Boolean = true,
-        showMyOffers: Boolean = true,
-        showMyOffersEmptyView: Boolean = false,
         widgetStyle: PremiumWidgetStyles = PremiumWidgetStyles.LIST,
     ) {
         TopOffers(
-            showMore = showMore,
-            showMyOffers = showMyOffers,
-            showMyOffersEmptyView = showMyOffersEmptyView,
             widgetStyle = widgetStyle
         )
     }

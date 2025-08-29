@@ -4,31 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,138 +19,60 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.kittinunf.fuel.Fuel
-import com.tyrads.sdk.NetworkCommons
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.launchUrlForce
-import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoCarouselSlider
-import com.tyrads.sdk.acmo.modules.premium_widgets.components.ActiveOfferButton
-import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferListItem
-import com.tyrads.sdk.acmo.modules.premium_widgets.components.PremiumHeaderSection
-import com.tyrads.sdk.acmo.modules.premium_widgets.components.PremiumWidgetLoading
-import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
-import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
-import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoOfferCard
+import com.tyrads.sdk.acmo.modules.premium_widgets.components.*
+import com.tyrads.sdk.acmo.modules.premium_widgets.view_model.TopOffersViewModel
 import com.tyrads.sdk.ui.theme.RedColor
 import com.tyrads.sdk.ui.theme.WhiteColor
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun TopOffers(
-    showMore: Boolean = true,
-    showMyOffers: Boolean = true,
-    showMyOffersEmptyView: Boolean = false,
     widgetStyle: PremiumWidgetStyles = PremiumWidgetStyles.LIST,
+    viewModel: TopOffersViewModel = viewModel()
 ) {
     val context: Context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
-    var cachedHotOffers by remember { mutableStateOf<List<AcmoOffersModel>>(emptyList()) }
-    var currencySales by remember { mutableStateOf<CurrencySales?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var activeOffersCount by remember { mutableIntStateOf(0) }
+    val uiState by viewModel.uiState.collectAsState()
+    val openUrlEvent by viewModel.openUrlEvent.collectAsState()
+    val privacyAccepted = Tyrads.getInstance().privacyAccepted
 
-    // Loading state management
-    var loadingIndex by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(openUrlEvent) {
+        Tyrads.getInstance().initializePrivacyStatus()
+        openUrlEvent?.let { url ->
+            if (url.isNotBlank()) {
+                launchUrlForce(context, url)
+                viewModel.onUrlEventHandled()
+            }
+        }
+    }
 
-    // LocalizationService instance
     val localizationService = remember { LocalizationService.getInstance() }
 
-    val privacyAccepted = remember {
-        Tyrads.getInstance().preferences.getBoolean(
-            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-            false
-        )
-    }
-    val networkCommons = remember { NetworkCommons() }
-
-    // Initialize localization service when the composable is first created
-    LaunchedEffect(Unit) {
-        // Initialize localization service with current locale
-        // You can get the current locale from system or user preferences
-        val currentLocale = java.util.Locale.getDefault().language
-        localizationService.init(currentLocale)
-    }
-
-    suspend fun openOffer(campaign: AcmoOffersModel) = withContext(Dispatchers.Default) {
-        coroutineScope.launch {
-            try {
-                val url = if (campaign.isInstalled) {
-                    campaign.app.previewUrl
-                } else {
-                    // Tyrads.getInstance().track(TyradsActivity.campaignActivated) // Assuming a tracking method
-                    networkCommons.activateOffer(id = campaign.campaignId.toString())
-                    campaign.tracking.clickUrl ?: ""
-                }
-
-                if (!campaign.tracking.s2sClickUrl.isNullOrEmpty()) {
-                    try {
-                        Fuel.get(campaign.tracking.s2sClickUrl)
-                    } catch (e: Exception) {
-                        Log.e(
-                            "S2S_CLICK_ERROR",
-                            "Failed to send S2S click for campaign ${campaign.campaignId}",
-                            e
-                        )
-                    }
-                }
-
-                // Launch the final URL in a browser or app that can handle it.
-                if (url.isNotBlank()) {
-                    launchUrlForce(context, url)
-                } else {
-                    Log.w(
-                        "OpenOffer",
-                        "URL is blank for campaign ${campaign.campaignId}, cannot launch."
-                    )
-                }
-
-            } catch (e: Exception) {
-                Log.e("OPEN_OFFER_ERROR", "Error opening offer: ${e.message}", e)
-            }
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        coroutineScope.launch {
-            try {
-                isLoading = true
-                cachedHotOffers = networkCommons.fetchCampaigns("en")
-                currencySales = networkCommons.fetchCurrencySale("en")
-                activeOffersCount = networkCommons.fetchActiveOffersSummary("en")
-                isLoading = false
-            } catch (e: Exception) {
-                Log.e("FetchCampaigns", "Error: ${e.message}", e)
-            }
-        }
-    }
-
-    if (isLoading && cachedHotOffers.isEmpty()) {
-        PremiumWidgetLoading(
-            widgetStyle = widgetStyle
-        )
+    if (uiState.isLoading && uiState.cachedHotOffers.isEmpty()) {
+        PremiumWidgetLoading(widgetStyle = widgetStyle)
         return
     }
 
-    if (error != null && cachedHotOffers.isEmpty()) {
+    if (uiState.error != null && uiState.cachedHotOffers.isEmpty()) {
         Text(
-            text = "Error: $error",
+            text = "Error: ${uiState.error}",
             color = RedColor,
             modifier = Modifier.padding(errorPadding)
         )
         return
     }
 
-    if (cachedHotOffers.isEmpty() || showMyOffersEmptyView) {
+    if (uiState.cachedHotOffers.isEmpty()) {
         EmptyOffersView(localizationService = localizationService)
         return
     }
@@ -188,21 +89,19 @@ fun TopOffers(
             modifier = Modifier.fillMaxWidth()
         ) {
             PremiumHeaderSection(
-                modifier = Modifier
-                    .padding(vertical = 16.dp, horizontal = 16.dp),
-                showMore = showMore
+                modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
             )
             when (widgetStyle) {
                 PremiumWidgetStyles.LIST -> {
-                    cachedHotOffers.forEachIndexed { index, offer ->
+                    uiState.cachedHotOffers.forEachIndexed { index, offer ->
                         AcmoOfferListItem(
                             modifier = Modifier.padding(
                                 start = 16.dp,
                                 end = 16.dp,
-                                bottom = if (index != cachedHotOffers.size - 1) 16.dp else 0.dp
+                                bottom = if (index != uiState.cachedHotOffers.size - 1) 16.dp else 0.dp
                             ),
                             offer = offer,
-                            currencySales = currencySales,
+                            currencySales = uiState.currencySales,
                             onItemTap = {
                                 coroutineScope.launch {
                                     Tyrads.getInstance()
@@ -210,10 +109,8 @@ fun TopOffers(
                                 }
                             },
                             onButtonTap = {
-                                if (privacyAccepted) {
-                                    coroutineScope.launch {
-                                        openOffer(offer)
-                                    }
+                                if (privacyAccepted.value) {
+                                    viewModel.onOfferClick(offer, index)
                                 } else {
                                     coroutineScope.launch {
                                         Tyrads.getInstance()
@@ -222,10 +119,7 @@ fun TopOffers(
                                 }
                             },
                             index = index,
-                            loadingIndex = loadingIndex,
-                            onLoadingIndexChange = { newLoadingIndex ->
-                                loadingIndex = newLoadingIndex
-                            }
+                            loadingIndex = uiState.loadingIndex,
                         )
                     }
                 }
@@ -239,18 +133,16 @@ fun TopOffers(
                             .fillMaxWidth()
                             .height((itemHeight + 150).dp)
                             .padding(bottom = 8.dp),
-                        itemCount = cachedHotOffers.size,
+                        itemCount = uiState.cachedHotOffers.size,
                         itemBuilder = { index ->
-                            val offer = cachedHotOffers[index]
+                            val offer = uiState.cachedHotOffers[index]
                             AcmoOfferCard(
                                 item = offer,
-                                currencySales = currencySales,
-                                margin = PaddingValues(all = 16.dp),
+                                currencySales = uiState.currencySales,
+                                margin = PaddingValues(horizontal = 16.dp),
                                 onButtonClick = {
-                                    if (privacyAccepted) {
-                                        coroutineScope.launch {
-                                            openOffer(offer)
-                                        }
+                                    if (privacyAccepted.value) {
+                                        viewModel.onOfferClick(offer, index)
                                     } else {
                                         coroutineScope.launch {
                                             Tyrads.getInstance()
@@ -268,27 +160,21 @@ fun TopOffers(
                         },
                         showIndicator = true,
                         infiniteScroll = true,
-                        viewportFraction = 1.0f,
+                        viewportFraction = 1f,
                         indicatorActiveColor = Tyrads.getInstance().premiumColor.toColor(),
-                        indicatorInactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
-                        onPageChanged = { index ->
-                        }
+                        indicatorInactiveColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
                     )
                 }
             }
 
-            when {
-                showMyOffers -> {
-                    ActiveOfferButton(
-                        activatedCount = activeOffersCount,
-                        onTap = {
-                            coroutineScope.launch {
-                                Tyrads.getInstance().showOffers(route = "active-offers")
-                            }
-                        }
-                    )
+            ActiveOfferButton(
+                activatedCount = uiState.activeOffersCount,
+                onTap = {
+                    coroutineScope.launch {
+                        Tyrads.getInstance().showOffers(route = "active-offers")
+                    }
                 }
-            }
+            )
         }
     }
 }
@@ -304,7 +190,6 @@ private fun EmptyOffersView(
             .clip(RoundedCornerShape(16.dp)),
         contentAlignment = Alignment.Center
     ) {
-        // Background image
         Image(
             painter = painterResource(id = R.drawable.premium_empty_bg),
             contentDescription = null,
@@ -339,7 +224,8 @@ private fun EmptyOffersView(
                     .height(34.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                val translatedText = localizationService.translate("data.widget.button.continuePlaying")
+                val translatedText =
+                    localizationService.translate("data.widget.button.continuePlaying")
                 Text(
                     text = translatedText,
                     fontSize = 12.sp,
@@ -348,47 +234,6 @@ private fun EmptyOffersView(
                 )
                 Log.d("TopOffers", "Localized continue playing text: $translatedText")
             }
-        }
-    }
-}
-
-@Composable
-private fun OfferCardItem(
-    offer: AcmoOffersModel,
-    onOfferClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Card(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(8.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        onClick = onOfferClick
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                text = offer.app.title,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Text(
-                text = "Tap to Play",
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary
-            )
         }
     }
 }
