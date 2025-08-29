@@ -90,6 +90,7 @@ fun TopOffers(
         ) {
             PremiumHeaderSection(
                 modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp),
+                localizationService = localizationService
             )
             when (widgetStyle) {
                 PremiumWidgetStyles.LIST -> {
@@ -184,6 +185,7 @@ private fun EmptyOffersView(
     localizationService: LocalizationService
 ) {
     val coroutineScope = rememberCoroutineScope()
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -224,15 +226,26 @@ private fun EmptyOffersView(
                     .height(34.dp),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                val translatedText =
-                    localizationService.translate("data.widget.button.continuePlaying")
+                // Debug and fix the localization
+                val translatedText = localizationService.translate("data.widget.button.continuePlaying")
+                val buttonText = if (translatedText == "data.widget.button.continuePlaying") {
+                    // Fallback if translation key doesn't exist
+                    Log.w("TopOffers", "Translation key 'data.widget.button.continuePlaying' not found, using fallback")
+                    localizationService.translate("data.widget.button.play") // Try alternative key
+                        .takeIf { it != "data.widget.button.play" }
+                        ?: "Continue Playing" // Final fallback
+                } else {
+                    translatedText
+                }
+
+                Log.d("TopOffers", "Original translation: '$translatedText', Final button text: '$buttonText'")
+
                 Text(
-                    text = translatedText,
+                    text = buttonText,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.secondary
                 )
-                Log.d("TopOffers", "Localized continue playing text: $translatedText")
             }
         }
     }
