@@ -137,7 +137,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             )
         }
         Tyrads.getInstance().TopPremiumOffers(
-            widgetStyle = Tyrads.PremiumWidgetStyles.LIST
+            widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
