@@ -193,10 +193,10 @@ private class WebAppInterface(private val context: Context) {
                 }
 
                 "changeLanguage" -> {
-                    val langCode = json.optString("languageCode")
+                    val langCode = json.optString("value")
                     if (langCode.isNotEmpty()) {
                         mainHandler.post {
-                            LocalizationHelper.changeLanguage(context, langCode, false)
+                            Tyrads.getInstance().changeLanguage(langCode)
                         }
                     }
                 }

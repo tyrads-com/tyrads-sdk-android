@@ -103,36 +103,6 @@ fun Greeting(modifier: Modifier = Modifier) {
         }
     }
 
-    fun handleWidgetsClick() {
-        if (apiKeyInput.isBlank() || apiSecretInput.isBlank() || userIdInput.isBlank()) {
-            // Show a message to the user
-            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        isLoadingWidgets = true
-        CoroutineScope(Dispatchers.Main).launch {
-            sharedPreferences.edit().apply {
-                putString("apiKey", apiKeyInput)
-                putString("apiSecret", apiSecretInput)
-                putString("userId", userIdInput)
-                apply()
-            }
-
-            Tyrads.getInstance().init(
-                context,
-                apiKey = apiKeyInput,
-                apiSecret = apiSecretInput,
-                debugMode = true
-            )
-
-            val data = Tyrads.getInstance().loginUser(userID = userIdInput)
-            Log.i("bmd", data.toString());
-            context.startActivity(Intent(context, PremiumLayoutsActivity::class.java))
-            isLoadingWidgets = false
-        }
-    }
-
     LaunchedEffect(Unit) {
         CoroutineScope(Dispatchers.Default).launch {
             Tyrads.getInstance().init(
