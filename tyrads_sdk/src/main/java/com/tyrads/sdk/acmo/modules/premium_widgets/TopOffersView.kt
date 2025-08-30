@@ -79,9 +79,6 @@ class TopPremiumOffersView @JvmOverloads constructor(
     @Composable
     override fun Content() {
         Tyrads.getInstance().TopPremiumOffers(
-            showMore = _showMore,
-            showMyOffers = _showMyOffers,
-            showMyOffersEmptyView = _showMyOffersEmptyView,
             widgetStyle = _style
         )
     }
