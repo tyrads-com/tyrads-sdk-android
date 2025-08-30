@@ -282,7 +282,7 @@ class Tyrads private constructor() {
                         usageStatsController.saveUsageStats()
                     }
 
-                    track(TyradsActivity.initialized)
+                    track(TyradsActivity.INITIALIZED)
 
                     val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
                     val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
@@ -373,9 +373,6 @@ class Tyrads private constructor() {
         widgetStyle: PremiumWidgetStyles = PremiumWidgetStyles.LIST,
     ) {
         TopOffers(
-            showMore = showMore,
-            showMyOffers = showMyOffers,
-            showMyOffersEmptyView = showMyOffersEmptyView,
             widgetStyle = widgetStyle,
         )
     }

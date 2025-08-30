@@ -1,5 +1,6 @@
 package com.tyrads.sdk.acmo.modules.premium_widgets.components
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
@@ -20,19 +20,18 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.graphics.toColorInt
 import coil.compose.AsyncImage
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.numeral
 import com.tyrads.sdk.acmo.core.extensions.toColor
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersModel
 import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
 
@@ -48,6 +47,7 @@ fun CardContainer(
     decoration: Shape? = null,
     content: @Composable () -> Unit
 ) {
+
     Card(
         modifier = modifier
             .then(if (margin != null) Modifier.padding(margin) else Modifier)
@@ -96,6 +96,7 @@ fun TrianglePainter(
     }
 }
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun AcmoOfferCard(
     item: AcmoOffersModel,
@@ -108,6 +109,7 @@ fun AcmoOfferCard(
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp.dp
     val itemHeight = screenWidth.value / itemScaleFactor
+    val localizationService = LocalizationService.getInstance()
 
     Box(
         modifier = Modifier
@@ -129,6 +131,8 @@ fun AcmoOfferCard(
 
         // Main card container
         CardContainer(
+            modifier = Modifier
+                .padding(margin ?: PaddingValues()),
             borderRadius = 16f,
             height = (itemHeight + 112).dp
         ) {
@@ -214,7 +218,7 @@ fun AcmoOfferCard(
                                 text = item.app.title,
                                 style = TextStyle(
                                     fontSize = 14.sp,
-                                    lineHeight = (18f/14f * 14).sp,
+                                    lineHeight = (18f / 14f * 14).sp,
                                 ),
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
@@ -253,9 +257,11 @@ fun AcmoOfferCard(
                                         )
 
                                         Text(
-                                            text = " ${(item.campaignPayout.totalPlayablePayoutConverted *
-                                                    (currencySales?.multiplier ?: 1.0))
-                                                .numeral()}",
+                                            text = " ${
+                                                (item.campaignPayout.totalPlayablePayoutConverted *
+                                                        (currencySales?.multiplier ?: 1.0))
+                                                    .numeral()
+                                            }",
                                             style = TextStyle(
                                                 color = Color.Black,
                                                 fontWeight = FontWeight.W700,
@@ -269,7 +275,7 @@ fun AcmoOfferCard(
 
                                 // Info icon
                                 Image(
-                                    painter = painterResource(R.drawable.diamond), // Replace with actual resource
+                                    painter = painterResource(R.drawable.info), // Replace with actual resource
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(16.dp)
@@ -290,7 +296,7 @@ fun AcmoOfferCard(
                         ) {
                             AcmoButton(
                                 onTap = onButtonClick,
-                                label = "Play Now",
+                                label = localizationService.translate("data.widget.button.play"), // Updated this line
                                 borderRadius = 8.0,
                                 labelStyle = TextStyle(
                                     color = Color.White,
@@ -340,7 +346,6 @@ fun AcmoOfferCard(
 }
 
 
-
 fun Double.formatDouble(): String {
     return if (this == this.toLong().toDouble()) {
         this.toLong().toString()
@@ -358,7 +363,6 @@ fun getDarkerShade(color: Color): Color {
     )
 }
 
-// AcmoButton3 component - exact conversion of AcmoButton_3
 @Composable
 fun AcmoButton(
     onTap: (() -> Unit)?,
@@ -366,8 +370,9 @@ fun AcmoButton(
     color: Color? = null,
     borderRadius: Double? = null,
     labelStyle: TextStyle? = null,
-    modifier: Modifier = Modifier
-) {
+    modifier: Modifier = Modifier,
+
+    ) {
     Box(
         modifier = modifier
             .clickable { onTap?.invoke() }
@@ -397,4 +402,3 @@ fun AcmoButton(
         }
     }
 }
-

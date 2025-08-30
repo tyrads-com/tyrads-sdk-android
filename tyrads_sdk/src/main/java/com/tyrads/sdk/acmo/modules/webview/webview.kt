@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -31,6 +32,7 @@ import org.json.JSONObject
 import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 
@@ -41,6 +43,7 @@ fun AcmoWebView() {
     val context = LocalContext.current
     val mUrl = Tyrads.getInstance().url
     val webViewState = rememberWebViewState()
+    val coroutineScope = rememberCoroutineScope()
 
     val fileChooserLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -87,7 +90,7 @@ fun AcmoWebView() {
                 allowFileAccess = true
                 allowContentAccess = true
             }
-            this.addJavascriptInterface(WebAppInterface(it), "AndroidInterface")
+            this.addJavascriptInterface(WebAppInterface(it, coroutineScope), "AndroidInterface")
         }
     }, update = {
         it.loadUrl(mUrl)
@@ -175,7 +178,7 @@ private class AcmoWebChromeClient(
 
 
 @Keep
-private class WebAppInterface(private val context: Context) {
+private class WebAppInterface(private val context: Context, private val coroutineScope: CoroutineScope) {
     private val mainHandler = Handler(Looper.getMainLooper())
 
     @JavascriptInterface
@@ -196,7 +199,10 @@ private class WebAppInterface(private val context: Context) {
                     val langCode = json.optString("value")
                     if (langCode.isNotEmpty()) {
                         mainHandler.post {
-                            Tyrads.getInstance().changeLanguage(langCode)
+                            coroutineScope.launch {
+                                Tyrads.getInstance().changeLanguage(  langCode)
+                            }
+
                         }
                     }
                 }
