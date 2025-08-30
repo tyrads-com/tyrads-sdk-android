@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.acmoLaunchURL
 import com.tyrads.sdk.acmo.modules.legal.settings.LanguageDropdownMenu
 
@@ -42,6 +43,7 @@ fun AcmoPrivacyPolicyPage() {
     val activityContext = LocalContext.current as? ComponentActivity // Get the current context
 
     val context = LocalContext.current
+    val localizationService = LocalizationService.getInstance()
     Scaffold(
         containerColor = Color.White
     ) { innerPadding ->
@@ -52,7 +54,7 @@ fun AcmoPrivacyPolicyPage() {
                 .padding(innerPadding)
         ) {
             CloseonTap()
-            Body()
+            Body(localizationService)
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -60,7 +62,7 @@ fun AcmoPrivacyPolicyPage() {
                     .verticalScroll(scrollState)
                     .padding(horizontal = 36.dp)
             ) {
-                Info()
+                Info(localizationService)
             }
 
             TwoButtonsWithInfo2(
@@ -102,7 +104,7 @@ fun CloseonTap() {
 }
 
 @Composable
-fun Body() {
+fun Body(localizationService: LocalizationService) {
 
     val provider = GoogleFont.Provider(
         providerAuthority = "com.google.android.gms.fonts",
@@ -123,7 +125,7 @@ fun Body() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = stringResource(id = R.string.privacy_policy_title),
+            text = localizationService.translate("data.initialization.intro.title"),
             style = TextStyle(
                 fontFamily = lexendFontFamily,
                 fontSize = 16.sp,
@@ -146,8 +148,7 @@ fun Body() {
         )
         Spacer(modifier = Modifier.height(18.dp))
         Text(
-//            text = "Play Your Favorite Games!\nAnd Earn Your Rewards!",
-            text = stringResource(id = R.string.privacy_policy_subtitle),
+            text = localizationService.translate("data.initialization.intro.subtitle"),
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = lexendFontFamily,
                 fontSize = 15.sp,
@@ -164,7 +165,7 @@ fun Body() {
 }
 
 @Composable
-fun Info() {
+fun Info(localizationService: LocalizationService) {
     val context = LocalContext.current  // Get the current context
 
     val provider = GoogleFont.Provider(
@@ -189,7 +190,7 @@ fun Info() {
             )
         ) {
             append(
-                text = stringResource(id = R.string.privacy_policy_consent_info)
+                text = localizationService.translate("data.initialization.legal.explanation")
             )
         }
         withStyle(

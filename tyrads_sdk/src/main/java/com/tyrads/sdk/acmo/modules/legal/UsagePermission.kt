@@ -16,11 +16,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.modules.legal.CloseonTap
 import kotlinx.coroutines.launch
 
 @Composable
 fun AcmoUsagePermissionsPage() {
+    val localizationService = LocalizationService.getInstance()
     Scaffold (
         containerColor = Color.White
     ){ innerPadding ->
@@ -36,7 +38,7 @@ fun AcmoUsagePermissionsPage() {
                 modifier = Modifier.padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Body()
+                Body(localizationService)
                 Spacer(modifier = Modifier.height(40.dp))
                 UsageStatsCard(
                     onGrant = {
@@ -63,10 +65,10 @@ fun AcmoUsagePermissionsPage() {
 
 
 @Composable
-fun Body() {
+fun Body(localizationService: LocalizationService) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(
-            text = stringResource(id = R.string.usage_permissions_title),
+            text = localizationService.translate("data.initialization.usagePermission.title"),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Medium,
                 fontSize = 16.sp,
