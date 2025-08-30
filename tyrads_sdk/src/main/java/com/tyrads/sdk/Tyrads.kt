@@ -6,6 +6,7 @@ import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
 import TyradsActivity
+import android.app.LocaleManager
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -19,24 +20,28 @@ import com.github.kittinunf.result.Result
 import com.google.android.gms.ads.identifier.AdvertisingIdClient
 import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
+import androidx.appcompat.app.AppCompatDelegate
 import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.core.content.edit
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import com.tyrads.sdk.acmo.modules.users.models.AcmoInitModel
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 @Keep
 class Tyrads private constructor() {
@@ -60,7 +65,11 @@ class Tyrads private constructor() {
     internal var url: String = ""
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
-    private lateinit var currentLanguageCode: String
+    private val _currentLanguageCode = MutableStateFlow("en")
+    val currentLanguageCode: StateFlow<String>
+        get() = _currentLanguageCode
+    private val localizationService = LocalizationService.getInstance()
+
 
     private var _isSecure: Boolean = false;
     val isSecure: Boolean get() = _isSecure;
@@ -68,6 +77,28 @@ class Tyrads private constructor() {
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
     var mainColor: String? = null
+
+
+    private val _privacyAccepted = MutableStateFlow(false)
+    val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
+
+    internal fun initializePrivacyStatus() {
+        _privacyAccepted.value = preferences.getBoolean(
+            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+            false
+        )
+    }
+
+    internal fun setPrivacyAccepted(isAccepted: Boolean) {
+        preferences.edit {
+            putBoolean(
+                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+                isAccepted
+            )
+        }
+        _privacyAccepted.value = isAccepted
+    }
+
 
     companion object {
         @Volatile
@@ -116,9 +147,6 @@ class Tyrads private constructor() {
             putString(AcmoKeyNames.API_KEY, apiKey)
             putString(AcmoKeyNames.API_SECRET, apiSecret)
         }
-        NetworkCommons()
-        currentLanguageCode = LocalizationHelper.getLanguageCode(context)
-
         log(
             "Warning: debugMode is set to true. This should not be used in production.",
             Log.WARN
@@ -128,7 +156,23 @@ class Tyrads private constructor() {
             _isSecure = true
         }
         NetworkCommons()
-        currentLanguageCode = LocalizationHelper.getLanguageCode(context)
+        var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
+
+        if (currentLanguage.isNullOrBlank()) {
+            currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                this@Tyrads.context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
+                    ?.split("-")?.first() ?: "en"
+            } else {
+                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first()
+                    ?: "en"
+            }
+        }
+        _currentLanguageCode.value = currentLanguage
+        log("Selected Language: ${currentLanguageCode.value}")
+
+        // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
+        localizationService.init(currentLanguageCode.value)
+
         val integrityToken = getPlayIntegrityToken(context)
         log("Integrity Token: $integrityToken")
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
@@ -253,7 +297,7 @@ class Tyrads private constructor() {
                         xSdkPlatform = sdkPlatform,
                         xSdkVersion = sdkVersion,
                         userAgent = userAgent,
-                        languageCode = currentLanguageCode,
+                        languageCode = currentLanguageCode.value,
                         premiumColor = loginData.data.publisherApp.premiumColor,
                         headerColor = loginData.data.publisherApp.headerColor,
                         mainColor = loginData.data.publisherApp.mainColor,
@@ -293,7 +337,7 @@ class Tyrads private constructor() {
                 .authority("sdk.tyrads.com")
                 .appendQueryParameter("token", token)
                 .appendQueryParameter("to", if(route == null) "" else if(campaignID == null) route else "$route/$campaignID")
-                .appendQueryParameter("lang", currentLanguageCode)
+                .appendQueryParameter("lang", currentLanguageCode.value)
                 .build()
                 .toString()
             Log.i("url", url.toString())
@@ -302,13 +346,23 @@ class Tyrads private constructor() {
             context.startActivity(intent)
         }
 
-    fun changeLanguage(context: Context, languageCode: String) {
-        tyradScope.launch {
-            LocalizationHelper.changeLanguage(
-                context, languageCode
-            )
+
+    suspend fun changeLanguage(languageCode: String) = withContext(Dispatchers.Default) {
+        try {
+            _currentLanguageCode.value = languageCode
+
+            preferences.edit {
+                putString(AcmoKeyNames.LANGUAGE, languageCode)
+            }
+
+            localizationService.changeLanguage(languageCode)
+
+            log("Language changed to: $languageCode")
+        } catch (e: Exception) {
+            log("Error changing language: ${e.message}", Log.ERROR)
         }
     }
+
 
     enum class PremiumWidgetStyles {LIST, SLIDER_CARDS}
     @Composable
