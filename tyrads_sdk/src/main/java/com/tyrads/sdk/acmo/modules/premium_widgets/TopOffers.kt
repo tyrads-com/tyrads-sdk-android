@@ -239,7 +239,6 @@ fun TopOffers(
                             AcmoOfferCard(
                                 item = offer,
                                 currencySales = currencySales,
-                                margin = PaddingValues(horizontal = 16.dp),
                                 onButtonClick = {
                                     if (privacyAccepted) {
                                         coroutineScope.launch {

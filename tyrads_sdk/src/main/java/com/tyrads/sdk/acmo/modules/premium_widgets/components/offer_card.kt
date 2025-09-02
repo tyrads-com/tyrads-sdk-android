@@ -102,7 +102,6 @@ fun AcmoOfferCard(
     onButtonClick: () -> Unit,
     currencySales: CurrencySales?,
     itemScaleFactor: Double = 3.1,
-    margin: PaddingValues? = null,
     onTap: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
@@ -111,13 +110,12 @@ fun AcmoOfferCard(
 
     Box(
         modifier = Modifier
-            .padding(margin ?: PaddingValues())
             .clickable { onTap.invoke() }
     ) {
         if (currencySales != null) {
             Box(
                 modifier = Modifier
-                    .offset(x = 8.dp, y = 63.dp)
+                    .offset(x = (-8).dp, y = 47.dp)
             ) {
                 TrianglePainter(
                     color = getDarkerShade(
@@ -131,7 +129,7 @@ fun AcmoOfferCard(
         // Main card container
         CardContainer(
             borderRadius = 16f,
-            height = (itemHeight + 112).dp
+            height = (itemHeight + 112).dp,
         ) {
             // Main image with rounded top corners
             Box(
@@ -313,7 +311,7 @@ fun AcmoOfferCard(
         if (currencySales != null) {
             Box(
                 modifier = Modifier
-                    .offset(x = 8.dp, y = 32.dp)
+                    .offset(x = (-8).dp, y = 16.dp)
                     .height(31.dp)
                     .background(
                         color = Tyrads.getInstance().premiumColor.toColor(),
