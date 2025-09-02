@@ -140,7 +140,6 @@ fun TopOffers(
                             AcmoOfferCard(
                                 item = offer,
                                 currencySales = uiState.currencySales,
-                                margin = PaddingValues(horizontal = 16.dp),
                                 onButtonClick = {
                                     if (privacyAccepted.value) {
                                         viewModel.onOfferClick(offer, index)
