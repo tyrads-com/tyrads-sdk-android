@@ -268,7 +268,7 @@ fun AcmoOfferCard(
 
                                 // Info icon
                                 Image(
-                                    painter = painterResource(R.drawable.diamond), // Replace with actual resource
+                                    painter = painterResource(R.drawable.info_icon),
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(16.dp)
