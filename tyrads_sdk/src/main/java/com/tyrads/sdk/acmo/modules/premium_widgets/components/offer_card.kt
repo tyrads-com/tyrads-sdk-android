@@ -330,7 +330,10 @@ fun AcmoOfferCard(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "${currencySales.multiplier?.formatDouble()}x Bonus",
+                    text = localizationService.translate(
+                        "data.shared.label.bonusTag",
+                        args = mapOf("multiplier" to currencySales.multiplier as Any)
+                    ),
                     style = TextStyle(
                         fontWeight = FontWeight.W700,
                         fontSize = 12.sp,
