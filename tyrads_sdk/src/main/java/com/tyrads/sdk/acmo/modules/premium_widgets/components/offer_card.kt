@@ -293,7 +293,7 @@ fun AcmoOfferCard(
                         ) {
                             AcmoButton(
                                 onTap = onButtonClick,
-                                label = localizationService.translate("data.widget.button.play"), // Updated this line
+                                label = localizationService.translate("data.shared.cta.playNow"),
                                 borderRadius = 8.0,
                                 labelStyle = TextStyle(
                                     color = Color.White,
