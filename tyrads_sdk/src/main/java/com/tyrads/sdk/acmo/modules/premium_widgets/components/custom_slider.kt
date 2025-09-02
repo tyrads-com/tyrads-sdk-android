@@ -76,13 +76,13 @@ fun AcmoCarouselSlider(
         onPageChanged?.invoke(currentRealIndex)
     }
 
-    val horizontalPadding = (screenWidth * (1 - viewportFraction) / 2)
+    val horizontalPadding = (screenWidth * (1 - if(viewportFraction == 1f) 0.93f else viewportFraction) / 2)
 
     Box(modifier = modifier) {
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
-            pageSpacing = 4.dp,
+            pageSpacing = if(viewportFraction == 1f) 16.dp else 4.dp,
             contentPadding = PaddingValues(horizontal = horizontalPadding)
         ) { page ->
             val realIndex = if (infiniteScroll && itemCount > 0) {

@@ -103,7 +103,6 @@ fun AcmoOfferCard(
     onButtonClick: () -> Unit,
     currencySales: CurrencySales?,
     itemScaleFactor: Double = 3.1,
-    margin: PaddingValues? = null,
     onTap: () -> Unit
 ) {
     val configuration = LocalConfiguration.current
@@ -118,7 +117,7 @@ fun AcmoOfferCard(
         if (currencySales != null) {
             Box(
                 modifier = Modifier
-                    .offset(x = 8.dp, y = 63.dp)
+                    .offset(x = (-8).dp, y = 47.dp)
             ) {
                 TrianglePainter(
                     color = getDarkerShade(
@@ -131,8 +130,6 @@ fun AcmoOfferCard(
 
         // Main card container
         CardContainer(
-            modifier = Modifier
-                .padding(margin ?: PaddingValues()),
             borderRadius = 16f,
             height = (itemHeight + 112).dp
         ) {
@@ -275,7 +272,7 @@ fun AcmoOfferCard(
 
                                 // Info icon
                                 Image(
-                                    painter = painterResource(R.drawable.info), // Replace with actual resource
+                                    painter = painterResource(R.drawable.info_icon), // Replace with actual resource
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(16.dp)
@@ -318,7 +315,7 @@ fun AcmoOfferCard(
         if (currencySales != null) {
             Box(
                 modifier = Modifier
-                    .offset(x = 8.dp, y = 32.dp)
+                    .offset(x = (-8).dp, y = 16.dp)
                     .height(31.dp)
                     .background(
                         color = Tyrads.getInstance().premiumColor.toColor(),
