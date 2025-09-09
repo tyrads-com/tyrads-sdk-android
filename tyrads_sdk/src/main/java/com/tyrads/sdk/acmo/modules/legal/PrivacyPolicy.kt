@@ -17,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -117,12 +119,22 @@ fun Body(localizationService: LocalizationService) {
         Font(googleFont = lexendFontName, fontProvider = provider, weight = FontWeight.Bold)
     )
 
+    val windowSize = LocalWindowInfo.current.containerSize
+    val density = LocalDensity.current
+
+    val windowWidthInDp = with(density) {
+        windowSize.width.toDp()
+    }
+
     Column(
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Title using localization
         Text(
+            modifier = Modifier.width(
+                (windowWidthInDp.value * 0.5).dp
+            ),
             text = localizationService.translate("data.initialization.intro.title"),
             style = TextStyle(
                 fontFamily = lexendFontFamily,
@@ -130,7 +142,7 @@ fun Body(localizationService: LocalizationService) {
                 fontWeight = FontWeight.Medium,
                 lineHeight = 22.sp,
                 textAlign = TextAlign.Center,
-                color = Color.Black
+                color = Color.Black,
             )
         )
 
@@ -149,6 +161,9 @@ fun Body(localizationService: LocalizationService) {
 
         // Subtitle using localization
         Text(
+            modifier = Modifier.width(
+                (windowWidthInDp.value * 0.6).dp
+            ),
             text = localizationService.translate("data.initialization.intro.subtitle"),
             style = MaterialTheme.typography.bodyMedium.copy(
                 fontFamily = lexendFontFamily,
@@ -196,15 +211,22 @@ fun Info(localizationService: LocalizationService) {
             append(localizedText)
         }
 
-        // Add URL annotations for clickable links
-        // This would need to be adapted based on how your localized text contains URLs
         val urlPattern = "https://[\\w.-]+(?:\\.[a-zA-Z]{2,})+(?:/[\\w.-]*)*/?".toRegex()
         urlPattern.findAll(localizedText).forEach { matchResult ->
+            val start = matchResult.range.first
+            val end = matchResult.range.last + 1
+
             addStringAnnotation(
                 tag = "URL",
                 annotation = matchResult.value,
-                start = matchResult.range.first,
-                end = matchResult.range.last + 1
+                start = start,
+                end = end
+            )
+
+            addStyle(
+                style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR)),
+                start = start,
+                end = end
             )
         }
     }
@@ -239,61 +261,50 @@ fun Info2(localizationService: LocalizationService) {
         Font(googleFont = interFontName, fontProvider = provider, weight = FontWeight.Bold)
     )
 
-    // Get the localized text which should contain styled tags
     val localizedText = localizationService.translate("data.initialization.intro.label.iHaveRead")
 
     val annotatedString = buildAnnotatedString {
         withStyle(style = SpanStyle(fontFamily = interFontFamily)) {
-            // Parse the localized text and handle <tos> and <pp> tags
-            var currentIndex = 0
             val tosPattern = "<tos>(.*?)</tos>".toRegex()
             val ppPattern = "<pp>(.*?)</pp>".toRegex()
 
-            var processedText = localizedText
+            val allMatches = (tosPattern.findAll(localizedText) + ppPattern.findAll(localizedText))
+                .sortedBy { it.range.first }
 
-            // Handle TOS tags
-            tosPattern.findAll(localizedText).forEach { matchResult ->
-                val beforeMatch = processedText.substring(currentIndex, matchResult.range.first)
-                append(beforeMatch)
+            var currentIndex = 0
 
-                pushStringAnnotation(
-                    tag = "TOS",
-                    annotation = "https://tyrads.com/tyrsdk-terms-of-service/"
-                )
+            allMatches.forEach { matchResult ->
+                append(localizedText.substring(currentIndex, matchResult.range.first))
+
+                val tag = if (matchResult.value.startsWith("<tos>")) "TOS" else "PP"
+                val annotation = if (tag == "TOS") {
+                    "https://tyrads.com/tyrsdk-terms-of-service/"
+                } else {
+                    "https://tyrads.com/tyrsdk-privacy-policy/"
+                }
+                val linkText = matchResult.groupValues[1]
+
+                pushStringAnnotation(tag = tag, annotation = annotation)
                 withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
-                    append(matchResult.groupValues[1])
+                    append(linkText)
                 }
                 pop()
 
                 currentIndex = matchResult.range.last + 1
             }
 
-            // Handle PP tags similarly
-            ppPattern.findAll(localizedText).forEach { matchResult ->
-                pushStringAnnotation(
-                    tag = "PP",
-                    annotation = "https://tyrads.com/tyrsdk-privacy-policy/"
-                )
-                withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
-                    append(matchResult.groupValues[1])
-                }
-                pop()
+            if (currentIndex < localizedText.length) {
+                append(localizedText.substring(currentIndex))
             }
-
-            // For now, use the cleaned text without tags
-            val cleanText = localizedText
-                .replace("<tos>", "")
-                .replace("</tos>", "")
-                .replace("<pp>", "")
-                .replace("</pp>", "")
-            append(cleanText)
         }
     }
 
     ClickableText(
         text = annotatedString,
-        style = MaterialTheme.typography.bodyMedium,
-        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+        style = MaterialTheme.typography.bodyMedium.copy(
+            textAlign = TextAlign.Center
+        ),
+        modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
     ) { offset ->
         annotatedString.getStringAnnotations(offset, offset).firstOrNull()?.let { annotation ->
             when (annotation.tag) {
@@ -320,7 +331,11 @@ fun TwoButtonsWithInfo2(
             .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Info2(localizationService)
+        Box(
+            modifier = Modifier.padding(horizontal = 30.dp)
+        ) {
+            Info2(localizationService)
+        }
 
         Button(
             onClick = acceptOnTap,
