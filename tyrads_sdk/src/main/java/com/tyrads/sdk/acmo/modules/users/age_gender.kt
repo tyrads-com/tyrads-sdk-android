@@ -1,4 +1,3 @@
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -10,9 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -20,13 +17,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.activity.ComponentActivity
+import android.widget.Toast
+import android.util.Log
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentGenderSelector
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentAgeSelector
 import com.tyrads.sdk.acmo.core.services.LocalizationService
+import com.tyrads.sdk.acmo.modules.users.AcmoUsersController
 import kotlinx.coroutines.launch
-
 
 @Composable
 fun AcmoUsersUpdatePage() {
@@ -34,6 +33,10 @@ fun AcmoUsersUpdatePage() {
     var selectedAge by remember { mutableStateOf(18) }
     var isSubmitting by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    // Initialize controller
+    val usersController = remember { AcmoUsersController() }
 
     // Initialize LocalizationService similar to Flutter implementation
     val localizationService = LocalizationService.getInstance()
@@ -44,14 +47,6 @@ fun AcmoUsersUpdatePage() {
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.singup_bg),
-                contentDescription = "Background",
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth(),
-                contentScale = ContentScale.FillWidth
-            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -125,20 +120,40 @@ fun AcmoUsersUpdatePage() {
                 Button(
                     onClick = {
                         if (!isSubmitting) {
+                            // Validation matching Flutter exactly
                             if (selectedGender == null) {
+                                Toast.makeText(
+                                    context,
+                                    "Please select gender and age to proceed.",
+                                    Toast.LENGTH_SHORT
+                                ).show()
                                 return@Button
                             }
 
                             isSubmitting = true
                             coroutineScope.launch {
-                                Tyrads.getInstance().showOffers()
-                            }
+                                try {
+                                    // Use the controller instead of calling Tyrads directly
+                                    usersController.updateUser(
+                                        userId = Tyrads.getInstance().publisherUserID!!,
+                                        age = selectedAge,
+                                        gender = selectedGender!!
+                                    )
 
-//                            Tyrads.getInstance().navController.navigate("offers") {
-//                                popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
-//                                    inclusive = true
-//                                }
-//                            }
+                                    // Navigate like Flutter does
+                                    Tyrads.getInstance().showOffers()
+
+                                } catch (e: Exception) {
+                                    Log.e("AcmoUsersUpdate", "Error updating user: ${e.message}")
+                                    Toast.makeText(
+                                        context,
+                                        "Error updating profile. Please try again.",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } finally {
+                                    isSubmitting = false
+                                }
+                            }
                         }
                     },
                     modifier = Modifier
