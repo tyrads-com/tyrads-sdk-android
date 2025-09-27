@@ -78,7 +78,9 @@ private fun GenderListItem(
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (gender.isSelected)
-                MaterialTheme.colorScheme.secondary
+//                MaterialTheme.colorScheme.primary
+                Color(0xFF2CB388)
+
             else
                 Color.White
         ),
@@ -89,7 +91,7 @@ private fun GenderListItem(
     ) {
         Box(
             modifier = Modifier
-                .size(100.dp)
+                .size(102.dp)
                 .padding(5.dp),
             contentAlignment = Alignment.Center
         ) {
