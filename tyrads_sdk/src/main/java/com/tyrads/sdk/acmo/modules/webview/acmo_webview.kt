@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
 import androidx.compose.runtime.Composable
@@ -35,22 +36,16 @@ import kotlinx.coroutines.launch
 fun AcmoWebView() {
     val context = LocalContext.current
     val mUrl = Tyrads.getInstance().url
+    val webViewState = rememberWebViewState()
     val coroutineScope = rememberCoroutineScope()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
-    val fileChooserLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        webViewRef?.let { webView ->
-            val filePathCallback = webView.getFilePathCallback()
-            if (uri != null) {
-                filePathCallback?.onReceiveValue(arrayOf(uri))
-            } else {
-                filePathCallback?.onReceiveValue(null)
-            }
-            webView.clearFilePathCallback()
+    val fileChooserLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            val result = uri?.let { arrayOf(it) }
+            webViewState.filePathCallback?.onReceiveValue(result)
+            webViewState.filePathCallback = null
         }
-    }
 
     AndroidView(factory = {
         WebView(it).apply {
@@ -60,11 +55,8 @@ fun AcmoWebView() {
             )
             this.webViewClient = AcmoWebViewClient(context)
             this.webChromeClient = AcmoWebChromeClient(
-                onShowFileChooser = { filePathCallback ->
-                    this.setFilePathCallback(filePathCallback)
-                    fileChooserLauncher.launch("*/*")
-                    true
-                }
+                webViewState = webViewState,
+                fileChooserLauncher = fileChooserLauncher
             )
             this.settings.apply {
                 javaScriptEnabled = true
@@ -142,34 +134,36 @@ private class AcmoWebViewClient(private val context: Context) : WebViewClient() 
 }
 
 private class AcmoWebChromeClient(
-    private val onShowFileChooser: (ValueCallback<Array<Uri>>) -> Boolean
+    private val webViewState: WebViewState,
+    private val fileChooserLauncher: ActivityResultLauncher<String>
 ) : WebChromeClient() {
+
     override fun onShowFileChooser(
-        webView: WebView?,
-        filePathCallback: ValueCallback<Array<Uri>>?,
-        fileChooserParams: FileChooserParams?
+        webView: WebView,
+        filePathCallback: ValueCallback<Array<Uri>>,
+        fileChooserParams: FileChooserParams
     ): Boolean {
-        return onShowFileChooser(filePathCallback ?: return false)
+        webViewState.filePathCallback?.onReceiveValue(null) // cancel old request if still open
+        webViewState.filePathCallback = filePathCallback
+        fileChooserLauncher.launch("*/*")
+        return true
     }
 }
 
-private var filePathCallback: ValueCallback<Array<Uri>>? = null
-
-private fun WebView.getFilePathCallback(): ValueCallback<Array<Uri>>? = filePathCallback
-
-private fun WebView.setFilePathCallback(callback: ValueCallback<Array<Uri>>?) {
-    filePathCallback = callback
+@Keep
+class WebViewState {
+    var webView: WebView? by mutableStateOf(null)
+    var filePathCallback: ValueCallback<Array<Uri>>? by mutableStateOf(null)
 }
 
-private fun WebView.clearFilePathCallback() {
-    filePathCallback = null
-}
+@Composable
+fun rememberWebViewState() = remember { WebViewState() }
 
 @Keep
 private class WebAppInterface(private val context: Context, private val coroutineScope: CoroutineScope) {
     private val mainHandler = Handler(Looper.getMainLooper())
     private val localizationService = LocalizationService.getInstance()
-     @JavascriptInterface
+    @JavascriptInterface
     fun postMessage(jsonMessage: String) {
         try {
             Log.d("WebAppInterface", "Received message: $jsonMessage")
@@ -203,4 +197,3 @@ private class WebAppInterface(private val context: Context, private val coroutin
         }
     }
 }
-
