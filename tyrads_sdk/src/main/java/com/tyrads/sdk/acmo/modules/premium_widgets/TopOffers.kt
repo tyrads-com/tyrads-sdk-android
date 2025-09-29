@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
+import com.tyrads.sdk.acmo.core.OnboardingCheck
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.launchUrlForce
@@ -110,12 +111,10 @@ fun TopOffers(
                                 }
                             },
                             onButtonTap = {
-                                if (privacyAccepted.value) {
-                                    viewModel.onOfferClick(offer, index)
-                                } else {
-                                    coroutineScope.launch {
-                                        Tyrads.getInstance()
-                                            .showOffers(route = "offers/${offer.campaignId}")
+                                coroutineScope.launch {
+                                    val isReady = OnboardingCheck.checkOnboardingStatus(context)
+                                    if (isReady) {
+                                        viewModel.onOfferClick(offer, index)
                                     }
                                 }
                             },
