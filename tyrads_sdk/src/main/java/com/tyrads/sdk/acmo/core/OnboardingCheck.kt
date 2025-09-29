@@ -26,7 +26,6 @@ object OnboardingCheck {
 
         if (!privacyAccepted) {
             // Navigate to privacy policy page using showOffers which opens AcmoApp
-            // The AcmoApp will automatically show privacy page based on the check
             tyrads.showOffers()
             return@withContext false
         }
@@ -62,10 +61,7 @@ object OnboardingCheck {
         return@withContext true
     }
 
-    /**
-     * Checks if usage stats permission is granted
-     */
-    private fun checkUsageStatsPermission(context: Context): Boolean {
+      private fun checkUsageStatsPermission(context: Context): Boolean {
         return try {
             val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as android.app.AppOpsManager
             val mode = appOps.checkOpNoThrow(
