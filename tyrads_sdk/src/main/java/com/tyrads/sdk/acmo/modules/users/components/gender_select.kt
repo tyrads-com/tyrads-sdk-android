@@ -19,6 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 
 data class Gender(
@@ -78,9 +80,7 @@ private fun GenderListItem(
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (gender.isSelected)
-//                MaterialTheme.colorScheme.primary
-                Color(0xFF2CB388)
-
+                Tyrads.getInstance().mainColor?.toColor() ?: Color( AcmoConfig.SECONDARY_COLOR)
             else
                 Color.White
         ),
@@ -104,7 +104,7 @@ private fun GenderListItem(
                         id = if (gender.isMale) R.drawable.male else R.drawable.female
                     ),
                     contentDescription = gender.name,
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(30.dp),
                     colorFilter = ColorFilter.tint(
                         if (gender.isSelected) Color.White else Color.Gray
                     )

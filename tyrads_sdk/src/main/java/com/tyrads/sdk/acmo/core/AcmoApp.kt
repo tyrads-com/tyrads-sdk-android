@@ -43,7 +43,8 @@ class AcmoApp : ComponentActivity() {
         Tyrads.getInstance().initializePrivacyStatus()
 
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&
-            !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)) {
+            !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)
+        ) {
             Tyrads.getInstance().log("Offerwall closed")
             finish()
             return
@@ -56,17 +57,22 @@ class AcmoApp : ComponentActivity() {
         setContent {
             TyradsSdkTheme {
                 var initPath = "privacy"
-                Log.e("Privacy", Tyrads.getInstance().privacyAccepted.value.toString())
                 if (Tyrads.getInstance().preferences.getBoolean(
                         AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
                         false
                     )
                 ) {
-                    initPath = "webview"
+                    initPath = if (Tyrads.getInstance().newUser) {
+                        "users-update"
+                    } else {
+                        "webview"
+                    }
                 }
                 Tyrads.getInstance().navController = rememberNavController()
                 Scaffold(
-                    modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding(),
                     contentWindowInsets = WindowInsets.systemBars
                 ) { innerPadding ->
                     NavHost(
