@@ -15,6 +15,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import kotlinx.coroutines.launch
 
 @Composable
@@ -127,7 +129,7 @@ fun AcmoComponentAgeSelector(
                 Text(
                     text = if (currentAge >= min && currentAge <= min + 99) currentAge.toString() else "",
                     style = TextStyle(
-                        color = if (currentAge == selectedAge) Color(0xFF2CB388) else Color.Black.copy(alpha = 0.7f),
+                        color = if (currentAge == selectedAge) (Tyrads.getInstance().mainColor?.toColor() ?: Color( AcmoConfig.SECONDARY_COLOR)) else Color.Black.copy(alpha = 0.7f),
                         fontSize = 32.sp,
                         fontWeight = if (currentAge == selectedAge) FontWeight.Bold else FontWeight.Normal
                     )
