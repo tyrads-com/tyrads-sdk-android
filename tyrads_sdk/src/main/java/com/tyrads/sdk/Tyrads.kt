@@ -2,6 +2,7 @@ package com.tyrads.sdk
 
 import AcmoConfig
 import AcmoEndpointNames
+import AcmoInitModel
 import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
@@ -32,13 +33,12 @@ import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.core.content.edit
+import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
-import com.tyrads.sdk.acmo.modules.users.models.AcmoInitModel
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -360,6 +360,20 @@ class Tyrads private constructor() {
             log("Language changed to: $languageCode")
         } catch (e: Exception) {
             log("Error changing language: ${e.message}", Log.ERROR)
+        }
+    }
+
+    fun isPrivacyAccepted(): Boolean {
+        return privacyAccepted.value
+    }
+
+    suspend fun checkOnboardingProcess(context: Context): Boolean = withContext(Dispatchers.Default){
+        try {
+            val result = AcmoOnboardingGate.start(context)
+            return@withContext result
+        } catch (e: Exception){
+            log("Onboarding check failed: ${e.message}", Log.ERROR)
+            return@withContext false
         }
     }
 
