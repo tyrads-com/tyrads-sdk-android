@@ -29,7 +29,7 @@ object AcmoOnboardingGate {
             AcmoUsersUpdateActivity.start(context, true)
             return
         }
-        Log.e("AcmoGate", "All onboarding steps completed")
+        Log.i("AcmoGate", "All onboarding steps completed")
         onComplete?.invoke()
         onComplete = null
     }
