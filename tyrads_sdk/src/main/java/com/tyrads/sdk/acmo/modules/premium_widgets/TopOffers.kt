@@ -112,10 +112,8 @@ fun TopOffers(
                             },
                             onButtonTap = {
                                 coroutineScope.launch {
-                                    coroutineScope.launch {
-                                        AcmoOnboardingGate.start(context) {
-                                            viewModel.onOfferClick(offer, index)
-                                        }
+                                    AcmoOnboardingGate.start(context) {
+                                        viewModel.onOfferClick(offer, index)
                                     }
                                 }
                             },
