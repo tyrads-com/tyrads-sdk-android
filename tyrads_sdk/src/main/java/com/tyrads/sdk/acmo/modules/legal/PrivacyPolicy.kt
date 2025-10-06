@@ -34,11 +34,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.helpers.acmoLaunchURL
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 
 @Composable
-fun AcmoPrivacyPolicyPage() {
+fun AcmoPrivacyPolicyPage(
+    onAccepted: (() -> Unit)? = null,
+    onCancelled: (() -> Unit)? = null,
+    returnToWidget: Boolean? = false
+) {
     val scrollState = rememberScrollState()
     val activityContext = LocalContext.current as? ComponentActivity
 
@@ -70,10 +75,18 @@ fun AcmoPrivacyPolicyPage() {
             TwoButtonsWithInfo2(
                 localizationService = localizationService,
                 acceptOnTap = {
-                    Tyrads.getInstance().navController.navigate("usage-permissions")
+                    if (returnToWidget == true) {
+                        onAccepted?.invoke()
+                    } else {
+                        Tyrads.getInstance().navController.navigate("usage-permissions")
+                    }
                 },
                 rejectOntap = {
-                    activityContext?.finish()
+                    if (returnToWidget == true) {
+                        onCancelled?.invoke()
+                    } else {
+                        activityContext?.finish()
+                    }
                 },
             )
         }
@@ -224,7 +237,7 @@ fun Info(localizationService: LocalizationService) {
             )
 
             addStyle(
-                style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR)),
+                style = SpanStyle(color = Tyrads.getInstance().mainColor?.toColor() ?: Color( AcmoConfig.SECONDARY_COLOR)),
                 start = start,
                 end = end
             )
@@ -285,7 +298,7 @@ fun Info2(localizationService: LocalizationService) {
                 val linkText = matchResult.groupValues[1]
 
                 pushStringAnnotation(tag = tag, annotation = annotation)
-                withStyle(style = SpanStyle(color = Color(AcmoConfig.SECONDARY_COLOR))) {
+                withStyle(style = SpanStyle(color = Tyrads.getInstance().mainColor?.toColor() ?: Color( AcmoConfig.SECONDARY_COLOR))) {
                     append(linkText)
                 }
                 pop()
@@ -343,7 +356,7 @@ fun TwoButtonsWithInfo2(
                 .width(160.dp)
                 .height(35.dp),
             shape = RoundedCornerShape(8.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Color(AcmoConfig.SECONDARY_COLOR))
+            colors = ButtonDefaults.buttonColors(containerColor = Tyrads.getInstance().mainColor?.toColor() ?: Color( AcmoConfig.SECONDARY_COLOR))
         ) {
             // Accept button using localization
             Text(localizationService.translate("data.initialization.intro.cta.accept"))

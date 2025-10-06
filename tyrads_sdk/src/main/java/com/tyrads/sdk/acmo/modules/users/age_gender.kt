@@ -21,6 +21,7 @@ import android.widget.Toast
 import android.util.Log
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentGenderSelector
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentAgeSelector
 import com.tyrads.sdk.acmo.core.services.LocalizationService
@@ -28,7 +29,11 @@ import com.tyrads.sdk.acmo.modules.users.AcmoUsersController
 import kotlinx.coroutines.launch
 
 @Composable
-fun AcmoUsersUpdatePage() {
+fun AcmoUsersUpdatePage(
+    onComplete: (() -> Unit)? = null,
+    onClose: (() -> Unit)? = null,
+    returnToWidget: Boolean? = false
+) {
     var selectedGender by remember { mutableStateOf<Int?>(null) }
     var selectedAge by remember { mutableStateOf(18) }
     var isSubmitting by remember { mutableStateOf(false) }
@@ -38,7 +43,6 @@ fun AcmoUsersUpdatePage() {
     // Initialize controller
     val usersController = remember { AcmoUsersController() }
 
-    // Initialize LocalizationService similar to Flutter implementation
     val localizationService = LocalizationService.getInstance()
 
     Scaffold { innerPadding ->
@@ -54,15 +58,18 @@ fun AcmoUsersUpdatePage() {
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CloseonTap()
+                CloseonTap(
+                    onClose = onClose,
+                    returnToWidget = returnToWidget
+                )
 
                 Spacer(modifier = Modifier.height(65.dp))
 
                 // Title section - using localization
                 Text(
                     text = localizationService.translate("data.initialization.userInfo.title"),
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        color = Color(0xFF2CB388),
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = Tyrads.getInstance().mainColor?.toColor() ?: Color(0xFF2CB388),
                         fontWeight = FontWeight.Medium
                     ),
                     textAlign = TextAlign.Center
@@ -74,7 +81,7 @@ fun AcmoUsersUpdatePage() {
                 Text(
                     text = localizationService.translate("data.initialization.userInfo.chooseGender.label"),
                     style = TextStyle(
-                        color = Color(0xFF2CB388),
+                        color = Tyrads.getInstance().mainColor?.toColor() ?: Color(0xFF2CB388),
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.sp
                     ),
@@ -99,7 +106,7 @@ fun AcmoUsersUpdatePage() {
                 Text(
                     text = localizationService.translate("data.initialization.userInfo.chooseAge.label"),
                     style = TextStyle(
-                        color = Color(0xFF2CB388),
+                        color = Tyrads.getInstance().mainColor?.toColor() ?: Color(0xFF2CB388),
                         fontWeight = FontWeight.Medium,
                         fontSize = 16.sp
                     ),
@@ -139,9 +146,12 @@ fun AcmoUsersUpdatePage() {
                                         age = selectedAge,
                                         gender = selectedGender!!
                                     )
-
-                                    // Navigate like Flutter does
-                                    Tyrads.getInstance().showOffers()
+                                    if (returnToWidget == true) {
+                                        onComplete?.invoke()
+                                    } else {
+                                        (context as? ComponentActivity)?.finish()
+                                        Tyrads.getInstance().showOffers()
+                                    }
 
                                 } catch (e: Exception) {
                                     Log.e("AcmoUsersUpdate", "Error updating user: ${e.message}")
@@ -162,7 +172,7 @@ fun AcmoUsersUpdatePage() {
                         .height(50.dp),
                     enabled = !isSubmitting,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2CB388)
+                        containerColor = Tyrads.getInstance().mainColor?.toColor() ?: Color(0xFF2CB388)
                     ),
                     shape = RoundedCornerShape(5.dp)
                 ) {
@@ -188,7 +198,10 @@ fun AcmoUsersUpdatePage() {
 }
 
 @Composable
-fun CloseonTap() {
+fun CloseonTap(
+    onClose: (() -> Unit)?,
+    returnToWidget: Boolean? = false
+) {
     val activityContext = LocalContext.current as? ComponentActivity
     Box(
         modifier = Modifier
@@ -196,7 +209,11 @@ fun CloseonTap() {
     ) {
         IconButton(
             onClick = {
-                activityContext?.finish()
+                if (returnToWidget == true) {
+                    onClose?.invoke()
+                } else {
+                    activityContext?.finish()
+                }
             },
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
