@@ -165,7 +165,6 @@ class Tyrads private constructor() {
         _currentLanguageCode.value = currentLanguage
         log("Selected Language: ${currentLanguageCode.value}")
 
-        // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
         localizationService.init(currentLanguageCode.value)
 
         val integrityToken = getPlayIntegrityToken(context)
