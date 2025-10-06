@@ -28,10 +28,6 @@ class AcmoUsagePermissionActivity : ComponentActivity() {
                     startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                 },
                 returnToWidget = actionType
-//                onSkip = {
-//                    finish()
-//                    AcmoOnboardingGate.start(this)
-//                }
             )
         }
     }
