@@ -17,7 +17,12 @@ object AcmoOnboardingGate {
 
     suspend fun start(context: Context): Boolean = suspendCancellableCoroutine { cont ->
         continuation = { cont.resume(it) }
-        proceed(context)
+        Handler(Looper.getMainLooper()).post {
+            proceed(context)
+        }
+        cont.invokeOnCancellation {
+            continuation = null
+        }
     }
 
     fun proceed(context: Context) {
