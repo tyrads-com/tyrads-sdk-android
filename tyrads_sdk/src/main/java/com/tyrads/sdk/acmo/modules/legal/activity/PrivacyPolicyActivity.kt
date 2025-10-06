@@ -13,6 +13,7 @@ class AcmoPrivacyPolicyActivity : ComponentActivity() {
     companion object {
         fun start(context: Context, actionType: Boolean) {
             val intent = Intent(context, AcmoPrivacyPolicyActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.putExtra("returnToWidget", actionType)
             context.startActivity(intent)
         }

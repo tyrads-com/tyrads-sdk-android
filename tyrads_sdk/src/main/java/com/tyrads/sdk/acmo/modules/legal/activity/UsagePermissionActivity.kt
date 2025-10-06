@@ -14,6 +14,7 @@ class AcmoUsagePermissionActivity : ComponentActivity() {
     companion object {
         fun start(context: Context, actionType: Boolean) {
             val intent = Intent(context, AcmoUsagePermissionActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             intent.putExtra("returnToWidget", actionType)
             context.startActivity(intent)
         }
