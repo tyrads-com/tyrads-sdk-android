@@ -23,6 +23,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
+import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.launchUrlForce
@@ -142,12 +143,12 @@ fun TopOffers(
                                 currencySales = uiState.currencySales,
                                 margin = PaddingValues(horizontal = 16.dp),
                                 onButtonClick = {
-                                    if (privacyAccepted.value) {
-                                        viewModel.onOfferClick(offer, index)
-                                    } else {
-                                        coroutineScope.launch {
-                                            Tyrads.getInstance()
-                                                .showOffers(route = "offers/${offer.campaignId}")
+                                    coroutineScope.launch {
+                                       val isReady =  AcmoOnboardingGate.start(context)
+                                        if(isReady){
+                                            viewModel.onOfferClick(offer, index)
+                                        } else{
+                                            Log.e("AcmoGate", "Error in gate")
                                         }
                                     }
                                 },
