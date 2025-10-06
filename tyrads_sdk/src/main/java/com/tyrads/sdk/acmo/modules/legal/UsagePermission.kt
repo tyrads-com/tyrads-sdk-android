@@ -20,7 +20,10 @@ import kotlinx.coroutines.launch
 import androidx.core.content.edit
 
 @Composable
-fun AcmoUsagePermissionsPage() {
+fun AcmoUsagePermissionsPage(
+    onGrantClicked: (() -> Unit)? = null,
+    returnToWidget: Boolean? = false
+) {
     // Initialize LocalizationService similar to Flutter implementation
     val localizationService = LocalizationService.getInstance()
 
@@ -45,17 +48,15 @@ fun AcmoUsagePermissionsPage() {
                     onGrant = {
                         // Save privacy acceptance preference
                         Tyrads.getInstance().setPrivacyAccepted(true)
-//                        Tyrads.getInstance().preferences.edit {
-//                            putBoolean(
-//                                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-//                                true
-//                            )
-//                        }
 
                         // Save usage stats
                         Tyrads.getInstance().tyradScope.launch {
                             val usageStatsController = AcmoUsageStatsController()
                             usageStatsController.saveUsageStats()
+                        }
+
+                        if(returnToWidget == true){
+                            return@UsageStatsCard
                         }
 
                         val destination = if (Tyrads.getInstance().newUser) {
