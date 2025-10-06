@@ -8,21 +8,24 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role.Companion.Image
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
-import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.modules.legal.CloseonTap
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
 
 @Composable
-fun AcmoUsagePermissionsPage() {
+fun AcmoUsagePermissionsPage(
+    onCancel: (() -> Unit)? = null,
+    returnToWidget: Boolean? = false
+) {
     val localizationService = LocalizationService.getInstance()
+
     Scaffold (
         containerColor = Color.White
     ){ innerPadding ->
@@ -32,7 +35,10 @@ fun AcmoUsagePermissionsPage() {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState())
         ) {
-            CloseonTap()
+            CloseonTap(
+                onClose = onCancel,
+                returnToWidget = returnToWidget
+            )
 
             Column(
                 modifier = Modifier.padding(20.dp),
@@ -42,16 +48,26 @@ fun AcmoUsagePermissionsPage() {
                 Spacer(modifier = Modifier.height(40.dp))
                 UsageStatsCard(
                     onGrant = {
-                        Tyrads.getInstance().preferences.edit().putBoolean(
-                            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-                            true
-                        ).apply()
+                        // Save privacy acceptance preference
+                        Tyrads.getInstance().setPrivacyAccepted(true)
+
+                        // Save usage stats
                         Tyrads.getInstance().tyradScope.launch {
                             val usageStatsController = AcmoUsageStatsController()
                             usageStatsController.saveUsageStats()
                         }
 
-                        Tyrads.getInstance().navController.navigate("webview") {
+                        if(returnToWidget == true){
+                            return@UsageStatsCard
+                        }
+
+                        val destination = if (Tyrads.getInstance().newUser) {
+                            "update-user"
+                        } else {
+                            "webview"
+                        }
+
+                        Tyrads.getInstance().navController.navigate(destination) {
                             popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -63,10 +79,10 @@ fun AcmoUsagePermissionsPage() {
     }
 }
 
-
 @Composable
 fun Body(localizationService: LocalizationService) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        // Title using localization - matching Flutter implementation
         Text(
             text = localizationService.translate("data.initialization.usagePermission.title"),
             style = MaterialTheme.typography.titleMedium.copy(
@@ -78,6 +94,7 @@ fun Body(localizationService: LocalizationService) {
             modifier = Modifier.padding(top = 10.dp)
         )
 
+        // Privacy banner image - matching Flutter sizing
         Image(
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",

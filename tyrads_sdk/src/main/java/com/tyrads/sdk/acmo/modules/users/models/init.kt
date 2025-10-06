@@ -1,5 +1,3 @@
-package com.tyrads.sdk.acmo.modules.users.models
-
 import androidx.annotation.Keep
 import com.google.android.gms.common.annotation.KeepForSdkWithFieldsAndMethods
 import com.google.gson.annotations.SerializedName
@@ -16,8 +14,7 @@ data class Data(
     val user: User,
     @SerializedName("publisherApp")
     val publisherApp: PublisherApp,
-    @SerializedName("token")
-    val token: String? = null,
+    val token: String
 )
 @Keep
 data class User(
