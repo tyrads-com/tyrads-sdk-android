@@ -22,5 +22,21 @@
             android:configChanges="locale|layoutDirection"
             android:theme="@style/Theme.TyradsSdk" />
 
+        <activity android:name="com.tyrads.sdk.acmo.modules.legal.activity.AcmoPrivacyPolicyActivity"
+            android:exported="false"
+            android:label="@string/title_activity_tyrads_webview"
+            android:configChanges="locale|layoutDirection"
+            android:theme="@style/Theme.TyradsSdk" />
+        <activity android:name="com.tyrads.sdk.acmo.modules.legal.activity.AcmoUsagePermissionActivity"
+            android:exported="false"
+            android:label="@string/title_activity_tyrads_webview"
+            android:configChanges="locale|layoutDirection"
+            android:theme="@style/Theme.TyradsSdk" />
+        <activity android:name="com.tyrads.sdk.acmo.modules.users.activity.AcmoUsersUpdateActivity"
+            android:exported="false"
+            android:label="@string/title_activity_tyrads_webview"
+            android:configChanges="locale|layoutDirection"
+            android:theme="@style/Theme.TyradsSdk" />
+
     </application>
 </manifest>
