@@ -125,4 +125,16 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+//    // Firebase BOM (Bill of Materials)
+//    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+//
+//// Firebase Cloud Messaging
+//    implementation("com.google.firebase:firebase-messaging-ktx")
+//    implementation("com.google.firebase:firebase-analytics-ktx")
+
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-messaging-ktx")
+    implementation("com.google.firebase:firebase-analytics-ktx")
+
 }
