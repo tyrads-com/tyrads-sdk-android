@@ -37,6 +37,7 @@ import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
+import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -170,6 +171,15 @@ class Tyrads private constructor() {
         val integrityToken = getPlayIntegrityToken(context)
         log("Integrity Token: $integrityToken")
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        log("Tyrads SDK initialized", Log.INFO)
+
+        // Initialize FCM Service
+        try {
+            FCMService.initialize(context)
+        } catch (error: Exception) {
+            log("Failed to initialize FCM: ${error.message}", Log.ERROR)
+        }
+
         log("Tyrads SDK initialized", Log.INFO)
     }
 
