@@ -39,6 +39,13 @@ android {
             )
         }
     }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -76,6 +83,9 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.ui.text.google.fonts)
     implementation(libs.androidx.animation)
+
+    implementation(libs.androidx.material.icons.extended)
+
 
     // ViewModel + Runtime for Compose
     implementation(libs.androidx.lifecycle.viewmodel.compose)
