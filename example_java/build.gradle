@@ -1,0 +1,81 @@
+import java.util.Properties
+
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+android {
+    namespace 'com.example.example_java'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.example.example_java"
+        minSdk 24
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary true
+        }
+    }
+
+    buildFeatures {
+        buildConfig true // Enable BuildConfig
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("String", "TYRADS_API_KEY", "\"${localProperties.getProperty("tyrads.api.key") ?: ""}\"")
+            buildConfigField("String", "TYRADS_API_SECRET", "\"${localProperties.getProperty("tyrads.api.secret") ?: ""}\"")
+        }
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField("String", "TYRADS_API_KEY", "\"${localProperties.getProperty("tyrads.api.key") ?: ""}\"")
+            buildConfigField("String", "TYRADS_API_SECRET", "\"${localProperties.getProperty("tyrads.api.secret") ?: ""}\"")
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+    }
+}
+
+dependencies {
+    implementation libs.androidx.appcompat
+    implementation libs.material
+    implementation libs.androidx.activity
+    implementation libs.androidx.constraintlayout
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.lifecycle.runtime.ktx
+
+    // Add Tyrads SDK dependency
+    implementation project(':tyrads_sdk')
+
+    // Add lifecycle and coroutines support for Java
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.6.1'
+    implementation 'androidx.lifecycle:lifecycle-livedata:2.6.1'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1'
+
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.junit
+    androidTestImplementation libs.androidx.espresso.core
+}
