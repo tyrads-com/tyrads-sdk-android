@@ -71,11 +71,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initializeTyrads() {
-        // Show initializing indicator
         initializingIndicator.setVisibility(View.VISIBLE);
         topOffersView.setVisibility(View.GONE);
 
-        // Initialize SDK with callback
         Tyrads.getInstance().init(
                 this,
                 "4f0eaa99e38e49b8b52804116e638a41",
