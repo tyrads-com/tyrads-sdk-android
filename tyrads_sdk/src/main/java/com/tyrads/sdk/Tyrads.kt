@@ -43,17 +43,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-/**
- * Generic callback interface for async operations - Java compatible
- */
 interface TyradsCallback {
     fun onSuccess()
     fun onFailure(error: String)
 }
 
-/**
- * Callback interface for login operations - Java compatible
- */
 interface TyradsLoginCallback {
     fun onSuccess(isNewUser: Boolean)
     fun onFailure(error: String)
@@ -142,10 +136,7 @@ class Tyrads private constructor() {
         }
     }
 
-    /**
-     * Helper function to safely execute callbacks on main thread
-     */
-    private suspend inline fun safeCallback(crossinline block: () -> Unit) {
+     private suspend inline fun safeCallback(crossinline block: () -> Unit) {
         withContext(Dispatchers.Main) {
             try {
                 block()
@@ -155,9 +146,6 @@ class Tyrads private constructor() {
         }
     }
 
-    /**
-     * Initialize the Tyrads SDK (Kotlin coroutine version)
-     */
     suspend fun init(
         context: Context,
         apiKey: String,
@@ -213,9 +201,6 @@ class Tyrads private constructor() {
         log("Tyrads SDK initialized", Log.INFO)
     }
 
-    /**
-     * Initialize the Tyrads SDK (Java-compatible version with callback)
-     */
     @JvmOverloads
     fun init(
         context: Context,
@@ -236,9 +221,6 @@ class Tyrads private constructor() {
         }
     }
 
-    /**
-     * Login user (Kotlin coroutine version)
-     */
     suspend fun loginUser(userID: String? = null): Boolean = withContext(Dispatchers.Default) {
         try {
             if (!::preferences.isInitialized) {
@@ -345,9 +327,6 @@ class Tyrads private constructor() {
         }
     }
 
-    /**
-//     Login user (Java-compatible version with callback)
-     */
     @JvmOverloads
     fun loginUser(userID: String? = null, callback: TyradsLoginCallback) {
         tyradScope.launch {
@@ -367,9 +346,6 @@ class Tyrads private constructor() {
         }
     }
 
-    /**
-     * Show offers (Kotlin coroutine version)
-     */
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
             log("Preparing to show offers", Log.INFO)
@@ -396,9 +372,6 @@ class Tyrads private constructor() {
             context.startActivity(intent)
         }
 
-    /**
-     * Show offers (Java-compatible version with callback)
-     */
     @JvmOverloads
     fun showOffers(
         route: String? = null,
@@ -453,9 +426,6 @@ class Tyrads private constructor() {
         }
     }
 
-    /**
-     * Changes the language of the SDK (Java-compatible version with callback)
-     */
     @JvmOverloads
     fun changeLanguage(languageCode: String, callback: TyradsCallback? = null) {
         tyradScope.launch {
