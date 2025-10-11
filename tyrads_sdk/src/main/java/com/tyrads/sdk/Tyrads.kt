@@ -27,6 +27,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.util.UUID
 import android.net.Uri
 import android.os.Build
@@ -41,6 +42,22 @@ import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+
+/**
+ * Generic callback interface for async operations - Java compatible
+ */
+interface TyradsCallback {
+    fun onSuccess()
+    fun onFailure(error: String)
+}
+
+/**
+ * Callback interface for login operations - Java compatible
+ */
+interface TyradsLoginCallback {
+    fun onSuccess(isNewUser: Boolean)
+    fun onFailure(error: String)
+}
 
 @Keep
 class Tyrads private constructor() {
@@ -71,7 +88,6 @@ class Tyrads private constructor() {
     private var _isSecure: Boolean = false;
     val isSecure: Boolean get() = _isSecure;
 
-    // need these variables outside
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
     var mainColor: String? = null
@@ -126,6 +142,22 @@ class Tyrads private constructor() {
         }
     }
 
+    /**
+     * Helper function to safely execute callbacks on main thread
+     */
+    private suspend inline fun safeCallback(crossinline block: () -> Unit) {
+        withContext(Dispatchers.Main) {
+            try {
+                block()
+            } catch (e: Exception) {
+                log("Error in callback execution: ${e.message}", Log.ERROR)
+            }
+        }
+    }
+
+    /**
+     * Initialize the Tyrads SDK (Kotlin coroutine version)
+     */
     suspend fun init(
         context: Context,
         apiKey: String,
@@ -171,9 +203,7 @@ class Tyrads private constructor() {
         val integrityToken = getPlayIntegrityToken(context)
         log("Integrity Token: $integrityToken")
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
-        log("Tyrads SDK initialized", Log.INFO)
 
-        // Initialize FCM Service
         try {
             FCMService.initialize(context)
         } catch (error: Exception) {
@@ -183,6 +213,32 @@ class Tyrads private constructor() {
         log("Tyrads SDK initialized", Log.INFO)
     }
 
+    /**
+     * Initialize the Tyrads SDK (Java-compatible version with callback)
+     */
+    @JvmOverloads
+    fun init(
+        context: Context,
+        apiKey: String,
+        apiSecret: String,
+        encryptionKey: String? = null,
+        debugMode: Boolean = false,
+        callback: TyradsCallback
+    ) {
+        tyradScope.launch {
+            try {
+                init(context, apiKey, apiSecret, encryptionKey, debugMode)
+                safeCallback { callback.onSuccess() }
+            } catch (e: Exception) {
+                log("Exception during init: ${e.message}", Log.ERROR)
+                safeCallback { callback.onFailure(e.message ?: "Unknown error during initialization") }
+            }
+        }
+    }
+
+    /**
+     * Login user (Kotlin coroutine version)
+     */
     suspend fun loginUser(userID: String? = null): Boolean = withContext(Dispatchers.Default) {
         try {
             if (!::preferences.isInitialized) {
@@ -260,7 +316,6 @@ class Tyrads private constructor() {
                     newUser = loginData.data.newRegisteredUser
                     token = loginData.data.token
 
-                    // check for empty
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
                     premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
                     headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
@@ -290,6 +345,31 @@ class Tyrads private constructor() {
         }
     }
 
+    /**
+//     Login user (Java-compatible version with callback)
+     */
+    @JvmOverloads
+    fun loginUser(userID: String? = null, callback: TyradsLoginCallback) {
+        tyradScope.launch {
+            try {
+                val success = loginUser(userID)
+                safeCallback {
+                    if (success) {
+                        callback.onSuccess(newUser)
+                    } else {
+                        callback.onFailure("Login failed - Please check your credentials and try again")
+                    }
+                }
+            } catch (e: Exception) {
+                log("Exception during loginUser: ${e.message}", Log.ERROR)
+                safeCallback { callback.onFailure(e.message ?: "Unknown error during login") }
+            }
+        }
+    }
+
+    /**
+     * Show offers (Kotlin coroutine version)
+     */
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
             log("Preparing to show offers", Log.INFO)
@@ -315,6 +395,26 @@ class Tyrads private constructor() {
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         }
+
+    /**
+     * Show offers (Java-compatible version with callback)
+     */
+    @JvmOverloads
+    fun showOffers(
+        route: String? = null,
+        campaignID: Int? = null,
+        callback: TyradsCallback? = null
+    ) {
+        tyradScope.launch {
+            try {
+                showOffers(route, campaignID)
+                callback?.let { safeCallback { it.onSuccess() } }
+            } catch (e: Exception) {
+                log("Exception during showOffers: ${e.message}", Log.ERROR)
+                callback?.let { safeCallback { it.onFailure(e.message ?: "Unknown error showing offers") } }
+            }
+        }
+    }
 
     /**
      * Changes the language of the SDK - similar to Dart implementation
@@ -350,6 +450,22 @@ class Tyrads private constructor() {
             log("Language changed to: $languageCode")
         } catch (e: Exception) {
             log("Error changing language: ${e.message}", Log.ERROR)
+        }
+    }
+
+    /**
+     * Changes the language of the SDK (Java-compatible version with callback)
+     */
+    @JvmOverloads
+    fun changeLanguage(languageCode: String, callback: TyradsCallback? = null) {
+        tyradScope.launch {
+            try {
+                changeLanguage(languageCode)
+                callback?.let { safeCallback { it.onSuccess() } }
+            } catch (e: Exception) {
+                log("Exception during changeLanguage: ${e.message}", Log.ERROR)
+                callback?.let { safeCallback { it.onFailure(e.message ?: "Unknown error changing language") } }
+            }
         }
     }
 
