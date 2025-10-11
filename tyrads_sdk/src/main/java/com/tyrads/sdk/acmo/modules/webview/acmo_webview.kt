@@ -143,9 +143,9 @@ private class AcmoWebChromeClient(
         filePathCallback: ValueCallback<Array<Uri>>,
         fileChooserParams: FileChooserParams
     ): Boolean {
-        webViewState.filePathCallback?.onReceiveValue(null) // cancel old request if still open
+        webViewState.filePathCallback?.onReceiveValue(null)
         webViewState.filePathCallback = filePathCallback
-        fileChooserLauncher.launch("*/*")
+        fileChooserLauncher.launch("image/*")
         return true
     }
 }
