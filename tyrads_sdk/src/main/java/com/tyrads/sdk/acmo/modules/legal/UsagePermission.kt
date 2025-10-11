@@ -24,7 +24,6 @@ fun AcmoUsagePermissionsPage(
     onGrantClicked: (() -> Unit)? = null,
     returnToWidget: Boolean? = false
 ) {
-    // Initialize LocalizationService similar to Flutter implementation
     val localizationService = LocalizationService.getInstance()
 
     Scaffold (
@@ -80,7 +79,6 @@ fun AcmoUsagePermissionsPage(
 @Composable
 fun Body(localizationService: LocalizationService) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // Title using localization - matching Flutter implementation
         Text(
             text = localizationService.translate("data.initialization.usagePermission.title"),
             style = MaterialTheme.typography.titleMedium.copy(
@@ -89,10 +87,12 @@ fun Body(localizationService: LocalizationService) {
                 color = Color.Black
             ),
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 10.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 10.dp),
+            maxLines = Int.MAX_VALUE
         )
 
-        // Privacy banner image - matching Flutter sizing
         Image(
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",
