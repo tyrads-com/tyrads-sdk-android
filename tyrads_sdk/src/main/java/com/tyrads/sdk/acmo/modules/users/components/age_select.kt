@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun AcmoComponentAgeSelector(
@@ -30,14 +31,16 @@ fun AcmoComponentAgeSelector(
     var dragOffset by remember { mutableStateOf(0f) }
     val density = LocalDensity.current
     val coroutineScope = rememberCoroutineScope()
+    val itemWidth = with(density) { 60.dp.toPx() }
+    val maxAge = min + 99
 
     LaunchedEffect(init) {
         selectedAge = init
     }
 
-    val centerIndex = selectedAge - min
-    val offsetSteps = (dragOffset / with(density) { 60.dp.toPx() }).toInt()
-    val virtualCenter = (centerIndex - offsetSteps).coerceIn(0, 99)
+    val centerPosition = selectedAge - min
+    val offsetSteps = (dragOffset / itemWidth).roundToInt()
+    val displayCenterAge = (selectedAge - offsetSteps).coerceIn(min, maxAge)
 
     Box(
         modifier = modifier
@@ -45,22 +48,31 @@ fun AcmoComponentAgeSelector(
             .pointerInput(Unit) {
                 detectDragGestures(
                     onDragEnd = {
-                        val snapSteps = (dragOffset / with(density) { 60.dp.toPx() }).toInt()
-                        val newAge = (selectedAge - snapSteps).coerceIn(min, min + 99)
-
                         coroutineScope.launch {
+                            val steps = (dragOffset / itemWidth).roundToInt()
+                            val newAge = (selectedAge - steps).coerceIn(min, maxAge)
+
                             selectedAge = newAge
                             onChanged(newAge)
                             dragOffset = 0f
                         }
+                    },
+                    onDrag = { _, dragAmount ->
+                        val newOffset = dragOffset + dragAmount.x
+
+                        val steps = (newOffset / itemWidth).roundToInt()
+                        val potentialAge = selectedAge - steps
+
+                        if (potentialAge in min..maxAge) {
+                            dragOffset = newOffset
+                        } else {
+                            val maxSteps = selectedAge - min
+                            val minSteps = -(maxAge - selectedAge)
+                            val limitedSteps = steps.coerceIn(minSteps, maxSteps)
+                            dragOffset = limitedSteps * itemWidth + (newOffset - steps * itemWidth) * 0.2f
+                        }
                     }
-                ) { _, dragAmount ->
-                    dragOffset += dragAmount.x
-                    // Limit drag range
-                    val maxOffset = (99 - (selectedAge - min)) * with(density) { 60.dp.toPx() }
-                    val minOffset = -(selectedAge - min) * with(density) { 60.dp.toPx() }
-                    dragOffset = dragOffset.coerceIn(minOffset, maxOffset)
-                }
+                )
             },
         contentAlignment = Alignment.Center
     ) {
@@ -68,119 +80,129 @@ fun AcmoComponentAgeSelector(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Far left age number (smallest, least visible)
-            val farLeftAge = min + virtualCenter - 2
-            TextButton(
+            // Far left age
+            val farLeftAge = displayCenterAge - 2
+            AgeButton(
+                age = farLeftAge,
+                isInRange = farLeftAge in min..maxAge,
+                alpha = 0.3f,
+                fontSize = 16.sp,
                 onClick = {
-                    if (farLeftAge >= min && farLeftAge != selectedAge) {
-                        selectedAge = farLeftAge
-                        onChanged(farLeftAge)
-                        dragOffset = 0f
+                    if (farLeftAge != selectedAge) {
+                        coroutineScope.launch {
+                            selectedAge = farLeftAge
+                            onChanged(farLeftAge)
+                            dragOffset = 0f
+                        }
                     }
-                },
-                enabled = farLeftAge >= min && farLeftAge <= min + 99,
-                contentPadding = PaddingValues(5.dp)
-            ) {
-                Text(
-                    text = if (farLeftAge >= min && farLeftAge <= min + 99) farLeftAge.toString() else "",
-                    style = TextStyle(
-                        color = Color.Black.copy(alpha = 0.3f),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
+                }
+            )
 
-            // Previous age number (medium size)
-            val leftAge = min + virtualCenter - 1
-            TextButton(
+            val leftAge = displayCenterAge - 1
+            AgeButton(
+                age = leftAge,
+                isInRange = leftAge in min..maxAge,
+                alpha = 0.54f,
+                fontSize = 22.sp,
                 onClick = {
-                    if (leftAge >= min && leftAge != selectedAge) {
-                        selectedAge = leftAge
-                        onChanged(leftAge)
-                        dragOffset = 0f
+                    if (leftAge != selectedAge) {
+                        coroutineScope.launch {
+                            selectedAge = leftAge
+                            onChanged(leftAge)
+                            dragOffset = 0f
+                        }
                     }
-                },
-                enabled = leftAge >= min && leftAge <= min + 99,
-                contentPadding = PaddingValues(8.dp)
-            ) {
-                Text(
-                    text = if (leftAge >= min && leftAge <= min + 99) leftAge.toString() else "",
-                    style = TextStyle(
-                        color = Color.Black.copy(alpha = 0.54f),
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
+                }
+            )
 
-            // Current age display with background (largest)
-            val currentAge = min + virtualCenter
             Box(
                 modifier = Modifier
                     .background(
-                        color = if (currentAge == selectedAge) Color(0xFFF6F6F6) else Color.Transparent,
+                        color = if (displayCenterAge == selectedAge && dragOffset.roundToInt() == 0)
+                            Color(0xFFF6F6F6)
+                        else
+                            Color.Transparent,
                         shape = RoundedCornerShape(12.dp)
                     )
                     .width(100.dp)
                     .height(70.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (currentAge >= min && currentAge <= min + 99) currentAge.toString() else "",
-                    style = TextStyle(
-                        color = if (currentAge == selectedAge) (Tyrads.getInstance().mainColor?.toColor() ?: Color( AcmoConfig.SECONDARY_COLOR)) else Color.Black.copy(alpha = 0.7f),
-                        fontSize = 32.sp,
-                        fontWeight = if (currentAge == selectedAge) FontWeight.Bold else FontWeight.Normal
+                if (displayCenterAge in min..maxAge) {
+                    Text(
+                        text = displayCenterAge.toString(),
+                        style = TextStyle(
+                            color = if (displayCenterAge == selectedAge && dragOffset.roundToInt() == 0)
+                                (Tyrads.getInstance().mainColor?.toColor() ?: Color(0xFF2CB388))
+                            else
+                                Color.Black.copy(alpha = 0.7f),
+                            fontSize = 32.sp,
+                            fontWeight = if (displayCenterAge == selectedAge && dragOffset.roundToInt() == 0)
+                                FontWeight.Bold
+                            else
+                                FontWeight.Normal
+                        )
                     )
-                )
+                }
             }
 
-            // Next age number (medium size)
-            val rightAge = min + virtualCenter + 1
-            TextButton(
+            val rightAge = displayCenterAge + 1
+            AgeButton(
+                age = rightAge,
+                isInRange = rightAge in min..maxAge,
+                alpha = 0.54f,
+                fontSize = 22.sp,
                 onClick = {
-                    if (rightAge <= min + 99 && rightAge != selectedAge) {
-                        selectedAge = rightAge
-                        onChanged(rightAge)
-                        dragOffset = 0f
+                    if (rightAge != selectedAge) {
+                        coroutineScope.launch {
+                            selectedAge = rightAge
+                            onChanged(rightAge)
+                            dragOffset = 0f
+                        }
                     }
-                },
-                enabled = rightAge >= min && rightAge <= min + 99,
-                contentPadding = PaddingValues(8.dp)
-            ) {
-                Text(
-                    text = if (rightAge >= min && rightAge <= min + 99) rightAge.toString() else "",
-                    style = TextStyle(
-                        color = Color.Black.copy(alpha = 0.54f),
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
+                }
+            )
 
-            // Far right age number (smallest, least visible)
-            val farRightAge = min + virtualCenter + 2
-            TextButton(
+            val farRightAge = displayCenterAge + 2
+            AgeButton(
+                age = farRightAge,
+                isInRange = farRightAge in min..maxAge,
+                alpha = 0.3f,
+                fontSize = 16.sp,
                 onClick = {
-                    if (farRightAge <= min + 99 && farRightAge != selectedAge) {
-                        selectedAge = farRightAge
-                        onChanged(farRightAge)
-                        dragOffset = 0f
+                    if (farRightAge != selectedAge) {
+                        coroutineScope.launch {
+                            selectedAge = farRightAge
+                            onChanged(farRightAge)
+                            dragOffset = 0f
+                        }
                     }
-                },
-                enabled = farRightAge >= min && farRightAge <= min + 99,
-                contentPadding = PaddingValues(4.dp)
-            ) {
-                Text(
-                    text = if (farRightAge >= min && farRightAge <= min + 99) farRightAge.toString() else "",
-                    style = TextStyle(
-                        color = Color.Black.copy(alpha = 0.3f),
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-            }
+                }
+            )
         }
+    }
+}
+
+@Composable
+private fun AgeButton(
+    age: Int,
+    isInRange: Boolean,
+    alpha: Float,
+    fontSize: androidx.compose.ui.unit.TextUnit,
+    onClick: () -> Unit
+) {
+    TextButton(
+        onClick = onClick,
+        enabled = isInRange,
+        contentPadding = PaddingValues(if (fontSize.value > 20f) 8.dp else 5.dp)
+    ) {
+        Text(
+            text = if (isInRange) age.toString() else "",
+            style = TextStyle(
+                color = Color.Black.copy(alpha = alpha),
+                fontSize = fontSize,
+                fontWeight = FontWeight.Bold
+            )
+        )
     }
 }
