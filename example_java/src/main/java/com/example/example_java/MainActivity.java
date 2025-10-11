@@ -87,7 +87,6 @@ public class MainActivity extends AppCompatActivity {
                     public void onSuccess() {
                         Log.d("TyradsInit", "SDK initialized successfully");
 
-                        // Login user after successful initialization
                         Tyrads.getInstance().loginUser("14560", new TyradsLoginCallback() {
                             @Override
                             public void onSuccess(boolean isNewUser) {
@@ -132,34 +131,29 @@ public class MainActivity extends AppCompatActivity {
         isLoadingOffers = true;
         updateLoadingState();
 
-        // Use default values if fields are blank (matching Kotlin version)
         String finalApiKey = apiKey.isEmpty() ? "4f0eaa99e38e49b8b52804116e638a41" : apiKey;
         String finalApiSecret = apiSecret.isEmpty() ? "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" : apiSecret;
         String finalEncryptionKey = encryptionKey.isEmpty() ? "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" : encryptionKey;
         String finalUserId = userId.isEmpty() ? "6" : userId;
 
-        // Save to SharedPreferences
         saveToSharedPreferences(apiKey, apiSecret, encryptionKey, userId);
 
-        // Initialize SDK with callback
         Tyrads.getInstance().init(
                 this,
                 finalApiKey,
                 finalApiSecret,
                 finalEncryptionKey,
-                false, // debug mode off for user-triggered actions
+                false,
                 new TyradsCallback() {
                     @Override
                     public void onSuccess() {
                         Log.d("TyradsInit", "SDK re-initialized successfully");
 
-                        // Login user after successful initialization
                         Tyrads.getInstance().loginUser(finalUserId, new TyradsLoginCallback() {
                             @Override
                             public void onSuccess(boolean isNewUser) {
                                 Log.d("TyradsLogin", "User logged in. New user: " + isNewUser);
 
-                                // Show offers after successful login
                                 Tyrads.getInstance().showOffers(null, null, new TyradsCallback() {
                                     @Override
                                     public void onSuccess() {
