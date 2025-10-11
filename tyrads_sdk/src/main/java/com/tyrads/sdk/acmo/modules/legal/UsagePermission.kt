@@ -83,7 +83,7 @@ fun Body(localizationService: LocalizationService) {
             text = localizationService.translate("data.initialization.usagePermission.title"),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
                 color = Color.Black
             ),
             textAlign = TextAlign.Center,
