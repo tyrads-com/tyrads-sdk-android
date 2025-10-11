@@ -3,8 +3,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +40,9 @@ fun AcmoUsersUpdatePage(
     val usersController = remember { AcmoUsersController() }
     val localizationService = LocalizationService.getInstance()
 
-    Scaffold { innerPadding ->
+    Scaffold(
+        containerColor = Color.White
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -55,12 +55,6 @@ fun AcmoUsersUpdatePage(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                /*
-                CloseonTap(
-                    onClose = onClose,
-                    returnToWidget = returnToWidget
-                )
-                */
 
                 Spacer(modifier = Modifier.height(113.dp))
 
@@ -188,37 +182,6 @@ fun AcmoUsersUpdatePage(
         }
     }
 }
-
-/*
-@Composable
-fun CloseonTap(
-    onClose: (() -> Unit)?,
-    returnToWidget: Boolean? = false
-) {
-    val activityContext = LocalContext.current as? ComponentActivity
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        IconButton(
-            onClick = {
-                if (returnToWidget == true) {
-                    onClose?.invoke()
-                } else {
-                    activityContext?.finish()
-                }
-            },
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                tint = Color(0xFFC4C4C4)
-            )
-        }
-    }
-}
-*/
 
 @Preview(showBackground = true)
 @Composable
