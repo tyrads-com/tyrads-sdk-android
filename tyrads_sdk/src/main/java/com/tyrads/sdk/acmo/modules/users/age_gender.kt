@@ -3,8 +3,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,7 +17,6 @@ import androidx.compose.ui.unit.sp
 import androidx.activity.ComponentActivity
 import android.widget.Toast
 import android.util.Log
-import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.modules.users.components.AcmoComponentGenderSelector
@@ -40,12 +37,13 @@ fun AcmoUsersUpdatePage(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Initialize controller
     val usersController = remember { AcmoUsersController() }
 
     val localizationService = LocalizationService.getInstance()
 
-    Scaffold { innerPadding ->
+    Scaffold(
+        containerColor = Color.White
+    ) { innerPadding ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -58,14 +56,9 @@ fun AcmoUsersUpdatePage(
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                CloseonTap(
-                    onClose = onClose,
-                    returnToWidget = returnToWidget
-                )
 
-                Spacer(modifier = Modifier.height(65.dp))
+                Spacer(modifier = Modifier.height(113.dp))
 
-                // Title section - using localization
                 Text(
                     text = localizationService.translate("data.initialization.userInfo.title"),
                     style = MaterialTheme.typography.titleMedium.copy(
@@ -77,7 +70,6 @@ fun AcmoUsersUpdatePage(
 
                 Spacer(modifier = Modifier.height(80.dp))
 
-                // Gender section - using localization
                 Text(
                     text = localizationService.translate("data.initialization.userInfo.chooseGender.label"),
                     style = TextStyle(
@@ -90,7 +82,6 @@ fun AcmoUsersUpdatePage(
 
                 Spacer(modifier = Modifier.height(30.dp))
 
-                // Gender selection component
                 Box(
                     modifier = Modifier.height(120.dp)
                 ) {
@@ -102,7 +93,6 @@ fun AcmoUsersUpdatePage(
 
                 Spacer(modifier = Modifier.height(70.dp))
 
-                // Age section - using localization
                 Text(
                     text = localizationService.translate("data.initialization.userInfo.chooseAge.label"),
                     style = TextStyle(
@@ -115,7 +105,6 @@ fun AcmoUsersUpdatePage(
 
                 Spacer(modifier = Modifier.height(36.dp))
 
-                // Age selection component
                 AcmoComponentAgeSelector(
                     onChanged = { selectedAge = it },
                     init = selectedAge,
@@ -127,7 +116,6 @@ fun AcmoUsersUpdatePage(
                 Button(
                     onClick = {
                         if (!isSubmitting) {
-                            // Validation matching Flutter exactly
                             if (selectedGender == null) {
                                 Toast.makeText(
                                     context,
@@ -140,7 +128,6 @@ fun AcmoUsersUpdatePage(
                             isSubmitting = true
                             coroutineScope.launch {
                                 try {
-                                    // Use the controller instead of calling Tyrads directly
                                     usersController.updateUser(
                                         userId = Tyrads.getInstance().publisherUserID!!,
                                         age = selectedAge,
@@ -193,35 +180,6 @@ fun AcmoUsersUpdatePage(
                 }
                 Spacer(modifier = Modifier.height(20.dp))
             }
-        }
-    }
-}
-
-@Composable
-fun CloseonTap(
-    onClose: (() -> Unit)?,
-    returnToWidget: Boolean? = false
-) {
-    val activityContext = LocalContext.current as? ComponentActivity
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-    ) {
-        IconButton(
-            onClick = {
-                if (returnToWidget == true) {
-                    onClose?.invoke()
-                } else {
-                    activityContext?.finish()
-                }
-            },
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Close",
-                tint = Color(0xFFC4C4C4)
-            )
         }
     }
 }
