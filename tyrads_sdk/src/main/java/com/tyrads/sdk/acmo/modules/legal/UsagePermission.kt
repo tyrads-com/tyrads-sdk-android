@@ -17,7 +17,6 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.CloseonTap
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.launch
-import androidx.core.content.edit
 
 @Composable
 fun AcmoUsagePermissionsPage(
@@ -83,13 +82,13 @@ fun Body(localizationService: LocalizationService) {
             text = localizationService.translate("data.initialization.usagePermission.title"),
             style = MaterialTheme.typography.titleMedium.copy(
                 fontWeight = FontWeight.Medium,
-                fontSize = 14.sp,
+                fontSize = 16.sp,
                 color = Color.Black
             ),
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
+                .padding(top = 20.dp),
             maxLines = Int.MAX_VALUE
         )
 
