@@ -1,7 +1,5 @@
 package com.tyrads.sdk.acmo.modules.webview
 
-import AcmoUsageStatsController
-import AcmoUsageStatsDialog
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
@@ -12,7 +10,6 @@ import android.os.Looper
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,17 +23,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.tyrads.sdk.Tyrads
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import java.lang.ref.WeakReference
 
-@SuppressLint("SetJavaScriptEnabled", "ContextCastToActivity")
+@SuppressLint("SetJavaScriptEnabled")
 @Keep
 @Composable
 fun AcmoWebView() {
@@ -44,6 +38,7 @@ fun AcmoWebView() {
     val mUrl = Tyrads.getInstance().url
     val webViewState = rememberWebViewState()
     val coroutineScope = rememberCoroutineScope()
+    var webViewRef by remember { mutableStateOf<WebView?>(null) }
 
     val fileChooserLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -51,27 +46,6 @@ fun AcmoWebView() {
             webViewState.filePathCallback?.onReceiveValue(result)
             webViewState.filePathCallback = null
         }
-
-    val usageStatsController = AcmoUsageStatsController()
-    var showDialog by remember { mutableStateOf(true) }
-
-    val status = usageStatsController.checkUsagePermission()
-
-    val activityContext = LocalContext.current as? ComponentActivity
-    val activityReference = WeakReference(activityContext)
-    if (!status && showDialog) {
-        Tyrads.getInstance().Dialog {
-            AcmoUsageStatsDialog(
-                dismissible = true,
-                onDismissRequest = {
-                    showDialog = false
-                    CoroutineScope(Dispatchers.IO).launch {
-                        usageStatsController.saveUsageStats()
-                    }
-                }
-            )
-        }
-    }
 
     AndroidView(factory = {
         WebView(it).apply {
@@ -169,18 +143,26 @@ private class AcmoWebChromeClient(
         filePathCallback: ValueCallback<Array<Uri>>,
         fileChooserParams: FileChooserParams
     ): Boolean {
-        webViewState.filePathCallback?.onReceiveValue(null) // cancel old request if still open
+        webViewState.filePathCallback?.onReceiveValue(null)
         webViewState.filePathCallback = filePathCallback
-        fileChooserLauncher.launch("*/*")
+        fileChooserLauncher.launch("image/*")
         return true
     }
 }
 
+@Keep
+class WebViewState {
+    var webView: WebView? by mutableStateOf(null)
+    var filePathCallback: ValueCallback<Array<Uri>>? by mutableStateOf(null)
+}
+
+@Composable
+fun rememberWebViewState() = remember { WebViewState() }
 
 @Keep
 private class WebAppInterface(private val context: Context, private val coroutineScope: CoroutineScope) {
     private val mainHandler = Handler(Looper.getMainLooper())
-
+    private val localizationService = LocalizationService.getInstance()
     @JavascriptInterface
     fun postMessage(jsonMessage: String) {
         try {
@@ -202,7 +184,6 @@ private class WebAppInterface(private val context: Context, private val coroutin
                             coroutineScope.launch {
                                 Tyrads.getInstance().changeLanguage(  langCode)
                             }
-
                         }
                     }
                 }
@@ -216,14 +197,3 @@ private class WebAppInterface(private val context: Context, private val coroutin
         }
     }
 }
-
-@Keep
-class WebViewState {
-    var webView: WebView? by mutableStateOf(null)
-    var filePathCallback: ValueCallback<Array<Uri>>? by mutableStateOf(null)
-
-}
-
-@Composable
-fun rememberWebViewState() = remember { WebViewState() }
-
