@@ -3,18 +3,16 @@ package com.tyrads.sdk.acmo.core
 
 import AcmoKeyNames
 import AcmoUsagePermissionsPage
+import AcmoUsageStatsController
 import AcmoUsersUpdatePage
 import android.content.Context
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
@@ -59,12 +57,14 @@ class AcmoApp : ComponentActivity() {
         setContent {
             TyradsSdkTheme {
                 var initPath = "privacy"
+                val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermissionGranted(this)
                 if (Tyrads.getInstance().preferences.getBoolean(
                         AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
                         false
                     )
                 ) {
-                    initPath = if(Tyrads.getInstance().newUser) "update-user" else "webview"
+                    initPath =
+                        if (!isUsagePermissionGranted) "usage-permissions" else if (Tyrads.getInstance().newUser) "update-user" else "webview"
                 }
                 Tyrads.getInstance().navController = rememberNavController()
                 Scaffold(
@@ -83,7 +83,7 @@ class AcmoApp : ComponentActivity() {
                         composable("privacy") {
                             AcmoPrivacyPolicyPage()
                         }
-                        composable ("update-user") {
+                        composable("update-user") {
                             AcmoUsersUpdatePage()
                         }
                         composable("usage-permissions") {
