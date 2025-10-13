@@ -3,6 +3,7 @@ package com.tyrads.sdk.acmo.core
 
 import AcmoKeyNames
 import AcmoUsagePermissionsPage
+import AcmoUsageStatsController
 import AcmoUsersUpdatePage
 import android.content.Context
 import android.os.Bundle
@@ -57,16 +58,20 @@ class AcmoApp : ComponentActivity() {
         setContent {
             TyradsSdkTheme {
                 var initPath = "privacy"
+                val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermission(this)
                 if (Tyrads.getInstance().preferences.getBoolean(
                         AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
                         false
                     )
                 ) {
-                    initPath = if (Tyrads.getInstance().newUser) {
-                        "users-update"
-                    } else {
-                        "webview"
-                    }
+                    initPath =
+                        if (!isUsagePermissionGranted) {
+                            "usage-permissions"
+                        } else if (Tyrads.getInstance().newUser) {
+                            "update-user"
+                        } else {
+                            "webview"
+                        }
                 }
                 Tyrads.getInstance().navController = rememberNavController()
                 Scaffold(
