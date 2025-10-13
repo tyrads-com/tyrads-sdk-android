@@ -178,6 +178,7 @@ class Tyrads private constructor() {
         log("Integrity Token: $integrityToken")
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         log("Tyrads SDK initialized", Log.INFO)
+        initializePrivacyStatus()
 
         try {
             FCMService.initialize(context)
@@ -371,6 +372,7 @@ class Tyrads private constructor() {
     }
 
     fun isPrivacyAccepted(): Boolean {
+        initializePrivacyStatus()
         return privacyAccepted.value
     }
 
