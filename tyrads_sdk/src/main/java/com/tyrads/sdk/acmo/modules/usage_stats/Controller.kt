@@ -61,6 +61,32 @@ class AcmoUsageStatsController() {
         return false
     }
 
+    fun isUsagePermissionGranted(context: Context): Boolean {
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            android.content.AttributionSource.Builder(Process.myUid())
+                .setPackageName(context.packageName)
+                .build()
+
+            val mode = appOps.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName
+            )
+
+            mode == AppOpsManager.MODE_ALLOWED
+        } else {
+            @Suppress("DEPRECATION")
+            val mode = appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName
+            )
+            mode == AppOpsManager.MODE_ALLOWED
+        }
+    }
+
     fun grantUsagePermission() {
         val context = Tyrads.getInstance().context
         if (!isUsagePermission(context)) {
