@@ -113,7 +113,6 @@ fun UsageStatsCard(
     ) {
         Column(
             modifier = modifier
-                .height(176.dp)
                 .padding(horizontal = 38.dp, vertical = 10.dp)
         ) {
             Row(
