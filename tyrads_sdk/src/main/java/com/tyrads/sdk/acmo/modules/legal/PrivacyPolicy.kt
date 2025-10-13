@@ -81,6 +81,7 @@ fun AcmoPrivacyPolicyPage(
                     if (returnToWidget == true) {
                         onAccepted?.invoke()
                     } else {
+                        Tyrads.getInstance().setPrivacyAccepted(true)
                         Tyrads.getInstance().navController.navigate("usage-permissions")
                     }
                 },

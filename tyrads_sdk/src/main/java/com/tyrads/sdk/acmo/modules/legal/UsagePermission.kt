@@ -93,7 +93,7 @@ fun Body(localizationService: LocalizationService) {
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 10.dp),
+                .padding(top = 20.dp),
             maxLines = Int.MAX_VALUE        )
 
         // Privacy banner image - matching Flutter sizing
