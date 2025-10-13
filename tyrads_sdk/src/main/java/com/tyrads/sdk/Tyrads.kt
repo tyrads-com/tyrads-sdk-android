@@ -136,7 +136,7 @@ class Tyrads private constructor() {
         }
     }
 
-     private suspend inline fun safeCallback(crossinline block: () -> Unit) {
+    private suspend inline fun safeCallback(crossinline block: () -> Unit) {
         withContext(Dispatchers.Main) {
             try {
                 block()
@@ -188,14 +188,13 @@ class Tyrads private constructor() {
 
         localizationService.init(currentLanguageCode.value)
 
-        val integrityToken = getPlayIntegrityToken(context)
-        log("Integrity Token: $integrityToken")
-        preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
-
         try {
+            val integrityToken = getPlayIntegrityToken(context)
+            log("Integrity Token: $integrityToken")
+            preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
             FCMService.initialize(context)
         } catch (error: Exception) {
-            log("Failed to initialize FCM: ${error.message}", Log.ERROR)
+            log("An Error Occurred: ${error.message}", Log.ERROR)
         }
 
         log("Tyrads SDK initialized", Log.INFO)
@@ -216,7 +215,11 @@ class Tyrads private constructor() {
                 safeCallback { callback.onSuccess() }
             } catch (e: Exception) {
                 log("Exception during init: ${e.message}", Log.ERROR)
-                safeCallback { callback.onFailure(e.message ?: "Unknown error during initialization") }
+                safeCallback {
+                    callback.onFailure(
+                        e.message ?: "Unknown error during initialization"
+                    )
+                }
             }
         }
     }
@@ -362,7 +365,10 @@ class Tyrads private constructor() {
                 .scheme("https")
                 .authority("sdk.tyrads.com")
                 .appendQueryParameter("token", token)
-                .appendQueryParameter("to", if(route == null) "" else if(campaignID == null) route else "$route/$campaignID")
+                .appendQueryParameter(
+                    "to",
+                    if (route == null) "" else if (campaignID == null) route else "$route/$campaignID"
+                )
                 .appendQueryParameter("lang", currentLanguageCode.value)
                 .build()
                 .toString()
@@ -384,7 +390,13 @@ class Tyrads private constructor() {
                 callback?.let { safeCallback { it.onSuccess() } }
             } catch (e: Exception) {
                 log("Exception during showOffers: ${e.message}", Log.ERROR)
-                callback?.let { safeCallback { it.onFailure(e.message ?: "Unknown error showing offers") } }
+                callback?.let {
+                    safeCallback {
+                        it.onFailure(
+                            e.message ?: "Unknown error showing offers"
+                        )
+                    }
+                }
             }
         }
     }
@@ -434,7 +446,13 @@ class Tyrads private constructor() {
                 callback?.let { safeCallback { it.onSuccess() } }
             } catch (e: Exception) {
                 log("Exception during changeLanguage: ${e.message}", Log.ERROR)
-                callback?.let { safeCallback { it.onFailure(e.message ?: "Unknown error changing language") } }
+                callback?.let {
+                    safeCallback {
+                        it.onFailure(
+                            e.message ?: "Unknown error changing language"
+                        )
+                    }
+                }
             }
         }
     }
