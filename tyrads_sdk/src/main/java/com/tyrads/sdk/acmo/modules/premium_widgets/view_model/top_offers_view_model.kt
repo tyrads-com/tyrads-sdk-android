@@ -84,10 +84,7 @@ class TopOffersViewModel : ViewModel() {
                     }
                 }
 
-                // Post a one-time event to the UI to open the URL
                 _openUrlEvent.value = url.takeIf { it.isNotBlank() }
-
-                // Refresh offers after a successful click
                 fetchData(Tyrads.getInstance().currentLanguageCode.value)
             } catch (e: Exception) {
                 Log.e("OPEN_OFFER_ERROR", "Error opening offer: ${e.message}", e)
@@ -98,9 +95,7 @@ class TopOffersViewModel : ViewModel() {
     }
 
     fun setLoadingIndex(index: Int?) {
-        Log.e("privacy", index.toString())
         _uiState.value = _uiState.value.copy(loadingIndex = index)
-        Log.e("privacy", _uiState.value.toString())
     }
 
     fun onUrlEventHandled() {
