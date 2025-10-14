@@ -87,22 +87,39 @@ fun Greeting(modifier: Modifier = Modifier) {
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
 
     var loggedIn by remember { mutableStateOf(false) }
-    var sdkKeyVersion by remember { mutableIntStateOf(0) }
+
+    var lastInitializedUserId by remember {
+        mutableStateOf(
+            sharedPreferences.getString("userId", "") ?: ""
+        )
+    }
+    var widgetReloadKey by remember { mutableIntStateOf(0) }
+
 
     val clipboard = LocalClipboard.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(sdkKeyVersion) {
+    LaunchedEffect(widgetReloadKey) {
         fcmToken = sdkPrefs.getString("acmo_tyrads_sdk_fcm_token", null)
-        Tyrads.getInstance().init(context, apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
+        Tyrads.getInstance().init(
+            context, apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
             apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
-            encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },)
-        val success = Tyrads.getInstance().loginUser(userID = "14560")
+            encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
+        )
+        val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "14560" })
         loggedIn = success
+        lastInitializedUserId = userIdInput
     }
 
     fun handleButtonClick() {
+        if (userIdInput == lastInitializedUserId) {
+            scope.launch {
+                Tyrads.getInstance().showOffers()
+            }
+            return
+        }
+
         isLoadingOffers = true
         CoroutineScope(Dispatchers.Main).launch {
             sharedPreferences.edit().apply {
@@ -123,13 +140,14 @@ fun Greeting(modifier: Modifier = Modifier) {
 
             Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
             Tyrads.getInstance().showOffers()
+            lastInitializedUserId = userIdInput
+            widgetReloadKey++
             isLoadingOffers = false
         }
-        sdkKeyVersion++
     }
     if (!loggedIn) {
         Column(
-            modifier= Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
@@ -152,9 +170,11 @@ fun Greeting(modifier: Modifier = Modifier) {
                     modifier = modifier
                 )
             }
-            Tyrads.getInstance().TopPremiumOffers(
-                widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS
-            )
+            androidx.compose.runtime.key(widgetReloadKey) {
+                Tyrads.getInstance().TopPremiumOffers(
+                    widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
             TextField(
                 modifier = Modifier.fillMaxWidth(),
