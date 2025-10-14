@@ -68,7 +68,7 @@ class AcmoApp : ComponentActivity() {
                         if (!isUsagePermissionGranted) {
                             "usage-permissions"
                         } else if (Tyrads.getInstance().newUser) {
-                            "update-user"
+                            "users-update"
                         } else {
                             "webview"
                         }
