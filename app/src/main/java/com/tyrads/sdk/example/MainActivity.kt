@@ -3,6 +3,7 @@ package com.tyrads.sdk.example
 import android.content.ClipData
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -29,6 +30,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -55,10 +57,17 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
+                var reloadKey by remember { mutableIntStateOf(0) }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                    key(reloadKey) {
+                        Greeting(
+                            modifier = Modifier.padding(innerPadding),
+                            onReload = {
+                                reloadKey++
+                                Log.i("Reload", reloadKey.toString())
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -67,7 +76,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(modifier: Modifier = Modifier) {
+fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     val context = LocalContext.current
     var isLoadingOffers by remember { mutableStateOf(false) }
     var fcmToken: String? by remember { mutableStateOf("") }
@@ -142,6 +151,7 @@ fun Greeting(modifier: Modifier = Modifier) {
             Tyrads.getInstance().showOffers()
             lastInitializedUserId = userIdInput
             widgetReloadKey++
+            onReload()
             isLoadingOffers = false
         }
     }
@@ -170,7 +180,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                     modifier = modifier
                 )
             }
-            androidx.compose.runtime.key(widgetReloadKey) {
+            key(userIdInput) {
                 Tyrads.getInstance().TopPremiumOffers(
                     widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS
                 )
