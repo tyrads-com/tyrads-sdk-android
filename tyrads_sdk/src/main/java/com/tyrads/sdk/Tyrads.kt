@@ -87,8 +87,7 @@ class Tyrads private constructor() {
     var mainColor: String? = null
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
-
-    internal fun initializePrivacyStatus() {
+     internal fun initializePrivacyStatus() {
         _privacyAccepted.value = preferences.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
             false
@@ -298,12 +297,14 @@ class Tyrads private constructor() {
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
-                    newUser = loginData.data.newRegisteredUser
-                    token = loginData.data.token
+                    this@Tyrads.newUser = loginData.data.newRegisteredUser
+                    Log.i("newUser", newUser.toString())
+//                    Log.i("newUser API",  loginData.data.newRegisteredUser.toString())
+                    this@Tyrads.token = loginData.data.token
 
-                    mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
-                    premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
-                    headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+                    this@Tyrads.mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                    this@Tyrads.premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                    this@Tyrads.headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
                     initializePrivacyStatus()
 
                     if (privacyAccepted.value) {
