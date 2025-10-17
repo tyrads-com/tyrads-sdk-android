@@ -109,7 +109,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(widgetReloadKey) {
+    LaunchedEffect(Unit) {
         fcmToken = sdkPrefs.getString("acmo_tyrads_sdk_fcm_token", null)
         Tyrads.getInstance().init(
             context, apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
@@ -151,7 +151,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             Tyrads.getInstance().showOffers()
             lastInitializedUserId = userIdInput
             widgetReloadKey++
-            onReload()
+//            onReload()
             isLoadingOffers = false
         }
     }
