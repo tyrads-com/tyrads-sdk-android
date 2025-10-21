@@ -298,8 +298,6 @@ class Tyrads private constructor() {
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     this@Tyrads.newUser = loginData.data.newRegisteredUser
-                    Log.i("newUser", newUser.toString())
-//                    Log.i("newUser API",  loginData.data.newRegisteredUser.toString())
                     this@Tyrads.token = loginData.data.token
 
                     this@Tyrads.mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
