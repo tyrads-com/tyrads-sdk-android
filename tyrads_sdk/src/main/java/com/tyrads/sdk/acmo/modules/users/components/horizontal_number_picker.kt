@@ -45,7 +45,7 @@ fun AcmoHorizontalNumberPicker(
     val selectedItemWidth = 70.dp
     val normalItemWidth = 70.dp
     val itemWidth = 100.dp
-    val itemHeight = 50.dp
+    val itemHeight = 60.dp
     val numbers = remember { (minValue..maxValue).toList() }
     var initialized by remember { mutableIntStateOf(0) }
 
