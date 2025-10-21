@@ -19,7 +19,11 @@ data class Data(
 @Keep
 data class User(
     @SerializedName("publisherUserId")
-    val publisherUserId: String
+    val publisherUserId: String,
+    @SerializedName("age")
+    val age: String?,
+    @SerializedName("gender")
+    val gender: String?
 )
 @Keep
 data class PublisherApp(
