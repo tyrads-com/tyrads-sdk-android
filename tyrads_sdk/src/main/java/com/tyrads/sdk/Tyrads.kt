@@ -294,16 +294,21 @@ class Tyrads private constructor() {
                 is Result.Success -> {
                     log("User login successful", Log.INFO)
                     val jsonString = String(response.data)
+                    Log.d("Full data", jsonString)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
-                    this@Tyrads.newUser = loginData.data.newRegisteredUser
                     this@Tyrads.token = loginData.data.token
-
                     this@Tyrads.mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
                     this@Tyrads.premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
                     this@Tyrads.headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
                     initializePrivacyStatus()
+
+                    try {
+                        this@Tyrads.newUser = NetworkCommons().isNewUser()
+                    } catch (e: Exception) {
+                        this@Tyrads.newUser = loginData.data.newRegisteredUser
+                    }
 
                     if (privacyAccepted.value) {
                         val usageStatsController = AcmoUsageStatsController()
