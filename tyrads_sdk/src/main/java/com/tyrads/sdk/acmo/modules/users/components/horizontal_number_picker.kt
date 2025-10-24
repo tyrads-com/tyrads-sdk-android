@@ -42,9 +42,7 @@ fun AcmoHorizontalNumberPicker(
     onValueChange: (Int) -> Unit = {}
 ) {
     var selectedValue by remember { mutableIntStateOf(initialValue) }
-    val selectedItemWidth = 70.dp
-    val normalItemWidth = 70.dp
-    val itemWidth = 100.dp
+    val itemWidth = 70.dp
     val itemHeight = 60.dp
     val numbers = remember { (minValue..maxValue).toList() }
     var initialized by remember { mutableIntStateOf(0) }
@@ -106,7 +104,6 @@ fun AcmoHorizontalNumberPicker(
             ) { index ->
                 val number = numbers[index]
                 val isSelected = number == selectedValue
-                val itemWidth = if (isSelected) selectedItemWidth else normalItemWidth
 
                 NumberItem(
                     number = number,
