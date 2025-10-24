@@ -81,6 +81,24 @@ class NetworkCommons {
         }
     }
 
+    suspend fun isNewUser(): Boolean = withContext(Dispatchers.Default) {
+        val url =
+            "${AcmoConfig.BASE_URL}${AcmoEndpointNames.CHECK_PROFILE_COMPLETION}?lang=${Tyrads.getInstance().currentLanguageCode.value}"
+        try {
+            val result = Fuel.get(url)
+                .awaitObject(object : ResponseDeserializable<JsonObject> {
+                    override fun deserialize(content: String): JsonObject {
+                        return JsonParser.parseString(content).asJsonObject
+                    }
+                })
+            val data = result["data"].asJsonObject
+            val isCompleted = data["age"].asBoolean && data["gender"].asBoolean
+            !isCompleted
+        } catch (e: Exception) {
+            throw e
+        }
+    }
+
     suspend fun fetchCampaigns(langCode: String): List<AcmoOffersModel> = withContext(Dispatchers.IO) {
         val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.OFFERS}?lang=$langCode"
 
