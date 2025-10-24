@@ -14,11 +14,11 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.tyrads.sdk.example"
+    namespace = "com.tyrads.sdk.rnexample"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.tyrads.sdk.example"
+        applicationId = "com.tyrads.sdk.rnexample"
         minSdk = 24
         targetSdk = 35
         versionCode = 1

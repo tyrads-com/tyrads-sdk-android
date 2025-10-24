@@ -24,7 +24,7 @@
         android:theme="@style/Theme.TyradsSdk"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name="com.tyrads.sdk.example.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.TyradsSdk">
@@ -34,10 +34,5 @@
             </intent-filter>
         </activity>
 
-        <!-- Add the PremiumLayoutsActivity -->
-        <activity
-            android:name=".PremiumLayoutsActivity"
-            android:exported="false"
-            android:theme="@style/Theme.TyradsSdk" />
     </application>
 </manifest>
