@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -84,19 +85,23 @@ private fun CountBadge(
 ) {
     Box(
         modifier = modifier
+            .width(18.dp)
+            .height(18.dp)
             .background(
                 color = Color(0xFFFF554A),
-                shape = CircleShape // BoxShape.circle equivalent
+                shape = CircleShape
             ),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Text(
+            modifier = Modifier.offset(y = (-1).dp),
             text = if (activatedCount > 0 && activatedCount <= 99) "$activatedCount" else "99+",
             color = Color.White,
             fontSize = 10.sp,
-            fontWeight = FontWeight.Bold, // FontWeight.w700 equivalent
+            fontWeight = FontWeight.Bold,
             maxLines = 1,
-            softWrap = false
+            softWrap = false,
+            textAlign = TextAlign.Center
         )
     }
 }
