@@ -273,7 +273,6 @@ class Tyrads private constructor() {
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
-                    newUser = loginData.data.newRegisteredUser
                     this@Tyrads.token = loginData.data.token
 
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
@@ -288,6 +287,11 @@ class Tyrads private constructor() {
                     ) {
                         val usageStatsController = AcmoUsageStatsController()
                         usageStatsController.saveUsageStats()
+                    }
+                    try {
+                        newUser = NetworkCommons().isNewUser()
+                    } catch (e: Exception) {
+                        newUser = loginData.data.newRegisteredUser
                     }
 
                     track(TyradsActivity.INITIALIZED)
