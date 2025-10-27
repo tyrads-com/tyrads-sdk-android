@@ -38,24 +38,6 @@
             android:configChanges="locale|layoutDirection"
             android:theme="@style/Theme.TyradsSdk" />
 
-        <!-- Notification Permission Activity -->
-        <activity
-            android:name="com.tyrads.sdk.acmo.modules.notifications.activity.NotificationPermissionActivity"
-            android:exported="false"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar"
-            android:excludeFromRecents="true"
-            android:taskAffinity=""
-            android:launchMode="singleInstance" />
-
-        <!-- FCM Service -->
-        <service
-            android:name="com.tyrads.sdk.acmo.modules.notifications.FCMService"
-            android:exported="false">
-            <intent-filter>
-                <action android:name="com.google.firebase.MESSAGING_EVENT" />
-            </intent-filter>
-        </service>
-
         <!-- FCM Default Notification Settings -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
