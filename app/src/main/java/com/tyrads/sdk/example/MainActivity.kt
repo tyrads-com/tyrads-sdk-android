@@ -154,12 +154,15 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 debugMode = false
             )
 
-            Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
+            val isSuccess = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
+            isLoadingOffers = false
+            if (!isSuccess){
+                return@launch
+            }
             Tyrads.getInstance().showOffers()
             lastInitializedUserId = userIdInput
             widgetReloadKey++
 //            onReload()
-            isLoadingOffers = false
         }
     }
     if (!loggedIn) {
