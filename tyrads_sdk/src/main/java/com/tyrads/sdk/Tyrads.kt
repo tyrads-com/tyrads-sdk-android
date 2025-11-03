@@ -265,7 +265,7 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
-                "engagementId" to if(engagementId.isNullOrBlank()) null else engagementId,
+                "engagementId" to if(engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
             mediaSourceInfo?.let { info ->
@@ -295,6 +295,8 @@ class Tyrads private constructor() {
                 if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(data = fd) else emptyMap()
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
+            val resBody = response.body().asString("application/json")
+            Log.d("Login", resBody)
             when (result) {
                 is Result.Success -> {
                     log("User login successful", Log.INFO)
