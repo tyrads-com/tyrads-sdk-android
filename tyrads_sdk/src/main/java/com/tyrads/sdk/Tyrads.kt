@@ -58,6 +58,7 @@ class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null
     internal var encKey: String? = null
+    internal var engagementId: String? = null
     internal var token: String = ""
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
@@ -150,12 +151,14 @@ class Tyrads private constructor() {
         apiKey: String,
         apiSecret: String,
         encryptionKey: String? = null,
+        engagementId: String? = null,
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
         this@Tyrads.context = context.applicationContext
         this@Tyrads.apiKey = apiKey.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API key cannot be blank")
         this@Tyrads.encKey = encryptionKey
+        this@Tyrads.engagementId = engagementId
         this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this@Tyrads.debugMode = debugMode
@@ -205,12 +208,13 @@ class Tyrads private constructor() {
         apiKey: String,
         apiSecret: String,
         encryptionKey: String? = null,
+        engagementId: String? = null,
         debugMode: Boolean = false,
         callback: TyradsCallback
     ) {
         tyradScope.launch {
             try {
-                init(context, apiKey, apiSecret, encryptionKey, debugMode)
+                init(context, apiKey, apiSecret, encryptionKey, engagementId, debugMode)
                 safeCallback { callback.onSuccess() }
             } catch (e: Exception) {
                 log("Exception during init: ${e.message}", Log.ERROR)
@@ -253,6 +257,7 @@ class Tyrads private constructor() {
 
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
+            val engagementId = this@Tyrads.engagementId
             log("Device Details: $deviceDetails")
 
             val fd = mutableMapOf(
@@ -260,6 +265,7 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
+                "engagementId" to if(engagementId.isNullOrBlank()) null else engagementId,
                 "deviceData" to deviceDetails
             )
             mediaSourceInfo?.let { info ->
@@ -284,12 +290,11 @@ class Tyrads private constructor() {
                 info.phoneNumber?.let { fd["phoneNumber"] = it }
                 info.userGroup?.let { fd["userGroup"] = it }
             }
-            log("Initialization Data : $fd")
+            log("Initialization Data : $fd", force = true)
             val encData =
                 if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(data = fd) else emptyMap()
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
-
             when (result) {
                 is Result.Success -> {
                     log("User login successful", Log.INFO)
@@ -323,8 +328,8 @@ class Tyrads private constructor() {
                     log("User login failed", Log.ERROR, force = true)
                     val error = result.getException()
                     val errorMessage = String(response.data)
-                    log("Error: ${error.message}")
-                    log("Server Message: $errorMessage")
+                    log("Error: ${error.message}", force = true)
+                    log("Server Message: $errorMessage", force = true)
                     return@withContext false
                 }
             }
