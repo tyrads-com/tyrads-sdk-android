@@ -93,6 +93,11 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             sharedPreferences.getString("encryptionKey", "") ?: ""
         )
     }
+    var engagementId by remember {
+        mutableStateOf(
+            sharedPreferences.getString("engagementId", "") ?: ""
+        )
+    }
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
 
     var loggedIn by remember { mutableStateOf(false) }
@@ -115,6 +120,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             context, apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
             apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
             encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
+            engagementId = engagementId,
         )
         val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "14560" })
         loggedIn = success
@@ -144,6 +150,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
                 apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
                 encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
+                engagementId = engagementId,
                 debugMode = false
             )
 
@@ -207,6 +214,14 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 value = encryptionKey,
                 onValueChange = { encryptionKey = it },
                 label = { Text("Encryption Key (optional)") },
+                singleLine = true
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = engagementId,
+                onValueChange = { engagementId = it },
+                label = { Text("Engagement ID (optional)") },
                 singleLine = true
             )
             Spacer(modifier = Modifier.height(16.dp))
