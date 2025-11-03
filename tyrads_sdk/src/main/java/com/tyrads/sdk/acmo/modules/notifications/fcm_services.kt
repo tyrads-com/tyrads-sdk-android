@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import androidx.core.content.edit
 
 @Keep
 class FCMService : FirebaseMessagingService() {
@@ -92,9 +93,9 @@ class FCMService : FirebaseMessagingService() {
         private fun saveToken(token: String) {
             try {
                 val tyrads = Tyrads.getInstance()
-                tyrads.preferences.edit()
-                    .putString(AcmoKeyNames.FCM_TOKEN, token)
-                    .apply()
+                tyrads.preferences.edit {
+                    putString(AcmoKeyNames.FCM_TOKEN, token)
+                }
                 Log.d(TAG, "FCM token saved: $token")
             } catch (e: UninitializedPropertyAccessException) {
                 Log.w(TAG, "Tyrads not initialized yet, FCM token will be saved later")
