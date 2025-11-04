@@ -2,10 +2,18 @@ import android.graphics.Color
 
 object AcmoConfig {
    const val API_VERSION = "3.0";
+    // MAJOR_VERSION.MINOR_VERSION.PATCH_VERSION-BUILD_VERSION
+    // EX: 2.3.0-1
+    // MAJOR Version (X.0.0-0)
+    // MINOR Version (0.X.0-0)
+    // PATCH Version (0.0.X-0)
+    // BUILD Version (0.0.0-X)
+   const val MAJOR_VERSION = "3";
+   const val MINOR_VERSION = "2";
    const val BUILD_VERSION = "0";
-   const val AV = "4";
+   const val PATCH_VERSION = "1";
 
-   const val SDK_VERSION = "$API_VERSION.$BUILD_VERSION";
+   const val SDK_VERSION = "$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION-$BUILD_VERSION";
    const val SDK_PLATFORM = "React Native";
    const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
     const val TAG = "TyrAds SDK"
