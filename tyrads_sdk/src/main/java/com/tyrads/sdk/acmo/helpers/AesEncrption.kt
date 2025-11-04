@@ -21,7 +21,7 @@ class AcmoEncrypt(private val encryptionKey: String) {
         }
     }
 
-    fun encryptDataAESGCM(data: Map<String, Any>): Map<String, String> {
+    fun encryptDataAESGCM(data: Map<String, Any?>): Map<String, String> {
         try {
             val keyBytes = encryptionKey.toByteArray(StandardCharsets.UTF_8)
             val keySpec = SecretKeySpec(keyBytes, "AES")
