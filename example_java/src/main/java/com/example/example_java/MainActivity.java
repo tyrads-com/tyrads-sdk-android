@@ -19,6 +19,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText apiKeyInput;
     private EditText apiSecretInput;
     private EditText encryptionKeyInput;
+    private EditText engagementIdInput;
     private EditText userIdInput;
     private Button showOffersButton;
     private ProgressBar loadingIndicator;
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity {
         apiKeyInput = findViewById(R.id.apiKeyInput);
         apiSecretInput = findViewById(R.id.apiSecretInput);
         encryptionKeyInput = findViewById(R.id.encryptionKeyInput);
+        engagementIdInput = findViewById(R.id.engagementIdInput);
         userIdInput = findViewById(R.id.userIdInput);
         showOffersButton = findViewById(R.id.showOffersButton);
         loadingIndicator = findViewById(R.id.loadingIndicator);
@@ -79,6 +81,7 @@ public class MainActivity extends AppCompatActivity {
                 "4f0eaa99e38e49b8b52804116e638a41",
                 "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
                 "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL", // encryption key
+                "",
                 true, // debug mode
                 new TyradsCallback() {
                     @Override
@@ -118,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
         String apiKey = apiKeyInput.getText().toString().trim();
         String apiSecret = apiSecretInput.getText().toString().trim();
         String encryptionKey = encryptionKeyInput.getText().toString().trim();
+        String engagementId = engagementIdInput.getText().toString().trim();
         String userId = userIdInput.getText().toString().trim();
 
         // Optional validation (commented out as in Kotlin version)
@@ -141,6 +145,7 @@ public class MainActivity extends AppCompatActivity {
                 finalApiKey,
                 finalApiSecret,
                 finalEncryptionKey,
+                engagementId,
                 false,
                 new TyradsCallback() {
                     @Override
