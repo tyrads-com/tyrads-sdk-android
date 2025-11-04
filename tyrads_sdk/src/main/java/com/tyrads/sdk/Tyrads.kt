@@ -49,6 +49,7 @@ class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null
     internal var encKey: String? = null
+    internal var engagementId: String? = null
     internal var token: String? = null
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
@@ -132,6 +133,7 @@ class Tyrads private constructor() {
         apiKey: String,
         apiSecret: String,
         encKey: String? = null,
+        engagementId: String? = null,
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
         this@Tyrads.context = context.applicationContext
@@ -140,6 +142,7 @@ class Tyrads private constructor() {
         this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this@Tyrads.encKey = encKey
+        this@Tyrads.engagementId = engagementId
         this@Tyrads.debugMode = debugMode
 
         Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
@@ -220,7 +223,7 @@ class Tyrads private constructor() {
                 }
                 identifierType = "OTHER"
             }
-
+            val engagementId = this@Tyrads.engagementId
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
             Log.i("DeviceDetails:", deviceDetails.toString())
@@ -230,6 +233,7 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
+                "engagementId" to if(engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
             log("Initialization Data of rn-v3.0.x: $fd")
