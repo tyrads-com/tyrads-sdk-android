@@ -49,6 +49,8 @@ class AcmoDeviceDetailsController {
         val androidId =
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
 
+        val fcmToken = Tyrads.getInstance().preferences.getString(AcmoKeyNames.FCM_TOKEN, "")
+
         var deviceDetails = mapOf(
             "deviceAge" to usageController.getDeviceAgeTime(),
             "deviceId" to androidId,
@@ -130,7 +132,8 @@ class AcmoDeviceDetailsController {
             // Tracking Info - Screen Metrics
             "screenDensity" to trackingInfo["screen_density"],
             "screenWidth" to trackingInfo["screen_width"],
-            "screenHeight" to trackingInfo["screen_height"]
+            "screenHeight" to trackingInfo["screen_height"],
+            "firebaseToken" to fcmToken
         )
         return@withContext deviceDetails
     }
