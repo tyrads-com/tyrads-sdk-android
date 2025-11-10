@@ -13,7 +13,7 @@ object AcmoConfig {
    const val BUILD_VERSION = "1";
    const val PATCH_VERSION = "1";
 
-   const val SDK_VERSION = "$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION-$BUILD_VERSION";
+   var SDK_VERSION = "$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION-$BUILD_VERSION";
    const val SDK_PLATFORM = "React Native";
    const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
     const val TAG = "TyrAds SDK"
