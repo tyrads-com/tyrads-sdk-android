@@ -10,7 +10,7 @@ object AcmoConfig {
     // BUILD Version (0.0.0-X)
    const val MAJOR_VERSION = "3";
    const val MINOR_VERSION = "2";
-   const val BUILD_VERSION = "0";
+   const val BUILD_VERSION = "1";
    const val PATCH_VERSION = "1";
 
    const val SDK_VERSION = "$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION-$BUILD_VERSION";
