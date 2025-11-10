@@ -421,6 +421,10 @@ class Tyrads private constructor() {
         this.mediaSourceInfo = mediaSourceInfo
     }
 
+    fun setUpSDKVersion(sdkVersion: String){
+        AcmoConfig.SDK_VERSION = sdkVersion
+    }
+
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
     }
