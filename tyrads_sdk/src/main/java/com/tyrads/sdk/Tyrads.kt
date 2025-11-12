@@ -38,6 +38,7 @@ import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
+import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -59,6 +60,8 @@ class Tyrads private constructor() {
     internal var apiSecret: String? = null
     internal var encKey: String? = null
     internal var engagementId: String? = null
+    private var config: TyradsConfig = TyradsConfig()
+    internal val tyradsConfig: TyradsConfig get() = config
     internal var token: String = ""
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
@@ -88,7 +91,7 @@ class Tyrads private constructor() {
     var mainColor: String? = null
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
-     internal fun initializePrivacyStatus() {
+    internal fun initializePrivacyStatus() {
         _privacyAccepted.value = preferences.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
             false
@@ -152,6 +155,7 @@ class Tyrads private constructor() {
         apiSecret: String,
         encryptionKey: String? = null,
         engagementId: String? = null,
+        config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
         this@Tyrads.context = context.applicationContext
@@ -161,6 +165,7 @@ class Tyrads private constructor() {
         this@Tyrads.engagementId = engagementId
         this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
+        setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
         Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
         preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
@@ -209,12 +214,13 @@ class Tyrads private constructor() {
         apiSecret: String,
         encryptionKey: String? = null,
         engagementId: String? = null,
+        config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false,
         callback: TyradsCallback
     ) {
         tyradScope.launch {
             try {
-                init(context, apiKey, apiSecret, encryptionKey, engagementId, debugMode)
+                init(context, apiKey, apiSecret, encryptionKey, engagementId, config, debugMode)
                 safeCallback { callback.onSuccess() }
             } catch (e: Exception) {
                 log("Exception during init: ${e.message}", Log.ERROR)
@@ -265,7 +271,7 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
-                "engagementId" to if(engagementId.isNullOrBlank()) null else engagementId.toInt(),
+                "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
             mediaSourceInfo?.let { info ->
@@ -295,20 +301,20 @@ class Tyrads private constructor() {
                 if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(data = fd) else emptyMap()
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
-            val resBody = response.body().asString("application/json")
-            Log.d("Login", resBody)
             when (result) {
                 is Result.Success -> {
                     log("User login successful", Log.INFO)
                     val jsonString = String(response.data)
-                    Log.d("Full data", jsonString)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.user.publisherUserId
                     preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     this@Tyrads.token = loginData.data.token
-                    this@Tyrads.mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
-                    this@Tyrads.premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
-                    this@Tyrads.headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+                    this@Tyrads.mainColor =
+                        loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                    this@Tyrads.premiumColor =
+                        loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                    this@Tyrads.headerColor =
+                        loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
                     initializePrivacyStatus()
 
                     try {
@@ -493,6 +499,11 @@ class Tyrads private constructor() {
 
     fun setMediaSourceInfo(mediaSourceInfo: TyradsMediaSourceInfo) {
         this.mediaSourceInfo = mediaSourceInfo
+    }
+
+    private fun setTyradsConfig(config: TyradsConfig) {
+        this.config = config
+        Log.d("Tyrads", "Config updated: $config")
     }
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
