@@ -60,12 +60,12 @@ class AcmoApp : ComponentActivity() {
                 Log.e("Config", tyrads.tyradsConfig.skipInitialPages.toString())
 
                 val initPath = when {
+                    tyrads.tyradsConfig.skipInitialPages && tyrads.newUser -> "users-update"
+                    tyrads.tyradsConfig.skipInitialPages -> "webview"
+
                     privacyAccepted && !isUsagePermissionGranted -> "usage-permissions"
                     privacyAccepted && tyrads.newUser -> "users-update"
                     privacyAccepted -> "webview"
-
-                    tyrads.tyradsConfig.skipInitialPages && tyrads.newUser -> "users-update"
-                    tyrads.tyradsConfig.skipInitialPages -> "webview"
 
                     else -> "privacy"
                 }
