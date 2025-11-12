@@ -1,21 +1,17 @@
 package com.tyrads.sdk.acmo.core
 
 
-import AcmoKeyNames
 import AcmoUsagePermissionsPage
 import AcmoUsageStatsController
 import AcmoUsersUpdatePage
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Scaffold
@@ -28,6 +24,7 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.AcmoPrivacyPolicyPage
 import com.tyrads.sdk.acmo.modules.webview.AcmoWebView
 import com.tyrads.sdk.ui.theme.TyradsSdkTheme
+import androidx.compose.runtime.collectAsState
 
 @Keep
 class AcmoApp : ComponentActivity() {
@@ -57,22 +54,22 @@ class AcmoApp : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
-                var initPath = "privacy"
+                val tyrads = Tyrads.getInstance()
                 val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermission(this)
-                if (Tyrads.getInstance().preferences.getBoolean(
-                        AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-                        false
-                    )
-                ) {
-                    initPath =
-                        if (!isUsagePermissionGranted) {
-                            "usage-permissions"
-                        } else if (Tyrads.getInstance().newUser) {
-                            "users-update"
-                        } else {
-                            "webview"
-                        }
+                val privacyAccepted = tyrads.privacyAccepted.collectAsState().value
+                Log.e("Config", tyrads.tyradsConfig.skipInitialPages.toString())
+
+                val initPath = when {
+                    privacyAccepted && !isUsagePermissionGranted -> "usage-permissions"
+                    privacyAccepted && tyrads.newUser -> "users-update"
+                    privacyAccepted -> "webview"
+
+                    tyrads.tyradsConfig.skipInitialPages && tyrads.newUser -> "users-update"
+                    tyrads.tyradsConfig.skipInitialPages -> "webview"
+
+                    else -> "privacy"
                 }
+
                 Tyrads.getInstance().navController = rememberNavController()
                 Scaffold(
                     modifier = Modifier
