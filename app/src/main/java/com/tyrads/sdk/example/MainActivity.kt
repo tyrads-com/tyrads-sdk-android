@@ -22,6 +22,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
@@ -46,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -114,6 +119,10 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
+    val options = listOf("Show", "Hide")
+    var selectedOption by remember { mutableStateOf(options[0]) }
+    var lastSelectedOption by remember { mutableStateOf(selectedOption) }
+
     LaunchedEffect(Unit) {
         fcmToken = sdkPrefs.getString("acmo_tyrads_sdk_fcm_token", null)
         Tyrads.getInstance().init(
@@ -121,6 +130,9 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
             encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
             engagementId = engagementId,
+            config = TyradsConfig(
+                skipInitialPages = selectedOption == options[1],
+            )
         )
         val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "14560" })
         loggedIn = success
@@ -128,7 +140,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     }
 
     fun handleButtonClick() {
-        if (userIdInput == lastInitializedUserId) {
+        if (userIdInput == lastInitializedUserId && selectedOption == lastSelectedOption) {
             scope.launch {
                 Tyrads.getInstance().showOffers()
             }
@@ -151,16 +163,20 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
                 encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
                 engagementId = engagementId,
+                config = TyradsConfig(
+                    skipInitialPages = selectedOption == options[1],
+                ),
                 debugMode = false
             )
 
             val isSuccess = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
             isLoadingOffers = false
-            if (!isSuccess){
+            if (!isSuccess) {
                 return@launch
             }
             Tyrads.getInstance().showOffers()
             lastInitializedUserId = userIdInput
+            lastSelectedOption = selectedOption
             widgetReloadKey++
 //            onReload()
         }
@@ -195,6 +211,12 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                     widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS
                 )
             }
+            Spacer(modifier = Modifier.height(16.dp))
+            SimpleDropdown(
+                options = options,
+                selectedOption = selectedOption,
+                onOptionSelected = { selectedOption = it }
+            )
             Spacer(modifier = Modifier.height(16.dp))
             TextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -289,6 +311,50 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
         }
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SimpleDropdown(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    Log.i("Config", selectedOption)
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        TextField(
+            readOnly = true,
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text("Select Initial Pages Settings") },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption) },
+                    onClick = {
+                        onOptionSelected(selectionOption)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
