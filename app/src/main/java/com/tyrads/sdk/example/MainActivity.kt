@@ -123,7 +123,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     var selectedOption by remember { mutableStateOf(options[0]) }
     var lastSelectedOption by remember { mutableStateOf(selectedOption) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(selectedOption) {
         fcmToken = sdkPrefs.getString("acmo_tyrads_sdk_fcm_token", null)
         Tyrads.getInstance().init(
             context, apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
