@@ -13,19 +13,22 @@ object AcmoOnboardingGate {
 
     fun start(context: Context, onFinished: (() -> Unit)? = null) {
         onComplete = onFinished
-        if (!Tyrads.getInstance().privacyAccepted.value) {
-            AcmoPrivacyPolicyActivity.start(context, true)
-            return
+        val tyrads = Tyrads.getInstance()
+        if (!tyrads.tyradsConfig.skipInitialPages) {
+            if (!tyrads.privacyAccepted.value) {
+                AcmoPrivacyPolicyActivity.start(context, true)
+                return
+            }
+
+            val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermission(context)
+
+            if (!isUsagePermissionGranted) {
+                AcmoUsagePermissionActivity.start(context, true)
+                return
+            }
         }
 
-        val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermission(context)
-
-        if (!isUsagePermissionGranted) {
-            AcmoUsagePermissionActivity.start(context, true)
-            return
-        }
-
-        if (Tyrads.getInstance().newUser) {
+        if (tyrads.newUser) {
             AcmoUsersUpdateActivity.start(context, true)
             return
         }
