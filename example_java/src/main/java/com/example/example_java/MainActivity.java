@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.tyrads.sdk.Tyrads;
 import com.tyrads.sdk.TyradsCallback;
 import com.tyrads.sdk.TyradsLoginCallback;
+import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -82,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
                 "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
                 "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL", // encryption key
                 "",
+                new TyradsConfig(),
                 true, // debug mode
                 new TyradsCallback() {
                     @Override
@@ -146,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
                 finalApiSecret,
                 finalEncryptionKey,
                 engagementId,
+                new TyradsConfig(),
                 false,
                 new TyradsCallback() {
                     @Override
