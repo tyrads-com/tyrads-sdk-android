@@ -320,7 +320,6 @@ fun SimpleDropdown(
     onOptionSelected: (String) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Log.i("Config", selectedOption)
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
