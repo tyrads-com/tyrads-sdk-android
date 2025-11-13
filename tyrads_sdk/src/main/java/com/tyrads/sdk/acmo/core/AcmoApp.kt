@@ -12,6 +12,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Scaffold
@@ -57,7 +58,6 @@ class AcmoApp : ComponentActivity() {
                 val tyrads = Tyrads.getInstance()
                 val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermission(this)
                 val privacyAccepted = tyrads.privacyAccepted.collectAsState().value
-                Log.e("Config", tyrads.tyradsConfig.skipInitialPages.toString())
 
                 val initPath = when {
                     tyrads.tyradsConfig.skipInitialPages && tyrads.newUser -> "users-update"
@@ -74,7 +74,8 @@ class AcmoApp : ComponentActivity() {
                 Scaffold(
                     modifier = Modifier
                         .fillMaxSize()
-                        .statusBarsPadding(),
+                        .statusBarsPadding()
+                        .navigationBarsPadding(),
                     contentWindowInsets = WindowInsets.systemBars
                 ) { innerPadding ->
                     NavHost(
