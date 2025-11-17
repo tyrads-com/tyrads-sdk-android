@@ -209,7 +209,9 @@ private fun EmptyOffersView(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        Tyrads.getInstance().showOffers()
+                        Tyrads.getInstance().showOffers(
+                            "active-offers"
+                        )
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -231,8 +233,6 @@ private fun EmptyOffersView(
                 } else {
                     translatedText
                 }
-
-                Log.d("TopOffers", "Original translation: '$translatedText', Final button text: '$buttonText'")
 
                 Text(
                     text = buttonText,
