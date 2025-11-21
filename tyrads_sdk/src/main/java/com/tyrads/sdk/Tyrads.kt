@@ -38,7 +38,6 @@ import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
-import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -182,12 +181,6 @@ class Tyrads private constructor() {
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         log("Tyrads SDK initialized", Log.INFO)
         initializePrivacyStatus()
-
-        try {
-            FCMService.initialize(context)
-        } catch (error: Exception) {
-            log("Failed to initialize FCM: ${error.message}", Log.ERROR)
-        }
     }
 
     suspend fun loginUser(userID: String? = null): ApiHeaders? = withContext(Dispatchers.Default) {
