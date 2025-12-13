@@ -118,6 +118,14 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
 
+    // Firebase BOM (Bill of Materials)
+    implementation(platform(libs.firebase.bom))
+
+    // Firebase Cloud Messaging
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.analytics.ktx)
+
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
