@@ -39,6 +39,7 @@ import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
+import com.tyrads.sdk.acmo.modules.push_notifications.FCMService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -181,6 +182,11 @@ class Tyrads private constructor() {
         preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         log("Tyrads SDK initialized", Log.INFO)
         initializePrivacyStatus()
+        try {
+            FCMService.initialize(context)
+        } catch (e: Exception){
+            log("$e", Log.ERROR)
+        }
     }
 
     suspend fun loginUser(userID: String? = null): ApiHeaders? = withContext(Dispatchers.Default) {
@@ -197,6 +203,7 @@ class Tyrads private constructor() {
             log("Starting user login process", Log.INFO)
             val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
             var advertisingId: String? = ""
+            val fcmToken = preferences.getString(AcmoKeyNames.FCM_TOKEN, null)
             var identifierType = ""
             try {
                 if (isGooglePlayServicesAvailable(context)) {
@@ -224,12 +231,13 @@ class Tyrads private constructor() {
             val fd = mutableMapOf(
                 "publisherUserId" to userId,
                 "platform" to "Android",
+                "devicePushToken" to fcmToken,
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
                 "engagementId" to if(engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
-            log("Initialization Data of rn-v3.0.x: $fd")
+            log("Initialization Data of rn-push notif: $fd")
             mediaSourceInfo?.let { info ->
                 info.sub1?.let { fd["sub1"] = it }
                 info.sub2?.let { fd["sub2"] = it }
