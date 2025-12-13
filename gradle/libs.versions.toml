@@ -37,7 +37,9 @@ androidx-ui-text-google-fonts = { module = "androidx.compose.ui:ui-text-google-f
 androidx-webkit = { module = "androidx.webkit:webkit", version.ref = "webkit" }
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
+firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics-ktx" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx" }
 fuel = { module = "com.github.kittinunf.fuel:fuel", version.ref = "fuel" }
 fuel-coroutines = { module = "com.github.kittinunf.fuel:fuel-coroutines", version.ref = "fuelCoroutines" }
 fuel-gson = { module = "com.github.kittinunf.fuel:fuel-gson", version.ref = "fuel" }
