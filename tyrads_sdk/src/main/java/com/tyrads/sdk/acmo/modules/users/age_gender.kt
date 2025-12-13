@@ -119,7 +119,7 @@ fun AcmoUsersUpdatePage(
                             if (selectedGender == null) {
                                 Toast.makeText(
                                     context,
-                                    "Please select gender and age to proceed.",
+                                    localizationService.translate("data.initialization.userInfo.toast.selectAgeGender"),
                                     Toast.LENGTH_SHORT
                                 ).show()
                                 return@Button
