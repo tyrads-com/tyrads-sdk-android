@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.toColor
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filter
 
 @Composable
@@ -60,13 +61,15 @@ fun AcmoHorizontalNumberPicker(
     LaunchedEffect(Unit) {
         selectedValue = initialValue
         onValueChange(initialValue)
-        kotlinx.coroutines.delay(1000)
+        delay(150)
         scrollState.scrollToItem(initialValue - minValue)
+        delay(150)
         initialized = 1
     }
 
     LaunchedEffect(centeredItemIndex) {
         if (initialized == 0) return@LaunchedEffect
+        delay(50)
         val newValue = numbers.getOrNull(centeredItemIndex) ?: initialValue
         if (newValue != selectedValue) {
             selectedValue = newValue
@@ -80,6 +83,7 @@ fun AcmoHorizontalNumberPicker(
             .filter { !it }
             .collect {
                 if (initialized == 0) return@collect
+                delay(50)
                 val newValue = numbers.getOrNull(centeredItemIndex) ?: initialValue
                 if (newValue != selectedValue) {
                     selectedValue = newValue
