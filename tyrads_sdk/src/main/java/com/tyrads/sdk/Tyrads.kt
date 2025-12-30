@@ -51,7 +51,7 @@ class Tyrads private constructor() {
     internal var encKey: String? = null
     internal var engagementId: String? = null
     internal var token: String? = null
-    internal var config: TyradsConfig  = TyradsConfig()
+    var config: TyradsConfig  = TyradsConfig()
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
