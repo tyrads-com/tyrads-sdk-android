@@ -72,7 +72,7 @@ fun Greeting(modifier: Modifier = Modifier) {
     var apiSecretInput by remember {
         mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "")
     }
-    var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
+    var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1322") ?: "") }
 
     fun handleButtonClick() {
 //        if (apiKeyInput.isBlank() || apiSecretInput.isBlank() || userIdInput.isBlank()) {
@@ -92,8 +92,8 @@ fun Greeting(modifier: Modifier = Modifier) {
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
-                apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
+                apiKey = apiKeyInput.ifBlank { "0a55de10c58f459c9f65988d9d33e774" },
+                apiSecret = apiSecretInput.ifBlank { "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed" },
                 debugMode = true
             )
 
@@ -107,8 +107,8 @@ fun Greeting(modifier: Modifier = Modifier) {
         CoroutineScope(Dispatchers.Default).launch {
             Tyrads.getInstance().init(
                 context,
-                apiKey = "4f0eaa99e38e49b8b52804116e638a41",
-                apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
+                apiKey = "0a55de10c58f459c9f65988d9d33e774",
+                apiSecret = "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed",
                 debugMode = true
             )
            val userData = Tyrads.getInstance().loginUser(userID = "78y86")

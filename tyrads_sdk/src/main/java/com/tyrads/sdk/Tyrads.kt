@@ -2,7 +2,6 @@ package com.tyrads.sdk
 
 import AcmoConfig
 import AcmoEndpointNames
-import AcmoInitModel
 import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
@@ -38,6 +37,8 @@ import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
+import com.tyrads.sdk.acmo.modules.input_models.AcmoInitModel
+import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -50,11 +51,11 @@ class Tyrads private constructor() {
     internal var encKey: String? = null
     internal var engagementId: String? = null
     internal var token: String? = null
+    internal var config: TyradsConfig  = TyradsConfig()
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
     internal lateinit var loginData: AcmoInitModel
-    internal var newUser: Boolean = false
     var initWait: Job? = null
     var loginUserWait: Job? = null
     lateinit var navController: NavHostController
@@ -133,6 +134,7 @@ class Tyrads private constructor() {
         apiSecret: String,
         encKey: String? = null,
         engagementId: String? = null,
+        config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
         this@Tyrads.context = context.applicationContext
@@ -142,6 +144,7 @@ class Tyrads private constructor() {
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this@Tyrads.encKey = encKey
         this@Tyrads.engagementId = engagementId
+        setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
 
         Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
@@ -173,12 +176,15 @@ class Tyrads private constructor() {
         _currentLanguageCode.value = currentLanguage
         log("Selected Language: ${currentLanguageCode.value}")
 
-        // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
         localizationService.init(currentLanguageCode.value)
+        try {
+            val integrityToken = getPlayIntegrityToken(context)
+            log("Integrity Token: $integrityToken")
+            preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        } catch (e: Exception) {
+            log("Error in fetching integrity token: $e")
+        }
 
-        val integrityToken = getPlayIntegrityToken(context)
-        log("Integrity Token: $integrityToken")
-        preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         log("Tyrads SDK initialized", Log.INFO)
         initializePrivacyStatus()
     }
@@ -266,10 +272,9 @@ class Tyrads private constructor() {
                 is Result.Success -> {
                     log("User login successful ${response.data}", Log.INFO)
                     val jsonString = String(response.data)
-                    Log.e("Data", jsonString)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.user.publisherUserId
-                    preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
+                    preferences.edit { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     this@Tyrads.token = loginData.data.token
 
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
@@ -284,11 +289,6 @@ class Tyrads private constructor() {
                     ) {
                         val usageStatsController = AcmoUsageStatsController()
                         usageStatsController.saveUsageStats()
-                    }
-                    try {
-                        newUser = NetworkCommons().isNewUser()
-                    } catch (e: Exception) {
-                        newUser = loginData.data.newRegisteredUser
                     }
 
                     track(TyradsActivity.INITIALIZED)
@@ -420,6 +420,10 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+
+    private fun setTyradsConfig(config: TyradsConfig) {
+        this.config = config
     }
 
 }
