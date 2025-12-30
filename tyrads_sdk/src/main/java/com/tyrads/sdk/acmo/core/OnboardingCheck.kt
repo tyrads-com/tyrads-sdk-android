@@ -25,6 +25,9 @@ object AcmoOnboardingGate {
 
     fun proceed(context: Context) {
         val tyrads = Tyrads.getInstance()
+        if (tyrads.config.skipInitialPages){
+            return
+        }
 
         if (!tyrads.privacyAccepted.value) {
             AcmoPrivacyPolicyActivity.start(context, true)
