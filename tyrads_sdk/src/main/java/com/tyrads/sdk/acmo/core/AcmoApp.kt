@@ -56,15 +56,17 @@ class AcmoApp : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
-                var initPath = "privacy"
                 val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermissionGranted(this)
-                if (Tyrads.getInstance().preferences.getBoolean(
-                        AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-                        false
-                    )
-                ) {
-                    initPath =
-                        if (!isUsagePermissionGranted) "usage-permissions" else "webview"
+                val tyrads = Tyrads.getInstance()
+                val privacyAccepted = tyrads.preferences.getBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
+                    false)
+                val skipInitialPages = tyrads.config.skipInitialPages
+
+                val initPath = when {
+                    skipInitialPages -> "webview"
+                    !privacyAccepted -> "privacy"
+                    !isUsagePermissionGranted -> "usage-permissions"
+                    else -> "webview"
                 }
                 Tyrads.getInstance().navController = rememberNavController()
                 Scaffold(

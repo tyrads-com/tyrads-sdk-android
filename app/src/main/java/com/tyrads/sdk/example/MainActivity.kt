@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,7 +95,10 @@ fun Greeting(modifier: Modifier = Modifier) {
                 context,
                 apiKey = apiKeyInput.ifBlank { "0a55de10c58f459c9f65988d9d33e774" },
                 apiSecret = apiSecretInput.ifBlank { "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed" },
-                debugMode = true
+                debugMode = true,
+                config = TyradsConfig(
+                    skipInitialPages = true
+                )
             )
 
             Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
@@ -109,7 +113,10 @@ fun Greeting(modifier: Modifier = Modifier) {
                 context,
                 apiKey = "0a55de10c58f459c9f65988d9d33e774",
                 apiSecret = "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed",
-                debugMode = true
+                debugMode = true,
+                config = TyradsConfig(
+                    skipInitialPages = true
+                )
             )
            val userData = Tyrads.getInstance().loginUser(userID = "78y86")
             isTyradsInitialized = true
