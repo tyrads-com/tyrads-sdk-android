@@ -30,21 +30,24 @@ class FCMService : FirebaseMessagingService() {
             try {
                 Log.d(TAG, "Initializing FCM service...")
 
-                // Initialize Firebase
-                try {
-                    com.google.firebase.FirebaseApp.initializeApp(
-                        context,
-                        com.google.firebase.FirebaseOptions.Builder()
-                            .setApiKey(FirebaseConfig.API_KEY_ANDROID)
-                            .setApplicationId(FirebaseConfig.APP_ID_ANDROID)
-                            .setProjectId(FirebaseConfig.PROJECT_ID)
-                            .setGcmSenderId(FirebaseConfig.MESSAGING_SENDER_ID)
-                            .setStorageBucket(FirebaseConfig.STORAGE_BUCKET)
-                            .build()
-                    )
-                    Log.d(TAG, "Firebase initialized successfully")
-                } catch (e: IllegalStateException) {
-                    // Firebase already initialized
+                // Check if Firebase is already initialized
+                if (com.google.firebase.FirebaseApp.getApps(context).isEmpty()) {
+                    try {
+                        com.google.firebase.FirebaseApp.initializeApp(
+                            context,
+                            com.google.firebase.FirebaseOptions.Builder()
+                                .setApiKey(FirebaseConfig.API_KEY_ANDROID)
+                                .setApplicationId(FirebaseConfig.APP_ID_ANDROID)
+                                .setProjectId(FirebaseConfig.PROJECT_ID)
+                                .setGcmSenderId(FirebaseConfig.MESSAGING_SENDER_ID)
+                                .setStorageBucket(FirebaseConfig.STORAGE_BUCKET)
+                                .build()
+                        )
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to initialize Firebase: ${e.message}", e)
+                        return
+                    }
+                } else {
                     Log.d(TAG, "Firebase already initialized")
                 }
 
