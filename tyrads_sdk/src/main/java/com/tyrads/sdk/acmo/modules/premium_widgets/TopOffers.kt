@@ -29,6 +29,7 @@ import com.tyrads.sdk.acmo.helpers.launchUrlForce
 import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
+import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.InAppNotificationHost
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.*
 import com.tyrads.sdk.acmo.modules.premium_widgets.view_model.TopOffersViewModel
 import com.tyrads.sdk.ui.theme.RedColor
@@ -171,6 +172,7 @@ fun TopOffers(
                 }
             )
         }
+        InAppNotificationHost()
     }
 }
 
