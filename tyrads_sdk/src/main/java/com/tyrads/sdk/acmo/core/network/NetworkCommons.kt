@@ -22,6 +22,8 @@ import com.google.gson.JsonParser
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOfferCurrencySaleModel
 import com.tyrads.sdk.acmo.modules.input_models.AcmoOffersResponseModel
 import com.tyrads.sdk.acmo.modules.input_models.CurrencySales
+import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.models.AcmoLimitedEventsModel
+import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.models.GroupData
 
 @Keep
 class NetworkCommons {
@@ -138,6 +140,23 @@ class NetworkCommons {
             throw e
         }
     }
+    suspend fun fetchLimitedEvents(langCode: String): List<GroupData>? =
+        withContext(Dispatchers.IO) {
+            val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ACTIVE_OFFERS}?lang=$langCode"
+
+            try {
+                val result = Fuel.get(url)
+                    .awaitObject(object : ResponseDeserializable<AcmoLimitedEventsModel> {
+                        override fun deserialize(content: String): AcmoLimitedEventsModel {
+                            return Gson().fromJson(content, AcmoLimitedEventsModel::class.java)
+                        }
+                    })
+
+                result.data
+            } catch (e: Exception) {
+                throw e
+            }
+        }
 
     suspend fun fetchActiveOffersSummary(langCode: String): Int = withContext(Dispatchers.IO) {
         val url =
