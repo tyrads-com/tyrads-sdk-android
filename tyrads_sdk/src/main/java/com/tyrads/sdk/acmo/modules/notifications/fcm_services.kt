@@ -30,7 +30,6 @@ class FCMService : FirebaseMessagingService() {
             try {
                 Log.d(TAG, "Initializing FCM service...")
 
-                // Check if Firebase is already initialized
                 if (com.google.firebase.FirebaseApp.getApps(context).isEmpty()) {
                     try {
                         com.google.firebase.FirebaseApp.initializeApp(
@@ -51,17 +50,13 @@ class FCMService : FirebaseMessagingService() {
                     Log.d(TAG, "Firebase already initialized")
                 }
 
-                // Initialize notifications
                 FCMNotifications.getInstance().initialize(context)
 
-                // Request notification permission for Android 13+
                 requestNotificationPermissionIfNeeded(context)
 
-                // Get FCM token
                 val token = FirebaseMessaging.getInstance().token.await()
                 Log.d(TAG, "FCM Token: $token")
 
-                // Save token
                 saveToken(token)
 
                 Log.d(TAG, "FCM service initialized successfully")
@@ -119,6 +114,9 @@ class FCMService : FirebaseMessagingService() {
         Log.d(TAG, "Message received from: ${message.from}")
         Log.d(TAG, "Message ID: ${message.messageId}")
 
+        // ✅ LISTENER 1: onReceive - Logs when notification is received
+        logNotificationEvent("onReceive", message.data)
+
         serviceScope.launch {
             handleMessage(message)
         }
@@ -126,7 +124,6 @@ class FCMService : FirebaseMessagingService() {
 
     private suspend fun handleMessage(message: RemoteMessage) {
         try {
-            // Handle notification payload
             message.notification?.let { notification ->
                 val title = notification.title ?: "TyrAds Notification"
                 val body = notification.body ?: ""
@@ -143,7 +140,6 @@ class FCMService : FirebaseMessagingService() {
                 )
             }
 
-            // Handle data payload
             if (message.data.isNotEmpty()) {
                 handleMessageData(message.data)
             }
@@ -154,7 +150,18 @@ class FCMService : FirebaseMessagingService() {
 
     private fun handleMessageData(data: Map<String, String>) {
         Log.d(TAG, "Message data: $data")
+    }
 
+    private fun logNotificationEvent(eventType: String, data: Map<String, String>) {
+        Log.i(TAG, "Notification Event: $eventType")
+        Log.i(TAG, "Event Data: $data")
+
+        try {
+            val tyrads = Tyrads.getInstance()
+            tyrads.log("FCM Notification Event - $eventType: $data", Log.INFO, force = true)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not log to Tyrads: ${e.message}")
+        }
     }
 
     override fun onDeletedMessages() {
