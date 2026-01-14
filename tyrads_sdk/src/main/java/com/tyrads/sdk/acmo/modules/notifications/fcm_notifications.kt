@@ -2,6 +2,8 @@ package com.tyrads.sdk.acmo.modules.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,7 +15,11 @@ import androidx.annotation.Keep
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.google.gson.Gson
+import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.notifications.activity.NotificationPermissionActivity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,6 +29,29 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 @Keep
+class NotificationActionReceiver : BroadcastReceiver() {
+    companion object {
+        private const val TAG = "NotifActionReceiver"
+    }
+
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
+
+        val action = intent.action
+        val dataString = intent.getStringExtra(FCMNotifications.EXTRA_NOTIFICATION_DATA)
+
+        when (action) {
+            FCMNotifications.ACTION_NOTIFICATION_CLICKED -> {
+                FCMNotifications.getInstance().onNotificationClicked(dataString ?: "no_data")
+            }
+            FCMNotifications.ACTION_NOTIFICATION_DISMISSED -> {
+                FCMNotifications.getInstance().onNotificationDismissed(dataString ?: "no_data")
+            }
+        }
+    }
+}
+
+@Keep
 class FCMNotifications private constructor() {
 
     companion object {
@@ -30,6 +59,10 @@ class FCMNotifications private constructor() {
         private const val CHANNEL_NAME = "TyrAds Notifications"
         private const val CHANNEL_DESCRIPTION = "Notifications from TyrAds SDK"
         private const val TAG = "FCMNotifications"
+
+        const val ACTION_NOTIFICATION_CLICKED = "com.tyrads.sdk.NOTIFICATION_CLICKED"
+        const val ACTION_NOTIFICATION_DISMISSED = "com.tyrads.sdk.NOTIFICATION_DISMISSED"
+        const val EXTRA_NOTIFICATION_DATA = "notification_data"
 
         @Volatile
         private var instance: FCMNotifications? = null
@@ -41,10 +74,37 @@ class FCMNotifications private constructor() {
         }
     }
 
+    fun jsonToMap(jsonString: String): Map<String, Any>{
+        val gson = Gson()
+        val type =  object: com.google.gson.reflect.TypeToken<Map<String, Any>>() {}.type
+        return gson.fromJson(jsonString, type)
+    }
+
+    // Helper function to parse Kotlin Map toString format: {key=value, key2=value2}
+    private fun parseMapStringToJson(mapString: String): com.google.gson.JsonObject {
+        val cleanString = mapString.trim().removeSurrounding("{", "}")
+        val jsonObject = com.google.gson.JsonObject()
+
+        if (cleanString.isNotEmpty()) {
+            // Split by comma, but be careful with nested structures
+            cleanString.split(",").forEach { pair ->
+                val trimmedPair = pair.trim()
+                val equalsIndex = trimmedPair.indexOf('=')
+                if (equalsIndex > 0) {
+                    val key = trimmedPair.substring(0, equalsIndex).trim()
+                    val value = trimmedPair.substring(equalsIndex + 1).trim()
+                    jsonObject.addProperty(key, value)
+                }
+            }
+        }
+
+        return jsonObject
+    }
     fun initialize(context: Context) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             createNotificationChannel(context)
         }
+        Log.d(TAG, "FCM Notifications initialized")
     }
 
     private fun createNotificationChannel(context: Context) {
@@ -62,6 +122,49 @@ class FCMNotifications private constructor() {
         }
     }
 
+    // ✅ LISTENER 2: onClick - Called when user clicks notification
+    internal fun onNotificationClicked(dataString: String) {
+        Log.i(TAG, "Notification Clicked Event")
+        Log.i(TAG, "Click Data String: $dataString")
+
+        val data = try {
+            // Try parsing as JSON first
+            JsonParser.parseString(dataString).asJsonObject
+        } catch (e: JsonSyntaxException) {
+            // Fallback: Handle Kotlin Map toString format like {key=value}
+            Log.w(TAG, "Failed to parse as JSON, attempting Map format parsing: ${e.message}")
+            try {
+                parseMapStringToJson(dataString)
+            } catch (e2: Exception) {
+                Log.e(TAG, "Failed to parse data in any format: ${e2.message}")
+                JsonParser.parseString("{}").asJsonObject
+            }
+        }
+
+        Log.i(TAG, "Click Data: $data")
+
+
+        try {
+            val tyrads = Tyrads.getInstance()
+            tyrads.log("FCM Notification Event - onClick: $dataString", Log.INFO, force = true)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not log to Tyrads: ${e.message}")
+        }
+    }
+
+    // ✅ LISTENER 3: onDismiss - Called when user dismisses notification
+    internal fun onNotificationDismissed(dataString: String) {
+        Log.i(TAG, "Notification Dismissed Event")
+        Log.i(TAG, "Dismiss Data: $dataString")
+
+        try {
+            val tyrads = Tyrads.getInstance()
+            tyrads.log("FCM Notification Event - onDismiss: $dataString", Log.INFO, force = true)
+        } catch (e: Exception) {
+            Log.w(TAG, "Could not log to Tyrads: ${e.message}")
+        }
+    }
+
     suspend fun showNotification(
         context: Context,
         title: String,
@@ -71,7 +174,6 @@ class FCMNotifications private constructor() {
     ) = withContext(Dispatchers.IO) {
         Log.d(TAG, "showNotification called - Title: $title, Body: $body, ImageUrl: $imageUrl")
 
-        // Check notification permission for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val hasPermission = ContextCompat.checkSelfPermission(
                 context,
@@ -85,7 +187,6 @@ class FCMNotifications private constructor() {
             }
         }
 
-        // Check if notifications are enabled
         val notificationManager = NotificationManagerCompat.from(context)
         if (!notificationManager.areNotificationsEnabled()) {
             Log.e(TAG, "Notifications are disabled by user!")
@@ -95,6 +196,32 @@ class FCMNotifications private constructor() {
         val notificationId = System.currentTimeMillis().toInt()
         Log.d(TAG, "Creating notification with ID: $notificationId")
 
+        // Convert payload to proper JSON string instead of Map.toString()
+        val gson = Gson()
+        val dataString = if (payload != null) gson.toJson(payload) else "{}"
+
+        val clickIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = ACTION_NOTIFICATION_CLICKED
+            putExtra(EXTRA_NOTIFICATION_DATA, dataString)
+        }
+        val clickPendingIntent = PendingIntent.getBroadcast(
+            context,
+            notificationId,
+            clickIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val dismissIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = ACTION_NOTIFICATION_DISMISSED
+            putExtra(EXTRA_NOTIFICATION_DATA, dataString)
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context,
+            notificationId + 1,
+            dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(title)
@@ -102,8 +229,9 @@ class FCMNotifications private constructor() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
             .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setContentIntent(clickPendingIntent)
+            .setDeleteIntent(dismissPendingIntent)
 
-        // Handle image if provided
         if (!imageUrl.isNullOrBlank()) {
             try {
                 Log.d(TAG, "Downloading image: $imageUrl")
@@ -137,7 +265,6 @@ class FCMNotifications private constructor() {
             )
         }
 
-        // Show notification on main thread
         withContext(Dispatchers.Main) {
             try {
                 Log.d(TAG, "Displaying notification...")
@@ -173,7 +300,6 @@ class FCMNotifications private constructor() {
                 val bitmap = BitmapFactory.decodeStream(inputStream)
 
                 if (bitmap != null) {
-                    // Cache the image
                     cacheImage(context, bitmap, notificationId)
                 }
 
