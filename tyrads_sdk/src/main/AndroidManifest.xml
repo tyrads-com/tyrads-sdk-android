@@ -56,6 +56,16 @@
             </intent-filter>
         </service>
 
+        <!-- Notification Action Receiver for Click/Dismiss Events -->
+        <receiver
+            android:name="com.tyrads.sdk.acmo.modules.notifications.NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.tyrads.sdk.NOTIFICATION_CLICKED" />
+                <action android:name="com.tyrads.sdk.NOTIFICATION_DISMISSED" />
+            </intent-filter>
+        </receiver>
+
         <!-- FCM Default Notification Settings -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
