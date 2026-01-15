@@ -8,6 +8,8 @@ import AcmoTrackingController
 import AcmoUsageStatsController
 import TyradsActivity
 import android.app.LocaleManager
+import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -40,9 +42,11 @@ import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
+import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import android.os.Bundle
 
 interface TyradsCallback {
     fun onSuccess()
@@ -206,6 +210,7 @@ class Tyrads private constructor() {
         // Initialize FCM Service
         try {
             FCMService.initialize(context)
+            registerLifecycleCallbacks(context)
         } catch (error: Exception) {
             log("Failed to initialize FCM: ${error.message}", Log.ERROR)
         }
@@ -514,5 +519,28 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+
+    private fun registerLifecycleCallbacks(context: Context) {
+        (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object :
+            Application.ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
+            }
+
+            override fun onActivityStarted(activity: Activity) {}
+
+            override fun onActivityResumed(activity: Activity) {
+                FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
+            }
+
+            override fun onActivityPaused(activity: Activity) {}
+
+            override fun onActivityStopped(activity: Activity) {}
+
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
     }
 }
