@@ -46,6 +46,8 @@ import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import android.os.Bundle
 
 interface TyradsCallback {
@@ -95,6 +97,10 @@ class Tyrads private constructor() {
     var mainColor: String? = null
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
+
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
     internal fun initializePrivacyStatus() {
         _privacyAccepted.value = preferences.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
@@ -339,6 +345,7 @@ class Tyrads private constructor() {
                         usageStatsController.saveUsageStats()
                     }
 
+                    _isLoggedIn.value = true
                     track(TyradsActivity.INITIALIZED)
                     return@withContext true
                 }
@@ -542,5 +549,9 @@ class Tyrads private constructor() {
 
             override fun onActivityDestroyed(activity: Activity) {}
         })
+
+        if (context is Activity) {
+            FCMNotifications.getInstance().handleNotificationIntent(context.intent)
+        }
     }
 }

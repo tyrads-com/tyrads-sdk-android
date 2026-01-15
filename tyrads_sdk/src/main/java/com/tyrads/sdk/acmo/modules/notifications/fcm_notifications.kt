@@ -24,6 +24,9 @@ import com.tyrads.sdk.acmo.modules.notifications.activity.NotificationPermission
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import android.widget.Toast
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
@@ -160,20 +163,31 @@ class FCMNotifications private constructor() {
         try {
             val tyrads = Tyrads.getInstance()
             val deepLinkRoute = data["deepLink"]
-            tyrads.log("FCM Notification Event - $eventType: $data", Log.INFO, force = true)
             if (!deepLinkRoute.isNullOrEmpty()) {
                 tyrads.tyradScope.launch {
+                    if (!tyrads.isLoggedIn.value) {
+                        try {
+                            withTimeout(15000) {
+                                tyrads.isLoggedIn.first { it }
+                            }
+                        } catch (e: Exception) {
+                            tyrads.log("Timeout waiting for SDK initialization: ${e.message}", Log.ERROR)
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(tyrads.context, "Initialization timed out. Please try again.", Toast.LENGTH_LONG).show()
+                            }
+                            return@launch
+                        }
+                    }
                     tyrads.showOffers(route = deepLinkRoute)
                 }
             }
         } catch (e: Exception) {
-            Log.w(TAG, "Could not log to Tyrads: ${e.message}")
+            tyrads.log("Could not log to Tyrads: ${e.message}", Log.ERROR)
         }
     }
 
     fun handleNotificationIntent(intent: Intent?) {
         if (intent == null) return
-
         val dataString = intent.getStringExtra(EXTRA_NOTIFICATION_DATA)
         if (dataString != null) {
             onNotificationClicked(dataString)
@@ -182,15 +196,22 @@ class FCMNotifications private constructor() {
         }
 
         val extras = intent.extras
-        if (extras != null && extras.containsKey("google.message_id")) {
-            val dataMap = mutableMapOf<String, String>()
-            extras.keySet().forEach { key ->
-                extras.get(key)?.let { value ->
-                    dataMap[key] = value.toString()
+        if (extras != null) {
+            if (extras.containsKey("google.message_id") || extras.containsKey("from")) {
+                val dataMap = mutableMapOf<String, String>()
+                extras.keySet().forEach { key ->
+                    extras.get(key)?.let { value ->
+                        dataMap[key] = value.toString()
+                    }
                 }
+                handleNotificationEvent("onClick", dataMap)
+                intent.removeExtra("google.message_id")
+                intent.removeExtra("from")
+            } else {
+                tyrads.log("No FCM identifying keys (google.message_id or from) found in extras", Log.INFO)
             }
-            handleNotificationEvent("onClick", dataMap)
-            intent.removeExtra("google.message_id")
+        } else {
+            tyrads.log("No extras found in intent", Log.INFO)
         }
     }
 
