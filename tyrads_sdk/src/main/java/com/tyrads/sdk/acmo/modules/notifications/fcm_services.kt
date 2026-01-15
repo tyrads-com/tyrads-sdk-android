@@ -115,7 +115,7 @@ class FCMService : FirebaseMessagingService() {
         Log.d(TAG, "Message ID: ${message.messageId}")
 
         // ✅ LISTENER 1: onReceive - Logs when notification is received
-        logNotificationEvent("onReceive", message.data)
+        FCMNotifications.getInstance().handleNotificationEvent("onReceive", message.data)
 
         serviceScope.launch {
             handleMessage(message)
@@ -150,18 +150,6 @@ class FCMService : FirebaseMessagingService() {
 
     private fun handleMessageData(data: Map<String, String>) {
         Log.d(TAG, "Message data: $data")
-    }
-
-    private fun logNotificationEvent(eventType: String, data: Map<String, String>) {
-        Log.i(TAG, "Notification Event: $eventType")
-        Log.i(TAG, "Event Data: $data")
-
-        try {
-            val tyrads = Tyrads.getInstance()
-            tyrads.log("FCM Notification Event - $eventType: $data", Log.INFO, force = true)
-        } catch (e: Exception) {
-            Log.w(TAG, "Could not log to Tyrads: ${e.message}")
-        }
     }
 
     override fun onDeletedMessages() {
