@@ -55,6 +55,15 @@
             </intent-filter>
         </service>
 
+        <receiver
+            android:name="com.tyrads.sdk.acmo.modules.push_notifications.NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.tyrads.sdk.NOTIFICATION_CLICKED" />
+                <action android:name="com.tyrads.sdk.NOTIFICATION_DISMISSED" />
+            </intent-filter>
+        </receiver>
+
         <!-- FCM Default Notification Settings -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
