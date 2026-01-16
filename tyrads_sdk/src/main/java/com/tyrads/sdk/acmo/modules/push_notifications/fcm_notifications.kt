@@ -52,6 +52,13 @@ class NotificationActionReceiver : BroadcastReceiver() {
 }
 
 @Keep
+interface TyradsNotificationListener {
+    fun onNotificationReceived(data: Map<String, String>)
+    fun onNotificationClicked(data: Map<String, String>)
+    fun onNotificationDismissed(data: Map<String, String>)
+}
+
+@Keep
 class FCMNotifications private constructor() {
 
     companion object {
@@ -72,6 +79,12 @@ class FCMNotifications private constructor() {
                 instance ?: FCMNotifications().also { instance = it }
             }
         }
+    }
+
+    private var listener: TyradsNotificationListener? = null
+
+    fun setNotificationListener(listener: TyradsNotificationListener?) {
+        this.listener = listener
     }
 
     fun initialize(context: Context) {
@@ -302,34 +315,20 @@ class FCMNotifications private constructor() {
     internal fun handleNotificationEvent(eventType: String, data: Map<String, String>) {
         val tyrads = Tyrads.getInstance()
         val deepLinkRoute = data["deepLink"]
-        
+
         try {
-            if (!deepLinkRoute.isNullOrEmpty() && eventType == "onClick") {
-                tyrads.tyradScope.launch {
-                    if (!tyrads.isLoggedIn.value) {
-                        try {
-                            withTimeout(15000) {
-                                tyrads.isLoggedIn.first { it }
-                            }
-                        } catch (e: Exception) {
-                            tyrads.log("Timeout waiting for SDK initialization: ${e.message}", Log.ERROR)
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(tyrads.context, "Initialization timed out. Please try again.", Toast.LENGTH_LONG).show()
-                            }
-                            return@launch
-                        }
-                    }
-                    tyrads.showOffers(route = deepLinkRoute)
-                }
+            when (eventType) {
+                "onReceive" -> listener?.onNotificationReceived(data)
+                "onClick" -> listener?.onNotificationClicked(data)
+                "onDismiss" -> listener?.onNotificationDismissed(data)
             }
         } catch (e: Exception) {
-            tyrads.log("Could not process notification event $eventType: ${e.message}", Log.ERROR)
+            Log.e(TAG, "Error notifying listener: ${e.message}")
         }
     }
 
     fun handleNotificationIntent(intent: Intent?) {
-        if (intent == null) return
-
+        if (intent == null) return        
         val dataString = intent.getStringExtra(EXTRA_NOTIFICATION_DATA)
         if (dataString != null) {
             onNotificationClicked(dataString)
@@ -339,7 +338,10 @@ class FCMNotifications private constructor() {
 
         val extras = intent.extras
         if (extras != null) {
-            if (extras.containsKey("google.message_id") || extras.containsKey("from")) {
+            val hasFcmKeys = extras.containsKey("google.message_id") || extras.containsKey("from") || extras.containsKey("google.sent_time")
+            val hasDeepLink = extras.containsKey("deepLink") || extras.containsKey("deeplink")
+            
+            if (hasFcmKeys || hasDeepLink) {
                 val dataMap = mutableMapOf<String, String>()
                 extras.keySet().forEach { key ->
                     extras.get(key)?.let { value ->
@@ -349,11 +351,13 @@ class FCMNotifications private constructor() {
                 handleNotificationEvent("onClick", dataMap)
                 intent.removeExtra("google.message_id")
                 intent.removeExtra("from")
+                intent.removeExtra("deepLink")
+                intent.removeExtra("deeplink")
             } else {
-                Tyrads.getInstance().log("No FCM identifying keys found in extras", Log.INFO)
+                Log.d(TAG, "Extras found but no identifying notification keys. Keys: ${extras.keySet()}")
             }
         } else {
-            Tyrads.getInstance().log("No extras found in intent", Log.INFO)
+            Log.d(TAG, "No extras found in intent")
         }
     }
 
