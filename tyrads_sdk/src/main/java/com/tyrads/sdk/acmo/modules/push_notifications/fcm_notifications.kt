@@ -16,12 +16,40 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.tyrads.sdk.R
 import com.tyrads.sdk.acmo.modules.push_notifications.activity.NotificationPermissionActivity
+import android.app.PendingIntent
+import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import android.widget.Toast
+import android.content.BroadcastReceiver
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import com.google.gson.Gson
+
+@Keep
+class NotificationActionReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent?) {
+        if (context == null || intent == null) return
+
+        val action = intent.action
+        val dataString = intent.getStringExtra(FCMNotifications.EXTRA_NOTIFICATION_DATA)
+
+        when (action) {
+            FCMNotifications.ACTION_NOTIFICATION_CLICKED -> {
+                FCMNotifications.getInstance().onNotificationClicked(dataString ?: "{}")
+            }
+
+            FCMNotifications.ACTION_NOTIFICATION_DISMISSED -> {
+                FCMNotifications.getInstance().onNotificationDismissed(dataString ?: "{}")
+            }
+        }
+    }
+}
 
 @Keep
 class FCMNotifications private constructor() {
@@ -31,6 +59,10 @@ class FCMNotifications private constructor() {
         private const val CHANNEL_NAME = "TyrAds Notifications"
         private const val CHANNEL_DESCRIPTION = "Notifications from TyrAds SDK"
         private const val TAG = "FCMNotifications"
+
+        const val ACTION_NOTIFICATION_CLICKED = "com.tyrads.sdk.NOTIFICATION_CLICKED"
+        const val ACTION_NOTIFICATION_DISMISSED = "com.tyrads.sdk.NOTIFICATION_DISMISSED"
+        const val EXTRA_NOTIFICATION_DATA = "notification_data"
 
         @Volatile
         private var instance: FCMNotifications? = null
@@ -96,11 +128,38 @@ class FCMNotifications private constructor() {
         val notificationId = System.currentTimeMillis().toInt()
         Log.d(TAG, "Creating notification with ID: $notificationId")
 
+        val gson = Gson()
+        val dataString = if (payload != null) gson.toJson(payload) else "{}"
+
+        val clickIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = ACTION_NOTIFICATION_CLICKED
+            putExtra(EXTRA_NOTIFICATION_DATA, dataString)
+        }
+        val clickPendingIntent = PendingIntent.getBroadcast(
+            context,
+            notificationId,
+            clickIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val dismissIntent = Intent(context, NotificationActionReceiver::class.java).apply {
+            action = ACTION_NOTIFICATION_DISMISSED
+            putExtra(EXTRA_NOTIFICATION_DATA, dataString)
+        }
+        val dismissPendingIntent = PendingIntent.getBroadcast(
+            context,
+            notificationId + 1,
+            dismissIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val builder =
             NotificationCompat.Builder(context, CHANNEL_ID).setSmallIcon(R.drawable.ic_notification)
                 .setContentTitle(title).setContentText(body)
                 .setPriority(NotificationCompat.PRIORITY_HIGH).setAutoCancel(true)
                 .setDefaults(NotificationCompat.DEFAULT_ALL)
+                .setContentIntent(clickPendingIntent)
+                .setDeleteIntent(dismissPendingIntent)
 
         // Handle image if provided
         if (!imageUrl.isNullOrBlank()) {
@@ -222,6 +281,85 @@ class FCMNotifications private constructor() {
         } catch (e: Exception) {
             Log.e(TAG, "Failed to request notification permission: ${e.message}", e)
         }
+    }
+
+    // ✅ LISTENER 2: onClick - Called when user clicks notification
+    internal fun onNotificationClicked(dataString: String) {
+        Log.i(TAG, "Notification Clicked Event")
+        Log.i(TAG, "Click Data String: $dataString")
+
+        val data = try {
+            val gson = Gson()
+            gson.fromJson(dataString, Map::class.java) as Map<String, String>
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to parse data as JSON: ${e.message}")
+            mapOf("deepLink" to dataString)
+        }
+        
+        handleNotificationEvent("onClick", data)
+    }
+
+    internal fun handleNotificationEvent(eventType: String, data: Map<String, String>) {
+        val tyrads = Tyrads.getInstance()
+        val deepLinkRoute = data["deepLink"]
+        
+        try {
+            if (!deepLinkRoute.isNullOrEmpty() && eventType == "onClick") {
+                tyrads.tyradScope.launch {
+                    if (!tyrads.isLoggedIn.value) {
+                        try {
+                            withTimeout(15000) {
+                                tyrads.isLoggedIn.first { it }
+                            }
+                        } catch (e: Exception) {
+                            tyrads.log("Timeout waiting for SDK initialization: ${e.message}", Log.ERROR)
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(tyrads.context, "Initialization timed out. Please try again.", Toast.LENGTH_LONG).show()
+                            }
+                            return@launch
+                        }
+                    }
+                    tyrads.showOffers(route = deepLinkRoute)
+                }
+            }
+        } catch (e: Exception) {
+            tyrads.log("Could not process notification event $eventType: ${e.message}", Log.ERROR)
+        }
+    }
+
+    fun handleNotificationIntent(intent: Intent?) {
+        if (intent == null) return
+
+        val dataString = intent.getStringExtra(EXTRA_NOTIFICATION_DATA)
+        if (dataString != null) {
+            onNotificationClicked(dataString)
+            intent.removeExtra(EXTRA_NOTIFICATION_DATA)
+            return
+        }
+
+        val extras = intent.extras
+        if (extras != null) {
+            if (extras.containsKey("google.message_id") || extras.containsKey("from")) {
+                val dataMap = mutableMapOf<String, String>()
+                extras.keySet().forEach { key ->
+                    extras.get(key)?.let { value ->
+                        dataMap[key] = value.toString()
+                    }
+                }
+                handleNotificationEvent("onClick", dataMap)
+                intent.removeExtra("google.message_id")
+                intent.removeExtra("from")
+            } else {
+                Tyrads.getInstance().log("No FCM identifying keys found in extras", Log.INFO)
+            }
+        } else {
+            Tyrads.getInstance().log("No extras found in intent", Log.INFO)
+        }
+    }
+
+    // ✅ LISTENER 3: onDismiss - Called when user dismisses notification
+    internal fun onNotificationDismissed(dataString: String) {
+        handleNotificationEvent("onDismiss", mapOf("data" to dataString))
     }
 
     suspend fun showTextNotification(
