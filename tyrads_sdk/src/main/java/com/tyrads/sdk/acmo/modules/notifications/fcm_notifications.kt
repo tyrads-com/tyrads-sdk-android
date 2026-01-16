@@ -85,7 +85,6 @@ class FCMNotifications private constructor() {
         return gson.fromJson(jsonString, type)
     }
 
-    // Helper function to parse Kotlin Map toString format: {key=value, key2=value2}
     private fun parseMapStringToJson(mapString: String): com.google.gson.JsonObject {
         val cleanString = mapString.trim().removeSurrounding("{", "}")
         val jsonObject = com.google.gson.JsonObject()
@@ -129,7 +128,6 @@ class FCMNotifications private constructor() {
         }
     }
 
-    // ✅ LISTENER 2: onClick - Called when user clicks notification
     internal fun onNotificationClicked(dataString: String) {
         Log.i(TAG, "Notification Clicked Event")
         Log.i(TAG, "Click Data String: $dataString")
@@ -159,11 +157,11 @@ class FCMNotifications private constructor() {
     }
 
     internal fun handleNotificationEvent(eventType: String, data: Map<String, String>) {
+        val tyrads = Tyrads.getInstance()
 
         try {
-            val tyrads = Tyrads.getInstance()
-            val deepLinkRoute = data["deepLink"]
-            if (!deepLinkRoute.isNullOrEmpty()) {
+             val deepLinkRoute = data["deepLink"]
+            if (!deepLinkRoute.isNullOrEmpty() && eventType == "onClick") {
                 tyrads.tyradScope.launch {
                     if (!tyrads.isLoggedIn.value) {
                         try {
@@ -196,6 +194,7 @@ class FCMNotifications private constructor() {
         }
 
         val extras = intent.extras
+        val tyrads = Tyrads.getInstance()
         if (extras != null) {
             if (extras.containsKey("google.message_id") || extras.containsKey("from")) {
                 val dataMap = mutableMapOf<String, String>()
@@ -214,8 +213,6 @@ class FCMNotifications private constructor() {
             tyrads.log("No extras found in intent", Log.INFO)
         }
     }
-
-    // ✅ LISTENER 3: onDismiss - Called when user dismisses notification
     internal fun onNotificationDismissed(dataString: String) {
         handleNotificationEvent("onDismiss", mapOf("data" to dataString))
     }
