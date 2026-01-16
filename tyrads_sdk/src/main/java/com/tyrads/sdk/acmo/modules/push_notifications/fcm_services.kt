@@ -94,7 +94,7 @@ class FCMService : FirebaseMessagingService() {
     override fun onMessageReceived(message: RemoteMessage) {
         super.onMessageReceived(message)
         Log.d(TAG, "Message received from: ${message.from}")
-
+        FCMNotifications.getInstance().handleNotificationEvent("onReceive", message.data)
         serviceScope.launch {
             handleMessage(message)
         }
