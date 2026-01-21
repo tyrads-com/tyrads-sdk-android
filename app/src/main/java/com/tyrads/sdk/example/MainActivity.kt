@@ -126,9 +126,9 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     LaunchedEffect(selectedOption) {
         fcmToken = sdkPrefs.getString("acmo_tyrads_sdk_fcm_token", null)
         Tyrads.getInstance().init(
-            context, apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
-            apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
-            encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
+            context, apiKey = apiKeyInput.ifBlank { "0a55de10c58f459c9f65988d9d33e774" },
+            apiSecret = apiSecretInput.ifBlank { "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed" },
+            encryptionKey = encryptionKey.ifBlank { "VKdZsSz9&3WQqA6xfBJ4G2!5cUe8Y7yP" },
             engagementId = engagementId,
             config = TyradsConfig(
                 skipInitialPages = selectedOption == options[1],
@@ -159,9 +159,9 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
-                apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
-                encryptionKey = encryptionKey.ifBlank { "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL" },
+                apiKey = apiKeyInput.ifBlank { "0a55de10c58f459c9f65988d9d33e774" },
+                apiSecret = apiSecretInput.ifBlank { "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed" },
+                encryptionKey = encryptionKey.ifBlank { "VKdZsSz9&3WQqA6xfBJ4G2!5cUe8Y7yP" },
                 engagementId = engagementId,
                 config = TyradsConfig(
                     skipInitialPages = selectedOption == options[1],
