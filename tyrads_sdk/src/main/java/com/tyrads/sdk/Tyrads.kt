@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.util.UUID
 import android.net.Uri
 import android.os.Build
@@ -39,6 +40,7 @@ import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
+import com.tyrads.sdk.acmo.modules.webview.WebViewManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,8 +84,8 @@ class Tyrads private constructor() {
         get() = _currentLanguageCode
     private val localizationService = LocalizationService.getInstance()
 
-    private var _isSecure: Boolean = false;
-    val isSecure: Boolean get() = _isSecure;
+    private var _isSecure: Boolean = false
+    val isSecure: Boolean get() = _isSecure
 
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
@@ -327,6 +329,11 @@ class Tyrads private constructor() {
                     }
 
                     track(TyradsActivity.INITIALIZED)
+
+                    // ✅ Preload WebView after successful login
+                    log("Calling _preloadWebView() after successful login", Log.INFO, force = true)
+                    _preloadWebView()
+
                     return@withContext true
                 }
 
@@ -364,9 +371,63 @@ class Tyrads private constructor() {
         }
     }
 
+    internal fun getWebUri(route: String? = null, campaignID: Int? = null): String {
+        val skipUserInfo = getSkipUserInfo()
+        val currentRoute = route ?: ""
+
+        return Uri.Builder()
+            .scheme("https")
+            .authority("sdk.tyrads.com")
+            .appendQueryParameter(
+                "to",
+                when {
+                    campaignID == null -> currentRoute
+                    else -> "$currentRoute/$campaignID"
+                }
+            )
+            .appendQueryParameter("token", token)
+            .appendQueryParameter("lang", currentLanguageCode.value)
+            .appendQueryParameter("skipUserInfo", skipUserInfo.toString())
+            .build()
+            .toString()
+    }
+    private fun _preloadWebView() {
+        try {
+            log("_preloadWebView: Starting preload", Log.INFO, force = true)
+
+            // Build URL - mirrors: webURI = getWebUri(); in Flutter
+            url = getWebUri()
+            log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
+
+            // Preload the WebView - mirrors: WebViewManager.instance.preload(webURI); in Flutter
+            WebViewManager.getInstance().preload(context, url)
+
+            log("_preloadWebView: Preload initiated successfully", Log.INFO, force = true)
+        } catch (e: Exception) {
+            log("_preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
+            log("_preloadWebView: Stack trace: ${e.stackTraceToString()}", Log.ERROR, force = true)
+        }
+    }
+
+    /**
+     * Preload WebView after closing (public method for AcmoApp to call)
+     * Mirrors: _preloadWebView() call in back() method in Flutter
+     */
+    fun preloadAfterClose() {
+        tyradScope.launch {
+            try {
+                log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
+                _preloadWebView()
+            } catch (e: Exception) {
+                log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
+            }
+        }
+    }
+
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
-            log("Preparing to show offers", Log.INFO)
+            log("showOffers: Preparing to show offers", Log.INFO, force = true)
+
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
                 withContext(Dispatchers.Main) {
@@ -374,23 +435,50 @@ class Tyrads private constructor() {
                 }
                 return@withContext
             }
-            log("Launching offers", Log.INFO)
-            url = Uri
-                .Builder()
-                .scheme("https")
-                .authority("sdk.tyrads.com")
-                .appendQueryParameter("token", token)
-                .appendQueryParameter(
-                    "to",
-                    if (route == null) "" else if (campaignID == null) route else "$route/$campaignID"
+
+            // Build the requested URL
+            val requestedUrl = getWebUri(route, campaignID)
+            val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
+
+            if (url != requestedUrl || !hasPreloadedWebView) {
+                url = requestedUrl
+                log(
+                    "showOffers: URL changed or no preload available - preloading now: $url",
+                    Log.INFO,
+                    force = true
                 )
-                .appendQueryParameter("lang", currentLanguageCode.value)
-                .build()
-                .toString()
-            Log.i("url", url.toString())
+
+                WebViewManager.getInstance().preload(context, url)
+
+                var attempts = 0
+                val maxAttempts = 20 // 2 seconds max wait (20 * 100ms)
+
+                while (WebViewManager.getInstance().getHeadlessWebView() == null && attempts < maxAttempts) {
+                    delay(100)
+                    attempts++
+                    log("showOffers: Waiting for preload... attempt $attempts/$maxAttempts", Log.DEBUG)
+                }
+
+                if (WebViewManager.getInstance().getHeadlessWebView() != null) {
+                    log("showOffers: Preload ready after ${attempts * 100}ms", Log.INFO, force = true)
+                } else {
+                    log(
+                        "showOffers: Preload timeout - will create WebView on demand",
+                        Log.WARN,
+                        force = true
+                    )
+                }
+            } else {
+                log("showOffers: Using existing preloaded WebView", Log.INFO, force = true)
+            }
+
+            // Start Activity
+            log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
+
+            track(TyradsActivity.opened)
         }
 
     @JvmOverloads
@@ -417,25 +505,8 @@ class Tyrads private constructor() {
     }
 
     /**
-     * Changes the language of the SDK - similar to Dart implementation
-     *
-     * This method is used to change the language of the SDK.
-     *
-     * The [languageCode] parameter is the language code of the language
-     * to be used. For example, "en" for English, or "es" for Spanish.
-     *
-     * The method is asynchronous and returns when the language has been changed.
-     *
-     * The Tyrads SDK supports the following languages:
-     * - English (en)
-     * - Spanish (es)
-     * - Indonesian (id)
-     * - Japanese (ja)
-     * - Korean (ko)
-     * - Chinese (China, Simplified) (zh-Hans-CN)
-     *
-     * Note that the language change is persisted in the app's preferences,
-     * so the next time the app is started, the SDK will use the new language.
+     * Changes the language of the SDK
+     * Mirrors: changeLanguage() in Flutter
      */
     suspend fun changeLanguage(languageCode: String) = withContext(Dispatchers.Default) {
         try {
@@ -506,5 +577,10 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+
+    private fun getSkipUserInfo(): Boolean {
+        val key = "${AcmoKeyNames.SKIP_USER_INFO}${publisherUserID}"
+        return preferences.getBoolean(key, false)
     }
 }
