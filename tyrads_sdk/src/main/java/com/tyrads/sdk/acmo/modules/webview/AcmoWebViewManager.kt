@@ -17,6 +17,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.json.JSONException
+
 @Keep
 class WebViewManager private constructor() {
 
@@ -38,28 +39,27 @@ class WebViewManager private constructor() {
     private var containerView: FrameLayout? = null
     private var preloadedUrl: String? = null
     private var hasError: Boolean = false
-    private var isFullyLoaded: Boolean = false
     private val mainHandler = Handler(Looper.getMainLooper())
 
     var onMessage: ((String) -> Unit)? = null
     var onErrorChanged: ((Boolean) -> Unit)? = null
 
-    fun getHeadlessWebView(): WebView? {
-        return if (isFullyLoaded) headlessWebView else null
-    }
+    fun getHeadlessWebView(): WebView? = headlessWebView
 
     fun hasPreloadError(): Boolean = hasError
+
     @SuppressLint("SetJavaScriptEnabled")
     fun preload(context: Context, url: String) {
         Tyrads.getInstance().log("WebViewManager: preload() called with URL: $url", Log.INFO, force = true)
-        if (preloadedUrl == url && headlessWebView != null && isFullyLoaded) {
-            Tyrads.getInstance().log("WebViewManager: Already preloaded and ready with URL: $url", Log.INFO, force = true)
+
+        // Check if already preloaded with same URL
+        if (preloadedUrl == url && headlessWebView != null) {
+            Tyrads.getInstance().log("WebViewManager: Already preloaded with URL: $url", Log.INFO, force = true)
             return
         }
 
         preloadedUrl = url
         hasError = false
-        isFullyLoaded = false
 
         mainHandler.post {
             try {
@@ -117,6 +117,7 @@ class WebViewManager private constructor() {
                             super.onPageFinished(view, url)
                             Tyrads.getInstance().log("WebViewManager: Page loaded successfully: $url", Log.INFO, force = true)
 
+                            // Inject JavaScript bridge once - will be used by the visible WebView
                             view?.evaluateJavascript(
                                 """
                                 (function() {
@@ -138,10 +139,6 @@ class WebViewManager private constructor() {
                                 })();
                                 """.trimIndent(), null
                             )
-                            mainHandler.postDelayed({
-                                isFullyLoaded = true
-                                Tyrads.getInstance().log("WebViewManager: Page is fully interactive and ready", Log.INFO, force = true)
-                            }, 500)
                         }
 
                         override fun onReceivedError(
@@ -192,6 +189,7 @@ class WebViewManager private constructor() {
                             Tyrads.getInstance().log("WebViewManager: Loading progress: $newProgress%", Log.DEBUG)
                         }
                     }
+
                     addJavascriptInterface(
                         WebAppInterfacePreload(context, scope),
                         "AndroidInterface"
@@ -239,8 +237,8 @@ class WebViewManager private constructor() {
         headlessWebView = null
         containerView = null
         preloadedUrl = null
-        isFullyLoaded = false
     }
+
     private fun disposeInternal() {
         try {
             mainHandler.removeCallbacksAndMessages(null)
@@ -257,7 +255,6 @@ class WebViewManager private constructor() {
             headlessWebView = null
             preloadedUrl = null
             hasError = false
-            isFullyLoaded = false
             Tyrads.getInstance().log("WebViewManager: Disposed headless WebView", Log.INFO, force = true)
         } catch (e: Exception) {
             Tyrads.getInstance().log(
