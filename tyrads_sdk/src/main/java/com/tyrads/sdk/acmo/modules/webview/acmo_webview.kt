@@ -55,6 +55,8 @@ fun AcmoWebView() {
     val preloadedWebViewAvailable = remember { webViewManager.getHeadlessWebView() != null }
     var isLoading by remember { mutableStateOf(!preloadedWebViewAvailable) }
 
+    var isUsingPreloadedWebView by remember { mutableStateOf(preloadedWebViewAvailable) }
+
     Tyrads.getInstance().log(
         "AcmoWebView: Composing - URL: $mUrl, Preload available: $preloadedWebViewAvailable",
         Log.INFO,
@@ -95,11 +97,14 @@ fun AcmoWebView() {
 
                 val webView = if (preloadedWebView != null) {
                     Tyrads.getInstance().log(
-                        "AcmoWebView: Using preloaded WebView - no loading needed",
+                        "AcmoWebView: Using preloaded WebView - instant display",
                         Log.INFO,
                         force = true
                     )
 
+                    isUsingPreloadedWebView = true
+
+                    // Remove from container
                     (preloadedWebView.parent as? ViewGroup)?.removeView(preloadedWebView)
 
                     preloadedWebView.layoutParams = ViewGroup.LayoutParams(
@@ -107,16 +112,39 @@ fun AcmoWebView() {
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
 
+                    // Update WebViewClient for visible WebView (no JS injection needed - already done in preload)
+                    preloadedWebView.webViewClient = AcmoWebViewClient(
+                        context = factoryContext,
+                        onLoadingChanged = { loading ->
+                            Tyrads.getInstance().log(
+                                "AcmoWebView: Preloaded WebView loading state change ignored (loading=$loading)",
+                                Log.DEBUG
+                            )
+                        },
+                        onError = { error ->
+                            hasError = error
+                            if (error) {
+                                isUsingPreloadedWebView = false
+                            }
+                        }
+                    )
+
                     preloadedWebView.webChromeClient = AcmoWebChromeClient(
                         webViewState = webViewState,
                         fileChooserLauncher = fileChooserLauncher,
                         onLoadingChanged = { loading ->
-                            if (loading) isLoading = loading
                             Tyrads.getInstance().log(
-                                "AcmoWebView: Preloaded WebView loading state: $loading",
+                                "AcmoWebView: Preloaded WebView progress change ignored (loading=$loading)",
                                 Log.DEBUG
                             )
                         }
+                    )
+
+                    // Update JavaScript interface
+                    preloadedWebView.removeJavascriptInterface("AndroidInterface")
+                    preloadedWebView.addJavascriptInterface(
+                        WebAppInterface(factoryContext, coroutineScope),
+                        "AndroidInterface"
                     )
 
                     // Make visible
@@ -133,6 +161,8 @@ fun AcmoWebView() {
                         Log.WARN,
                         force = true
                     )
+
+                    isUsingPreloadedWebView = false
 
                     WebView(factoryContext).apply {
                         this.layoutParams = ViewGroup.LayoutParams(
@@ -182,7 +212,7 @@ fun AcmoWebView() {
                 val currentUrl = webView.url
                 val wasPreloaded = webView.tag == "preloaded"
 
-                if (currentUrl == null && !wasPreloaded) {
+                if (currentUrl == null && !wasPreloaded && !isUsingPreloadedWebView) {
                     Tyrads.getInstance().log(
                         "AcmoWebView: Update block - loading URL: $mUrl",
                         Log.INFO,
@@ -192,14 +222,14 @@ fun AcmoWebView() {
                     webView.loadUrl(mUrl)
                 } else {
                     Tyrads.getInstance().log(
-                        "AcmoWebView: Update block - skipping load (url=$currentUrl, preloaded=$wasPreloaded)",
+                        "AcmoWebView: Update block - skipping load (url=$currentUrl, preloaded=$wasPreloaded, usingPreloaded=$isUsingPreloadedWebView)",
                         Log.DEBUG
                     )
                 }
             }
         )
 
-        if (isLoading && !hasError) {
+        if (isLoading && !isUsingPreloadedWebView) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
@@ -208,12 +238,10 @@ fun AcmoWebView() {
             }
         }
 
-        // Show error view
         if (hasError) {
             ErrorView(
                 onRetry = {
                     hasError = false
-                    isLoading = true
                     webViewRef?.reload()
                 }
             )
@@ -265,10 +293,17 @@ private class AcmoWebViewClient(
         onLoadingChanged(false)
         Tyrads.getInstance().log("AcmoWebViewClient: Page finished: $url", Log.INFO, force = true)
 
-        // Inject JavaScript bridge
+        // Only inject JS bridge if not already injected by preload
+        // This prevents duplicate injection
         view?.evaluateJavascript(
             """
                 (function() {
+                    // Check if bridge already exists
+                    if (window.tyradsJsBridgeInitialized) {
+                        console.log('AcmoWebView: JavaScript bridge already initialized - skipping');
+                        return;
+                    }
+                    
                     window.addEventListener('message', function(event) {
                         try {
                             const message = typeof event.data === 'string' 
@@ -282,6 +317,8 @@ private class AcmoWebViewClient(
                             console.error('Error handling message:', error);
                         }
                     });
+                    
+                    window.tyradsJsBridgeInitialized = true;
                     console.log('AcmoWebView: JavaScript bridge initialized');
                 })();
             """.trimIndent(), null
