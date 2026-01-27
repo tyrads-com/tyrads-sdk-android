@@ -28,7 +28,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import java.util.UUID
 import android.net.Uri
 import android.os.Build
@@ -92,6 +91,7 @@ class Tyrads private constructor() {
     var mainColor: String? = null
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
+
     internal fun initializePrivacyStatus() {
         _privacyAccepted.value = preferences.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
@@ -224,11 +224,7 @@ class Tyrads private constructor() {
                 safeCallback { callback.onSuccess() }
             } catch (e: Exception) {
                 log("Exception during init: ${e.message}", Log.ERROR)
-                safeCallback {
-                    callback.onFailure(
-                        e.message ?: "Unknown error during initialization"
-                    )
-                }
+                safeCallback { callback.onFailure(e.message ?: "Unknown error during initialization") }
             }
         }
     }
@@ -391,28 +387,22 @@ class Tyrads private constructor() {
             .build()
             .toString()
     }
+
     private fun _preloadWebView() {
         try {
             log("_preloadWebView: Starting preload", Log.INFO, force = true)
 
-            // Build URL - mirrors: webURI = getWebUri(); in Flutter
             url = getWebUri()
             log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
 
-            // Preload the WebView - mirrors: WebViewManager.instance.preload(webURI); in Flutter
             WebViewManager.getInstance().preload(context, url)
 
             log("_preloadWebView: Preload initiated successfully", Log.INFO, force = true)
         } catch (e: Exception) {
             log("_preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
-            log("_preloadWebView: Stack trace: ${e.stackTraceToString()}", Log.ERROR, force = true)
         }
     }
 
-    /**
-     * Preload WebView after closing (public method for AcmoApp to call)
-     * Mirrors: _preloadWebView() call in back() method in Flutter
-     */
     fun preloadAfterClose() {
         tyradScope.launch {
             try {
@@ -436,7 +426,6 @@ class Tyrads private constructor() {
                 return@withContext
             }
 
-            // Build the requested URL
             val requestedUrl = getWebUri(route, campaignID)
             val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
 
@@ -449,30 +438,10 @@ class Tyrads private constructor() {
                 )
 
                 WebViewManager.getInstance().preload(context, url)
-
-                var attempts = 0
-                val maxAttempts = 20 // 2 seconds max wait (20 * 100ms)
-
-                while (WebViewManager.getInstance().getHeadlessWebView() == null && attempts < maxAttempts) {
-                    delay(100)
-                    attempts++
-                    log("showOffers: Waiting for preload... attempt $attempts/$maxAttempts", Log.DEBUG)
-                }
-
-                if (WebViewManager.getInstance().getHeadlessWebView() != null) {
-                    log("showOffers: Preload ready after ${attempts * 100}ms", Log.INFO, force = true)
-                } else {
-                    log(
-                        "showOffers: Preload timeout - will create WebView on demand",
-                        Log.WARN,
-                        force = true
-                    )
-                }
             } else {
                 log("showOffers: Using existing preloaded WebView", Log.INFO, force = true)
             }
 
-            // Start Activity
             log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -504,10 +473,6 @@ class Tyrads private constructor() {
         }
     }
 
-    /**
-     * Changes the language of the SDK
-     * Mirrors: changeLanguage() in Flutter
-     */
     suspend fun changeLanguage(languageCode: String) = withContext(Dispatchers.Default) {
         try {
             _currentLanguageCode.value = languageCode
