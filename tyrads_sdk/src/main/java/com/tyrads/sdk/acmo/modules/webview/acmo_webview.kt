@@ -112,7 +112,6 @@ fun AcmoWebView() {
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
 
-                    // Update WebViewClient for visible WebView (no JS injection needed - already done in preload)
                     preloadedWebView.webViewClient = AcmoWebViewClient(
                         context = factoryContext,
                         onLoadingChanged = { loading ->
@@ -140,11 +139,12 @@ fun AcmoWebView() {
                         }
                     )
 
-                    // Update JavaScript interface
-                    preloadedWebView.removeJavascriptInterface("AndroidInterface")
-                    preloadedWebView.addJavascriptInterface(
-                        WebAppInterface(factoryContext, coroutineScope),
-                        "AndroidInterface"
+                    webViewManager.setActivityContext(factoryContext as? Activity)
+
+                    Tyrads.getInstance().log(
+                        "AcmoWebView: Activity context set in WebViewManager for back button",
+                        Log.INFO,
+                        force = true
                     )
 
                     // Make visible
