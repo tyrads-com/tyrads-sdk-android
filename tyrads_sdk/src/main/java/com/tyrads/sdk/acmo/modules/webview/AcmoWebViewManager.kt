@@ -16,6 +16,7 @@ import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.json.JSONException
 
 @Keep
@@ -40,6 +41,7 @@ class WebViewManager private constructor() {
     private var preloadedUrl: String? = null
     private var hasError: Boolean = false
     private val mainHandler = Handler(Looper.getMainLooper())
+    private var activityContext: android.app.Activity? = null
 
     var onMessage: ((String) -> Unit)? = null
     var onErrorChanged: ((Boolean) -> Unit)? = null
@@ -47,6 +49,15 @@ class WebViewManager private constructor() {
     fun getHeadlessWebView(): WebView? = headlessWebView
 
     fun hasPreloadError(): Boolean = hasError
+
+    fun setActivityContext(activity: android.app.Activity?) {
+        activityContext = activity
+        Tyrads.getInstance().log(
+            "WebViewManager: Activity context set: ${activity != null}",
+            Log.INFO,
+            force = true
+        )
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     fun preload(context: Context, url: String) {
@@ -255,6 +266,7 @@ class WebViewManager private constructor() {
             headlessWebView = null
             preloadedUrl = null
             hasError = false
+            activityContext = null
             Tyrads.getInstance().log("WebViewManager: Disposed headless WebView", Log.INFO, force = true)
         } catch (e: Exception) {
             Tyrads.getInstance().log(
@@ -276,11 +288,61 @@ class WebViewManager private constructor() {
         private val context: Context,
         private val coroutineScope: CoroutineScope
     ) {
+        private val mainHandler = Handler(Looper.getMainLooper())
         @JavascriptInterface
         fun postMessage(jsonMessage: String) {
             try {
-                Tyrads.getInstance().log("WebViewManager: JSInterface message received: $jsonMessage", Log.DEBUG, force = true)
-                onMessage?.invoke(jsonMessage)
+                Tyrads.getInstance().log(
+                    "🔔 WebAppInterfacePreload: Received: $jsonMessage",
+                    Log.INFO,
+                    force = true
+                )
+
+                // Parse the message
+                val json = org.json.JSONObject(jsonMessage)
+                val action = json.optString("action")
+
+                // Handle closeWebView action
+                if (action == "closeWebView") {
+                    Tyrads.getInstance().log(
+                        "🔔 WebAppInterfacePreload: closeWebView action detected",
+                        Log.INFO,
+                        force = true
+                    )
+
+                    mainHandler.post {
+                        // Use activityContext if available (when WebView is visible in Activity)
+                        val activity = activityContext ?: (context as? android.app.Activity)
+
+                        if (activity != null && !activity.isFinishing) {
+                            Tyrads.getInstance().log(
+                                "✅ WebAppInterfacePreload: Closing activity",
+                                Log.INFO,
+                                force = true
+                            )
+                            activity.finish()
+                        } else {
+                            Tyrads.getInstance().log(
+                                "⚠️ WebAppInterfacePreload: No Activity context available",
+                                Log.WARN,
+                                force = true
+                            )
+                            onMessage?.invoke(jsonMessage)
+                        }
+                    }
+                } else if (action == "changeLanguage") {
+                    val langCode = json.optString("value")
+                    if (langCode.isNotEmpty()) {
+                        mainHandler.post {
+                            coroutineScope.launch {
+                                Tyrads.getInstance().changeLanguage(langCode)
+                            }
+                        }
+                    }
+                } else {
+                    // Forward other messages to callback
+                    onMessage?.invoke(jsonMessage)
+                }
             } catch (e: JSONException) {
                 Tyrads.getInstance().log(
                     "WebViewManager: Error parsing message: ${e.message}",
