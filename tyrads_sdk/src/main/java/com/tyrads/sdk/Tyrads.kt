@@ -395,6 +395,7 @@ class Tyrads private constructor() {
                 return@withContext
             }
             log("Launching offers", Log.INFO)
+            val cleanRoute = route?.trim()?.removeSurrounding("\"")
             url = Uri
                 .Builder()
                 .scheme("https")
@@ -402,7 +403,7 @@ class Tyrads private constructor() {
                 .appendQueryParameter("token", token)
                 .appendQueryParameter(
                     "to",
-                    if (route == null) "" else if (campaignID == null) route else "$route/$campaignID"
+                    if (cleanRoute == null) "" else if (campaignID == null) cleanRoute else "$cleanRoute/$campaignID"
                 )
                 .appendQueryParameter("lang", currentLanguageCode.value)
                 .build()
