@@ -252,11 +252,11 @@ class FCMNotifications private constructor() {
         val gson = Gson()
         val dataString = if (payload != null) gson.toJson(payload) else "{}"
 
-        val clickIntent = Intent(context, NotificationActionReceiver::class.java).apply {
-            action = ACTION_NOTIFICATION_CLICKED
+        val clickIntent = Intent(context, com.tyrads.sdk.acmo.core.AcmoApp::class.java).apply {
             putExtra(EXTRA_NOTIFICATION_DATA, dataString)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
-        val clickPendingIntent = PendingIntent.getBroadcast(
+        val clickPendingIntent = PendingIntent.getActivity(
             context,
             notificationId,
             clickIntent,
