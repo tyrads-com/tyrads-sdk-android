@@ -280,6 +280,7 @@ class Tyrads private constructor() {
 
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
+            val fcmToken = preferences.getString(AcmoKeyNames.FCM_TOKEN, null)
             val engagementId = this@Tyrads.engagementId
             log("Device Details: $deviceDetails")
 
@@ -288,6 +289,7 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
+                "devicePushToken" to fcmToken,
                 "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
