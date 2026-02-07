@@ -26,7 +26,6 @@ import com.tyrads.sdk.Tyrads
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
-import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -36,9 +35,15 @@ import kotlinx.coroutines.launch
 fun AcmoWebView() {
     val context = LocalContext.current
     val mUrl = Tyrads.getInstance().url
+    val webViewManager = WebViewManager.getInstance()
     val webViewState = rememberWebViewState()
     val coroutineScope = rememberCoroutineScope()
-    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+
+    Tyrads.getInstance().log(
+        "AcmoWebView: Composing - URL: $mUrl",
+        Log.INFO,
+        force = true
+    )
 
     val fileChooserLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
@@ -47,28 +52,84 @@ fun AcmoWebView() {
             webViewState.filePathCallback = null
         }
 
-    AndroidView(factory = {
-        WebView(it).apply {
-            this.layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            this.webViewClient = AcmoWebViewClient(context)
-            this.webChromeClient = AcmoWebChromeClient(
-                webViewState = webViewState,
-                fileChooserLauncher = fileChooserLauncher
-            )
-            this.settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                allowFileAccess = true
-                allowContentAccess = true
+    AndroidView(
+        factory = { factoryContext ->
+            Tyrads.getInstance().log("AcmoWebView: Factory executing", Log.INFO, force = true)
+
+            // Try to get preloaded WebView
+            val preloadedWebView = webViewManager.getHeadlessWebView()
+
+            val webView = if (preloadedWebView != null) {
+                Tyrads.getInstance().log(
+                    "AcmoWebView: Using preloaded WebView - instant display",
+                    Log.INFO,
+                    force = true
+                )
+
+                // Remove from container
+                (preloadedWebView.parent as? ViewGroup)?.removeView(preloadedWebView)
+
+                preloadedWebView.layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+
+                preloadedWebView.webViewClient = AcmoWebViewClient(factoryContext)
+                preloadedWebView.webChromeClient = AcmoWebChromeClient(
+                    webViewState = webViewState,
+                    fileChooserLauncher = fileChooserLauncher
+                )
+
+                // Make visible
+                preloadedWebView.visibility = android.view.View.VISIBLE
+                preloadedWebView.requestLayout()
+
+                webViewManager.clearPreload()
+
+                preloadedWebView
+            } else {
+                Tyrads.getInstance().log(
+                    "AcmoWebView: No preload - creating new WebView",
+                    Log.WARN,
+                    force = true
+                )
+
+                WebView(factoryContext).apply {
+                    this.layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                    this.webViewClient = AcmoWebViewClient(factoryContext)
+                    this.webChromeClient = AcmoWebChromeClient(
+                        webViewState = webViewState,
+                        fileChooserLauncher = fileChooserLauncher
+                    )
+                    this.settings.apply {
+                        javaScriptEnabled = true
+                        domStorageEnabled = true
+                        allowFileAccess = true
+                        allowContentAccess = true
+                    }
+                    this.addJavascriptInterface(
+                        WebAppInterface(factoryContext, coroutineScope),
+                        "AndroidInterface"
+                    )
+                }
             }
-            this.addJavascriptInterface(WebAppInterface(it, coroutineScope), "AndroidInterface")
+
+            webView
+        },
+        update = { webView ->
+            if (webView.url == null) {
+                Tyrads.getInstance().log(
+                    "AcmoWebView: Update block - loading URL: $mUrl",
+                    Log.INFO,
+                    force = true
+                )
+                webView.loadUrl(mUrl)
+            }
         }
-    }, update = {
-        it.loadUrl(mUrl)
-    })
+    )
 }
 
 private class AcmoWebViewClient(private val context: Context) : WebViewClient() {
@@ -86,8 +147,6 @@ private class AcmoWebViewClient(private val context: Context) : WebViewClient() 
     }
 
     private fun handleUrl(url: String?): Boolean {
-        Log.d("WebView", "Intercepting URL: $url")
-
         return when {
             url == null -> false
             url.contains("sdk.tyrads.com") -> false
@@ -125,7 +184,6 @@ private class AcmoWebViewClient(private val context: Context) : WebViewClient() 
                         }
                     });
                     
-                    // Debug log
                     console.log('WebView JavaScript bridge initialized');
                 })();
             """.trimIndent(), null
@@ -160,9 +218,12 @@ class WebViewState {
 fun rememberWebViewState() = remember { WebViewState() }
 
 @Keep
-private class WebAppInterface(private val context: Context, private val coroutineScope: CoroutineScope) {
+private class WebAppInterface(
+    private val context: Context,
+    private val coroutineScope: CoroutineScope
+) {
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val localizationService = LocalizationService.getInstance()
+
     @JavascriptInterface
     fun postMessage(jsonMessage: String) {
         try {
@@ -176,18 +237,16 @@ private class WebAppInterface(private val context: Context, private val coroutin
                         (context as? Activity)?.finish()
                     }
                 }
-
                 "changeLanguage" -> {
                     val langCode = json.optString("value")
                     if (langCode.isNotEmpty()) {
                         mainHandler.post {
                             coroutineScope.launch {
-                                Tyrads.getInstance().changeLanguage(  langCode)
+                                Tyrads.getInstance().changeLanguage(langCode)
                             }
                         }
                     }
                 }
-
                 else -> {
                     Log.w("WebAppInterface", "Unknown action: $action")
                 }
