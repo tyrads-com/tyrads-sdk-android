@@ -43,6 +43,7 @@ import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 @Keep
 class Tyrads private constructor() {
@@ -293,6 +294,10 @@ class Tyrads private constructor() {
 
                     track(TyradsActivity.INITIALIZED)
 
+                    // ✅ Preload WebView after successful login
+                    log("Calling preloadWebView() after successful login", Log.INFO, force = true)
+                    preloadWebView()
+
                     val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
                     val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     val sdkPlatform = AcmoConfig.SDK_PLATFORM
@@ -326,6 +331,40 @@ class Tyrads private constructor() {
         } catch (e: Exception) {
             log("Exception during login: ${e.message}", Log.ERROR)
             return@withContext null
+        }
+    }
+    private fun preloadWebView() {
+        try {
+            log("preloadWebView: Starting preload", Log.INFO, force = true)
+
+            val url = Uri.Builder()
+                .scheme("https")
+                .authority("sdk.tyrads.com")
+                .appendQueryParameter("token", token)
+                .appendQueryParameter("to", "")
+                .appendQueryParameter("lang", currentLanguageCode.value)
+                .build()
+                .toString()
+
+            log("preloadWebView: Built URL: $url", Log.INFO, force = true)
+
+            com.tyrads.sdk.acmo.modules.webview.WebViewManager.getInstance().preload(context, url)
+
+            log("preloadWebView: Preload initiated successfully", Log.INFO, force = true)
+        } catch (e: Exception) {
+            log("preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
+        }
+    }
+
+    // Add this public method for re-preloading after close
+    fun preloadAfterClose() {
+        tyradScope.launch {
+            try {
+                log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
+                preloadWebView()
+            } catch (e: Exception) {
+                log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
+            }
         }
     }
 
