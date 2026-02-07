@@ -6,6 +6,7 @@ import AcmoUsagePermissionsPage
 import AcmoUsageStatsController
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -101,4 +102,17 @@ class AcmoApp : ComponentActivity() {
         outState.putBoolean(ACMO_KEY_ACTIVITY_KILLED, true)
         outState.putBoolean(ACMO_KEY_LANGUAGE_CHANGE, true)
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            Tyrads.getInstance().log(
+                "AcmoApp: Activity finishing - triggering preload for next open",
+                Log.INFO,
+                force = true
+            )
+            Tyrads.getInstance().preloadAfterClose()
+        }
+    }
+
 }
