@@ -1,10 +1,7 @@
 package com.tyrads.sdk.example
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -42,7 +39,6 @@ import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -60,6 +56,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -76,12 +73,6 @@ fun Greeting(modifier: Modifier = Modifier) {
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1322") ?: "") }
 
     fun handleButtonClick() {
-//        if (apiKeyInput.isBlank() || apiSecretInput.isBlank() || userIdInput.isBlank()) {
-//            // Show a message to the user
-//            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-//            return
-//        }
-
         isLoadingOffers = true
         CoroutineScope(Dispatchers.Main).launch {
             sharedPreferences.edit().apply {
@@ -91,17 +82,8 @@ fun Greeting(modifier: Modifier = Modifier) {
                 apply()
             }
 
-            Tyrads.getInstance().init(
-                context,
-                apiKey = apiKeyInput.ifBlank { "0a55de10c58f459c9f65988d9d33e774" },
-                apiSecret = apiSecretInput.ifBlank { "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed" },
-                debugMode = true,
-                config = TyradsConfig(
-                    skipInitialPages = true
-                )
-            )
-
-            Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
+            // ✅ ONLY CHANGE: Removed init() and loginUser() calls here
+            // Just show offers directly
             Tyrads.getInstance().showOffers()
             isLoadingOffers = false
         }
@@ -118,7 +100,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                     skipInitialPages = true
                 )
             )
-           val userData = Tyrads.getInstance().loginUser(userID = "78y86")
+            val userData = Tyrads.getInstance().loginUser(userID = "78y86")
             isTyradsInitialized = true
         }
     }
