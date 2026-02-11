@@ -40,6 +40,7 @@ import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.input_models.AcmoInitModel
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
+import com.tyrads.sdk.acmo.modules.webview.WebViewManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -293,10 +294,9 @@ class Tyrads private constructor() {
                     }
 
                     track(TyradsActivity.INITIALIZED)
-
-                    // ✅ Preload WebView after successful login
-                    log("Calling preloadWebView() after successful login", Log.INFO, force = true)
-                    preloadWebView()
+                    // Preload WebView after successful login
+                    log("Calling _preloadWebView() after successful login", Log.INFO, force = true)
+                    _preloadWebView()
 
                     val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
                     val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
@@ -333,40 +333,54 @@ class Tyrads private constructor() {
             return@withContext null
         }
     }
-    private fun preloadWebView() {
+    internal fun getWebUri(route: String? = null, campaignID: Int? = null): String {
+        val skipUserInfo = getSkipUserInfo()
+        val currentRoute = route ?: ""
+
+        return Uri.Builder()
+            .scheme("https")
+            .authority("sdk.tyrads.com")
+            .appendQueryParameter(
+                "to",
+                when {
+                    campaignID == null -> currentRoute
+                    else -> "$currentRoute/$campaignID"
+                }
+            )
+            .appendQueryParameter("token", token)
+            .appendQueryParameter("lang", currentLanguageCode.value)
+            .appendQueryParameter("skipUserInfo", skipUserInfo.toString())
+            .build()
+            .toString()
+    }
+    private fun _preloadWebView() {
         try {
-            log("preloadWebView: Starting preload", Log.INFO, force = true)
+            log("_preloadWebView: Starting preload", Log.INFO, force = true)
 
-            val url = Uri.Builder()
-                .scheme("https")
-                .authority("sdk.tyrads.com")
-                .appendQueryParameter("token", token)
-                .appendQueryParameter("to", "")
-                .appendQueryParameter("lang", currentLanguageCode.value)
-                .build()
-                .toString()
+            // Build URL - mirrors: webURI = getWebUri(); in Flutter
+            url = getWebUri()
+            log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
 
-            log("preloadWebView: Built URL: $url", Log.INFO, force = true)
+            // Preload the WebView - mirrors: WebViewManager.instance.preload(webURI); in Flutter
+            WebViewManager.getInstance().preload(context, url)
 
-            com.tyrads.sdk.acmo.modules.webview.WebViewManager.getInstance().preload(context, url)
-
-            log("preloadWebView: Preload initiated successfully", Log.INFO, force = true)
+            log("_preloadWebView: Preload initiated successfully", Log.INFO, force = true)
         } catch (e: Exception) {
-            log("preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
+            log("_preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
         }
     }
 
-    // Add this public method for re-preloading after close
     fun preloadAfterClose() {
         tyradScope.launch {
             try {
                 log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
-                preloadWebView()
+                _preloadWebView()
             } catch (e: Exception) {
                 log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
             }
         }
     }
+
 
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
@@ -379,19 +393,32 @@ class Tyrads private constructor() {
                 }
                 return@withContext
             }
-            log("Launching offers", Log.INFO)
-            url = Uri.Builder()
-                .scheme("https")
-                .authority("sdk.tyrads.com")
-                .appendQueryParameter("token", token)
-                .appendQueryParameter("to", if(route == null) "" else if(campaignID == null) route else "$route/$campaignID")
-                .appendQueryParameter("lang", currentLanguageCode.value)
-                .build()
-                .toString()
-            Log.i("url", url.toString())
+            // Build the requested URL
+            val requestedUrl = getWebUri(route, campaignID)
+            val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
+
+            if (url != requestedUrl || !hasPreloadedWebView) {
+                url = requestedUrl
+                log(
+                    "showOffers: URL changed or no preload available - preloading now: $url",
+                    Log.INFO,
+                    force = true
+                )
+
+                WebViewManager.getInstance().preload(context, url)
+
+            } else {
+                log("showOffers: Using existing preloaded WebView", Log.INFO, force = true)
+            }
+
+            // Start Activity
+            log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
+
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
+
+            track(TyradsActivity.opened)
         }
 
 
@@ -459,6 +486,10 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+    private fun getSkipUserInfo(): Boolean {
+        val key = "${AcmoKeyNames.SKIP_USER_INFO}${publisherUserID}"
+        return preferences.getBoolean(key, false)
     }
 
     private fun setTyradsConfig(config: TyradsConfig) {
