@@ -8,6 +8,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.*
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 enum class InAppDialogType {
     LIMITED_TIME,
@@ -54,24 +57,37 @@ object InAppNotificationManager {
         return "$baseKey$userId"
     }
 
+    private fun today(): String =
+        SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+
     private fun hasShownLimitedTime(): Boolean {
         val key = getUserSpecificKey(KEY_SHOWN_LIMITED_TIME)
-        return sharedPreferences?.getBoolean(key, false) ?: false
+        val stored = try {
+            sharedPreferences?.getString(key, null)
+        } catch (e: ClassCastException) {
+            null
+        }
+        return stored == today()
     }
 
     private fun hasShownCurrencySale(): Boolean {
         val key = getUserSpecificKey(KEY_SHOWN_CURRENCY_SALE)
-        return sharedPreferences?.getBoolean(key, false) ?: false
+        val stored = try {
+            sharedPreferences?.getString(key, null)
+        } catch (e: ClassCastException) {
+            null
+        }
+        return stored == today()
     }
 
     private fun markLimitedTimeAsShown() {
         val key = getUserSpecificKey(KEY_SHOWN_LIMITED_TIME)
-        sharedPreferences?.edit()?.putBoolean(key, true)?.apply()
+        sharedPreferences?.edit()?.putString(key, today())?.apply()
     }
 
     private fun markCurrencySaleAsShown() {
         val key = getUserSpecificKey(KEY_SHOWN_CURRENCY_SALE)
-        sharedPreferences?.edit()?.putBoolean(key, true)?.apply()
+        sharedPreferences?.edit()?.putString(key, today())?.apply()
     }
 
     fun setLimitedTimeVisible(visible: Boolean, hasEvents: Boolean = true) {
