@@ -8,6 +8,8 @@ import AcmoTrackingController
 import AcmoUsageStatsController
 import TyradsActivity
 import android.app.LocaleManager
+import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -39,9 +41,14 @@ import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
+import com.tyrads.sdk.acmo.modules.notifications.FCMService
+import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import android.os.Bundle
 
 interface TyradsCallback {
     fun onSuccess()
@@ -90,6 +97,10 @@ class Tyrads private constructor() {
     var mainColor: String? = null
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
+
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
     internal fun initializePrivacyStatus() {
         _privacyAccepted.value = preferences.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
@@ -202,6 +213,14 @@ class Tyrads private constructor() {
             log("An Error Occurred: ${error.message}", Log.ERROR)
         }
 
+        // Initialize FCM Service
+        try {
+            FCMService.initialize(context)
+            registerLifecycleCallbacks(context)
+        } catch (error: Exception) {
+            log("Failed to initialize FCM: ${error.message}", Log.ERROR)
+        }
+
         log("Tyrads SDK initialized", Log.INFO)
     }
 
@@ -261,6 +280,7 @@ class Tyrads private constructor() {
 
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
+            val fcmToken = preferences.getString(AcmoKeyNames.FCM_TOKEN, null)
             val engagementId = this@Tyrads.engagementId
             log("Device Details: $deviceDetails")
 
@@ -269,6 +289,7 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
+                "devicePushToken" to fcmToken,
                 "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
@@ -326,6 +347,7 @@ class Tyrads private constructor() {
                         usageStatsController.saveUsageStats()
                     }
 
+                    _isLoggedIn.value = true
                     track(TyradsActivity.INITIALIZED)
                     return@withContext true
                 }
@@ -375,6 +397,7 @@ class Tyrads private constructor() {
                 return@withContext
             }
             log("Launching offers", Log.INFO)
+            val cleanRoute = route?.trim()?.removeSurrounding("\"")
             url = Uri
                 .Builder()
                 .scheme("https")
@@ -382,7 +405,7 @@ class Tyrads private constructor() {
                 .appendQueryParameter("token", token)
                 .appendQueryParameter(
                     "to",
-                    if (route == null) "" else if (campaignID == null) route else "$route/$campaignID"
+                    if (cleanRoute == null) "" else if (campaignID == null) cleanRoute else "$cleanRoute/$campaignID"
                 )
                 .appendQueryParameter("lang", currentLanguageCode.value)
                 .build()
@@ -506,5 +529,32 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+
+    private fun registerLifecycleCallbacks(context: Context) {
+        (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object :
+            Application.ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
+            }
+
+            override fun onActivityStarted(activity: Activity) {}
+
+            override fun onActivityResumed(activity: Activity) {
+                FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
+            }
+
+            override fun onActivityPaused(activity: Activity) {}
+
+            override fun onActivityStopped(activity: Activity) {}
+
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
+
+        if (context is Activity) {
+            FCMNotifications.getInstance().handleNotificationIntent(context.intent)
+        }
     }
 }
