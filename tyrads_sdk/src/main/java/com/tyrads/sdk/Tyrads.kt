@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import android.os.Bundle
+import androidx.core.net.toUri
 
 interface TyradsCallback {
     fun onSuccess()
@@ -81,7 +82,11 @@ class Tyrads private constructor() {
     internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
-    internal var url: String = ""
+    private val _urlState = MutableStateFlow("")
+    val urlState: StateFlow<String> = _urlState.asStateFlow()
+    var url: String
+        get() = _urlState.value
+        set(value) { _urlState.value = value }
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
 
@@ -411,11 +416,21 @@ class Tyrads private constructor() {
             .toString()
     }
 
-    private fun _preloadWebView() {
+    private fun _preloadWebView(forceRebuildURL: Boolean = true) {
         try {
-            log("_preloadWebView: Starting preload", Log.INFO, force = true)
+            log("_preloadWebView: Starting preload (forceRebuildURL=$forceRebuildURL)", Log.INFO, force = true)
 
-            url = getWebUri()
+            if (forceRebuildURL || url.isEmpty()) {
+                val newUrl = getWebUri()
+                
+                if (url.isNotEmpty() && !isDefaultUrl(url) && isDefaultUrl(newUrl)) {
+                    log("_preloadWebView: Skipping default URL preload to preserve existing deep link: $url", Log.INFO, force = true)
+                    return
+                }
+                
+                url = newUrl
+            }
+            
             log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
 
             WebViewManager.getInstance().preload(context, url)
@@ -426,11 +441,21 @@ class Tyrads private constructor() {
         }
     }
 
+    private fun isDefaultUrl(testUrl: String): Boolean {
+        return try {
+            val uri = testUrl.toUri()
+            val toParam = uri.getQueryParameter("to")
+            toParam.isNullOrEmpty()
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     fun preloadAfterClose() {
         tyradScope.launch {
             try {
                 log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
-                _preloadWebView()
+                _preloadWebView(forceRebuildURL = false)
             } catch (e: Exception) {
                 log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
             }
