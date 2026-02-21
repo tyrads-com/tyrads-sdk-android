@@ -22,9 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.tyrads.sdk.R
-
-// Color definitions
-private val TealTop = Color(0xFF02B5BE)
+import com.tyrads.sdk.Tyrads
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun CommonBonusCard(
@@ -41,7 +40,6 @@ fun CommonBonusCard(
             .padding(horizontal = 24.dp),
         contentAlignment = Alignment.TopStart
     ) {
-        // Main Card with solid gradient background (white to teal)
         Card(
             modifier = Modifier
                 .fillMaxWidth()
@@ -64,14 +62,9 @@ fun CommonBonusCard(
                     .wrapContentHeight()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(
-                                Color.White,
-                                Color.White,
-                                Color(0xFFE0F7F7),
-                                Color(0xFFB3EBEB),
-                                Color(0xFF66D9D9),
-                                Color(0xFF33CACA),
-                                TealTop
+                            colorStops = arrayOf(
+                                0.0f to Color.White,
+                                0.8628f to (Tyrads.getInstance().mainColor?.let { Color(it.toColorInt()) } ?: Color(0xFF02B5BE))
                             )
                         )
                     )
@@ -81,13 +74,11 @@ fun CommonBonusCard(
                         .fillMaxWidth()
                         .wrapContentHeight()
                 ) {
-                    // Header Section with space for coin
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(top = 20.dp, bottom = 8.dp)
                     ) {
-                        // Title - with padding to avoid coin overlap, supports multi-line
                         Text(
                             text = title,
                             fontSize = 17.sp,
@@ -99,11 +90,10 @@ fun CommonBonusCard(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .align(Alignment.Center)
-                                .padding(start = 85.dp, end = 55.dp) // Left padding to avoid coin, right for close button
+                                .padding(start = 85.dp, end = 55.dp)
                                 .offset(y = 15.dp)
                         )
 
-                        // Close button on the right - positioned higher
                         Box(
                             modifier = Modifier
                                 .size(24.dp)
@@ -141,7 +131,6 @@ fun CommonBonusCard(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // Content area
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -151,7 +140,6 @@ fun CommonBonusCard(
                         content()
                     }
 
-                    // Bottom limit label (if provided)
                     if (bottomLimitLabel != null) {
                         Box(
                             modifier = Modifier
