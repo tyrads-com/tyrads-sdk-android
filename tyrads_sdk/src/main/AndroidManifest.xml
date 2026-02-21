@@ -20,6 +20,7 @@
             android:exported="false"
             android:label="@string/title_activity_tyrads_webview"
             android:configChanges="locale|layoutDirection|orientation|keyboardHidden|screenSize"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.TyradsSdk" />
 
         <activity android:name="com.tyrads.sdk.acmo.modules.legal.activity.AcmoPrivacyPolicyActivity"
