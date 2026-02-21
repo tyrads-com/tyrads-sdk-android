@@ -3,6 +3,7 @@ package com.tyrads.sdk.acmo.core
 import AcmoUsagePermissionsPage
 import AcmoUsageStatsController
 import AcmoUsersUpdatePage
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -25,6 +26,7 @@ import com.tyrads.sdk.acmo.modules.legal.AcmoPrivacyPolicyPage
 import com.tyrads.sdk.acmo.modules.webview.AcmoWebView
 import com.tyrads.sdk.ui.theme.TyradsSdkTheme
 import androidx.compose.runtime.collectAsState
+import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 
 @Keep
 class AcmoApp : ComponentActivity() {
@@ -45,6 +47,8 @@ class AcmoApp : ComponentActivity() {
             finish()
             return
         }
+
+        FCMNotifications.getInstance().handleNotificationIntent(intent)
 
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
@@ -96,6 +100,13 @@ class AcmoApp : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        Tyrads.getInstance().log("AcmoApp: onNewIntent received", Log.INFO, force = true)
+        FCMNotifications.getInstance().handleNotificationIntent(intent)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
