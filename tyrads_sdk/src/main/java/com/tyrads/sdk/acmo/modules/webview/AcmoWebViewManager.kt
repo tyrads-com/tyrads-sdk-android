@@ -48,6 +48,8 @@ class WebViewManager private constructor() {
 
     fun getHeadlessWebView(): WebView? = headlessWebView
 
+    fun getPreloadedUrl(): String? = preloadedUrl
+
     fun hasPreloadError(): Boolean = hasError
 
     fun setActivityContext(activity: android.app.Activity?) {
