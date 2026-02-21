@@ -132,29 +132,36 @@ class FCMNotifications private constructor() {
         Log.i(TAG, "Notification Clicked Event")
         Log.i(TAG, "Click Data String: $dataString")
 
-        val data = try {
+        val dataMap = try {
             // Try parsing as JSON first
-            JsonParser.parseString(dataString).asJsonObject
-        } catch (e: JsonSyntaxException) {
+            val jsonObject = JsonParser.parseString(dataString).asJsonObject
+            jsonObjectToMap(jsonObject)
+        } catch (e: Exception) {
             // Fallback: Handle Kotlin Map toString format like {key=value}
             Log.w(TAG, "Failed to parse as JSON, attempting Map format parsing: ${e.message}")
             try {
-                parseMapStringToJson(dataString)
+                val jsonObject = parseMapStringToJson(dataString)
+                jsonObjectToMap(jsonObject)
             } catch (e2: Exception) {
                 Log.e(TAG, "Failed to parse data in any format: ${e2.message}")
-                JsonParser.parseString("{}").asJsonObject
+                emptyMap()
             }
         }
-        handleNotificationEvent("onClick", data.asMap().mapValues { it.value.toString() })
+        handleNotificationEvent("onClick", dataMap)
     }
 
-    private fun com.google.gson.JsonObject.asMap(): Map<String, Any> {
-        val map = mutableMapOf<String, Any>()
-        this.entrySet().forEach { (key, value) ->
-            map[key] = value
+    private fun jsonObjectToMap(jsonObject: com.google.gson.JsonObject): Map<String, String> {
+        val map = mutableMapOf<String, String>()
+        jsonObject.entrySet().forEach { (key, value) ->
+            if (value.isJsonPrimitive) {
+                map[key] = value.asString
+            } else {
+                map[key] = value.toString()
+            }
         }
         return map
     }
+
 
     internal fun handleNotificationEvent(eventType: String, data: Map<String, String>) {
         val tyrads = Tyrads.getInstance()

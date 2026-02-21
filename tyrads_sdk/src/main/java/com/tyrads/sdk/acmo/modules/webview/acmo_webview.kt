@@ -20,6 +20,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +46,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AcmoWebView() {
     val context = LocalContext.current
-    val mUrl = Tyrads.getInstance().url
+    val mUrl by Tyrads.getInstance().urlState.collectAsState()
     val webViewManager = WebViewManager.getInstance()
     val webViewState = rememberWebViewState()
     val coroutineScope = rememberCoroutineScope()
@@ -212,7 +213,18 @@ fun AcmoWebView() {
                 val currentUrl = webView.url
                 val wasPreloaded = webView.tag == "preloaded"
 
-                if (currentUrl == null && !wasPreloaded && !isUsingPreloadedWebView) {
+                // Check if we need to load or reload
+                val needsLoad = when {
+                    currentUrl == null && !wasPreloaded && !isUsingPreloadedWebView -> true
+                    currentUrl != null && mUrl.isNotEmpty() && !currentUrl.startsWith(mUrl.substringBefore("?")) -> {
+                        // Different base URL (e.g., different 'to' parameter or different environment)
+                        Tyrads.getInstance().log("AcmoWebView: URL changed - reloading. Current: $currentUrl, New: $mUrl", Log.INFO, force = true)
+                        true
+                    }
+                    else -> false
+                }
+
+                if (needsLoad) {
                     Tyrads.getInstance().log(
                         "AcmoWebView: Update block - loading URL: $mUrl",
                         Log.INFO,
