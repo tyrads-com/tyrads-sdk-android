@@ -19,5 +19,6 @@ class AcmoKeyNames {
         const val PRIVACY_ACCEPTED_FOR_USER_ID = "${PREFIX}privacy_accepted_for_user_id_"
         const val LANGUAGE = "${PREFIX}language"
         const val PLAY_INTEGRITY_TOKEN = "${PREFIX}play_integrity_token"
+        const val SKIP_USER_INFO = "${PREFIX}skip_user_info_for_user_id_"
     }
 }

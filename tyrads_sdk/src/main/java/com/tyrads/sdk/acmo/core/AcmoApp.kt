@@ -1,6 +1,5 @@
 package com.tyrads.sdk.acmo.core
 
-
 import AcmoUsagePermissionsPage
 import AcmoUsageStatsController
 import AcmoUsersUpdatePage
@@ -32,9 +31,7 @@ class AcmoApp : ComponentActivity() {
     companion object {
         private const val ACMO_KEY_ACTIVITY_KILLED = "acmo_activity_killed"
         private const val ACMO_KEY_LANGUAGE_CHANGE = "acmo_language_change"
-
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -48,6 +45,7 @@ class AcmoApp : ComponentActivity() {
             finish()
             return
         }
+
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
         }
@@ -86,15 +84,13 @@ class AcmoApp : ComponentActivity() {
                             AcmoWebView()
                         }
                         composable("privacy") {
-                            AcmoPrivacyPolicyPage(
-                            )
+                            AcmoPrivacyPolicyPage()
                         }
                         composable("users-update") {
                             AcmoUsersUpdatePage()
                         }
                         composable("usage-permissions") {
-                            AcmoUsagePermissionsPage(
-                            )
+                            AcmoUsagePermissionsPage()
                         }
                     }
                 }
@@ -106,5 +102,17 @@ class AcmoApp : ComponentActivity() {
         super.onSaveInstanceState(outState)
         outState.putBoolean(ACMO_KEY_ACTIVITY_KILLED, true)
         outState.putBoolean(ACMO_KEY_LANGUAGE_CHANGE, true)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            Tyrads.getInstance().log(
+                "AcmoApp: Activity finishing - triggering preload for next open",
+                Log.INFO,
+                force = true
+            )
+            Tyrads.getInstance().preloadAfterClose()
+        }
     }
 }
