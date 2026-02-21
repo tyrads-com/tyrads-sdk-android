@@ -17,14 +17,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.viewModels.BonusRewardsViewModel
 import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.widgets.CommonBonusCard
 import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.widgets.CountDownTimer
 import kotlinx.coroutines.delay
 
-private val CyanButton = Color(0xFF00BCD4)
 private val RedExpiry = Color(0xFFFF554A)
 
 @Composable
@@ -35,6 +36,7 @@ fun BonusRewardsUnlockedScreen(
     coinIconRes: Int = R.drawable.bonus_rewards_coin
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val mainColor = Tyrads.getInstance().mainColor?.let { Color(it.toColorInt()) } ?: Color(0xFF02B5BE)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -59,7 +61,7 @@ fun BonusRewardsUnlockedScreen(
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(
-                                color = CyanButton,
+                                color = mainColor,
                                 modifier = Modifier.size(24.dp)
                             )
                         } else {
@@ -72,7 +74,7 @@ fun BonusRewardsUnlockedScreen(
                                 fontFamily = FontFamily.SansSerif,
                                 color = Color(0xFF1A1A1A),
                                 textAlign = TextAlign.Center,
-                                letterSpacing = (-0.3).sp,  // tighten spacing globally
+                                letterSpacing = (-0.3).sp,
                                 modifier = Modifier.padding(horizontal = 16.dp)
                             )
 
@@ -98,7 +100,7 @@ fun BonusRewardsUnlockedScreen(
                             .height(100.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = CyanButton)
+                        CircularProgressIndicator(color = mainColor)
                     }
                 } else {
                     Column(
@@ -130,7 +132,6 @@ fun BonusRewardsUnlockedScreen(
 
                         Spacer(modifier = Modifier.height(14.dp))
 
-                        // Go to Offerwall button
                         OutlinedButton(
                             onClick = onGoToOfferwall,
                             modifier = Modifier
@@ -138,11 +139,11 @@ fun BonusRewardsUnlockedScreen(
                                 .height(50.dp),
                             colors = ButtonDefaults.outlinedButtonColors(
                                 containerColor = Color.White,
-                                contentColor = CyanButton
+                                contentColor = mainColor
                             ),
                             border = androidx.compose.foundation.BorderStroke(
                                 width = 2.dp,
-                                color = Color(0xFF02B5BE)
+                                color = mainColor
                             ),
                             shape = RoundedCornerShape(25.dp),
                             elevation = ButtonDefaults.buttonElevation(
@@ -154,7 +155,7 @@ fun BonusRewardsUnlockedScreen(
                                 text = "Go to Offerwall",
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
-                                color = CyanButton
+                                color = mainColor
                             )
                         }
                     }

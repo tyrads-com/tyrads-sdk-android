@@ -24,8 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.graphics.toColorInt
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tyrads.sdk.R
+import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.numeral
 import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.models.Campaign
 import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.models.LimitedTimeEvent
@@ -34,7 +36,6 @@ import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.widgets.Com
 import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.widgets.CountDownTimer
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.AcmoCarouselSlider
 
-private val CyanButton = Color(0xFF00BCD4)
 private val RedExpiry = Color(0xFFFF554A)
 private val CreamBackground = Color(0xFFFFF9ED)
 
@@ -85,7 +86,9 @@ fun LimitedTimeOfferScreen(
                             .height(380.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = CyanButton)
+                        CircularProgressIndicator(
+                            color = Tyrads.getInstance().mainColor?.let { Color(it.toColorInt()) } ?: Color(0xFF02B5BE)
+                        )
                     }
                 } else if (uiState.campaigns.isEmpty()) {
                     Box(
@@ -161,6 +164,7 @@ fun LimitedOfferCard(
     campaign: Campaign,
     onPlayNow: () -> Unit
 ) {
+    val mainColor = Tyrads.getInstance().mainColor?.let { Color(it.toColorInt()) } ?: Color(0xFF02B5BE)
     val limitedEvents = campaign.limitedTimeEvents?.filter { it.isLimitedTimeEvent == true } ?: emptyList()
 
     Card(
@@ -275,7 +279,7 @@ fun LimitedOfferCard(
                         .fillMaxWidth()
                         .height(40.dp),
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = CyanButton
+                        containerColor = mainColor
                     ),
                     shape = RoundedCornerShape(8.dp),
                     elevation = ButtonDefaults.buttonElevation(
@@ -297,6 +301,8 @@ fun LimitedOfferCard(
 
 @Composable
 fun LimitedOfferTaskRow(event: LimitedTimeEvent, adUnitCurrencyIcon: String?, viewModel: LimitedTimeOfferViewModel = viewModel()) {
+    val mainColor = Tyrads.getInstance().mainColor?.let { Color(it.toColorInt()) } ?: Color(0xFF02B5BE)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -350,12 +356,12 @@ fun LimitedOfferTaskRow(event: LimitedTimeEvent, adUnitCurrencyIcon: String?, vi
                     text = (event.payoutAmountConverted ?: 0).toDouble().numeral(),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Bold,
-                    color = CyanButton
+                    color = mainColor
                 )
             }
         }
 
-        if (viewModel.showCountDown(event)){
+        if (viewModel.showCountDown(event)) {
             Box(
                 modifier = Modifier
                     .background(
@@ -369,7 +375,7 @@ fun LimitedOfferTaskRow(event: LimitedTimeEvent, adUnitCurrencyIcon: String?, vi
                     fontSize = 11.sp,
                 )
             }
-        } else{
+        } else {
             Text(
                 text = viewModel.getStatusString(event),
                 fontSize = 10.sp,
