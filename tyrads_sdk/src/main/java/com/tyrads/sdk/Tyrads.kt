@@ -25,6 +25,7 @@ import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
+import com.tyrads.sdk.acmo.helpers.urlsMatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -78,6 +79,7 @@ class Tyrads private constructor() {
     internal var newUser: Boolean = false
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
+    internal var currentActivity: Activity? = null
 
     internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -475,24 +477,34 @@ class Tyrads private constructor() {
             }
 
             val requestedUrl = getWebUri(route, campaignID)
+            
+            url = requestedUrl
+            
+            val preloadedUrl = WebViewManager.getInstance().getPreloadedUrl()
             val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
+            
+            val needsNewPreload = !hasPreloadedWebView || (preloadedUrl != null && !urlsMatch(preloadedUrl, requestedUrl))
 
-            if (url != requestedUrl || !hasPreloadedWebView) {
-                url = requestedUrl
+            if (needsNewPreload) {
                 log(
-                    "showOffers: URL changed or no preload available - preloading now: $url",
+                    "showOffers: Preload missing or URL mismatch ($preloadedUrl vs $requestedUrl) - preloading now",
                     Log.INFO,
                     force = true
                 )
 
                 WebViewManager.getInstance().preload(context, url)
             } else {
-                log("showOffers: Using existing preloaded WebView", Log.INFO, force = true)
+                log("showOffers: Using existing matching preloaded WebView ($preloadedUrl)", Log.INFO, force = true)
+            }
+
+            if (currentActivity is AcmoApp) {
+                log("showOffers: AcmoApp already in foreground, skipping startActivity", Log.INFO, force = true)
+                return@withContext
             }
 
             log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
             val intent = Intent(context, AcmoApp::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
             context.startActivity(intent)
 
             track(TyradsActivity.opened)
@@ -601,22 +613,38 @@ class Tyrads private constructor() {
         (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                currentActivity = activity
                 FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
             }
 
-            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityStarted(activity: Activity) {
+                currentActivity = activity
+            }
 
             override fun onActivityResumed(activity: Activity) {
+                currentActivity = activity
                 FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
             }
 
-            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {
+                if (currentActivity == activity) {
+                    currentActivity = null
+                }
+            }
 
-            override fun onActivityStopped(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {
+                if (currentActivity == activity) {
+                    currentActivity = null
+                }
+            }
 
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
-            override fun onActivityDestroyed(activity: Activity) {}
+            override fun onActivityDestroyed(activity: Activity) {
+                if (currentActivity == activity) {
+                    currentActivity = null
+                }
+            }
         })
 
         if (context is Activity) {
