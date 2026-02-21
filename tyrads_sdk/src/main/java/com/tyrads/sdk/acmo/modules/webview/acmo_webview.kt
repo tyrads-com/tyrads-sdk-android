@@ -38,6 +38,7 @@ import com.tyrads.sdk.Tyrads
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
+import com.tyrads.sdk.acmo.helpers.urlsMatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -147,7 +148,19 @@ fun AcmoWebView() {
                         Log.INFO,
                         force = true
                     )
-
+ 
+                    // Only mark as fresh_preload if the preloaded URL matches our goal URL
+                    // This ensures that if they don't match (e.g. stale preload or deep link race),
+                    // the update block below will trigger a reload immediately.
+                    val preUrl = webViewManager.getPreloadedUrl()
+                    if (preUrl != null && urlsMatch(preUrl, mUrl)) {
+                        Tyrads.getInstance().log("AcmoWebView: Preload matches target - marking as fresh", Log.INFO, force = true)
+                        preloadedWebView.tag = "fresh_preload"
+                    } else {
+                        Tyrads.getInstance().log("AcmoWebView: Preload URL mismatch or missing - will reload in update", Log.WARN, force = true)
+                        preloadedWebView.tag = null
+                    }
+ 
                     // Make visible
                     preloadedWebView.visibility = android.view.View.VISIBLE
                     preloadedWebView.requestLayout()
@@ -198,11 +211,10 @@ fun AcmoWebView() {
                         )
 
                         Tyrads.getInstance().log(
-                            "AcmoWebView: Loading URL in new WebView: $mUrl",
+                            "AcmoWebView: Initializing empty WebView, update block will load: $mUrl",
                             Log.INFO,
                             force = true
                         )
-                        this.loadUrl(mUrl)
                     }
                 }
 
@@ -211,13 +223,21 @@ fun AcmoWebView() {
             },
             update = { webView ->
                 val currentUrl = webView.url
+                
+                // If this is a fresh preload we just attached, skip the update block
+                // this once to allow the preloaded content to manifest without interference.
+                if (webView.tag == "fresh_preload") {
+                    Tyrads.getInstance().log("AcmoWebView: Fresh preload detected - skipping first update cycle", Log.INFO, force = true)
+                    webView.tag = null
+                    return@AndroidView
+                }
+
                 val wasPreloaded = webView.tag == "preloaded"
 
                 // Check if we need to load or reload
                 val needsLoad = when {
                     currentUrl == null && !wasPreloaded && !isUsingPreloadedWebView -> true
-                    currentUrl != null && mUrl.isNotEmpty() && !currentUrl.startsWith(mUrl.substringBefore("?")) -> {
-                        // Different base URL (e.g., different 'to' parameter or different environment)
+                    currentUrl != null && mUrl.isNotEmpty() && !urlsMatch(currentUrl, mUrl) -> {
                         Tyrads.getInstance().log("AcmoWebView: URL changed - reloading. Current: $currentUrl, New: $mUrl", Log.INFO, force = true)
                         true
                     }
