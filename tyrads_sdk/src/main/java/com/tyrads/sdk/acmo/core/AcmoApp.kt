@@ -3,7 +3,6 @@ package com.tyrads.sdk.acmo.core
 
 import AcmoUsagePermissionsPage
 import AcmoUsageStatsController
-import AcmoUsersUpdatePage
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -60,11 +59,9 @@ class AcmoApp : ComponentActivity() {
                 val privacyAccepted = tyrads.privacyAccepted.collectAsState().value
 
                 val initPath = when {
-                    tyrads.tyradsConfig.skipInitialPages && tyrads.newUser -> "users-update"
                     tyrads.tyradsConfig.skipInitialPages -> "webview"
 
                     privacyAccepted && !isUsagePermissionGranted -> "usage-permissions"
-                    privacyAccepted && tyrads.newUser -> "users-update"
                     privacyAccepted -> "webview"
 
                     else -> "privacy"
@@ -88,9 +85,6 @@ class AcmoApp : ComponentActivity() {
                         composable("privacy") {
                             AcmoPrivacyPolicyPage(
                             )
-                        }
-                        composable("users-update") {
-                            AcmoUsersUpdatePage()
                         }
                         composable("usage-permissions") {
                             AcmoUsagePermissionsPage(
