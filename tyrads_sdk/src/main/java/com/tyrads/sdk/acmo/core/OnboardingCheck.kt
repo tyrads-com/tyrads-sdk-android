@@ -6,7 +6,6 @@ import android.util.Log
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.activity.AcmoPrivacyPolicyActivity
 import com.tyrads.sdk.acmo.modules.legal.activity.AcmoUsagePermissionActivity
-import com.tyrads.sdk.acmo.modules.users.activity.AcmoUsersUpdateActivity
 
 object AcmoOnboardingGate {
     private var onComplete: (() -> Unit)? = null
@@ -28,10 +27,6 @@ object AcmoOnboardingGate {
             }
         }
 
-        if (tyrads.newUser) {
-            AcmoUsersUpdateActivity.start(context, true)
-            return
-        }
         Log.i("AcmoGate", "All onboarding steps completed")
         onComplete?.invoke()
         onComplete = null
