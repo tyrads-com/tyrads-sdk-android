@@ -1,20 +1,9 @@
 package com.tyrads.sdk.acmo.modules.notifications
 
 import androidx.annotation.Keep
+import com.tyrads.sdk.acmo.core.utils.SecurityUtils
 
 
-@Keep
-object SecurityUtils {
-    private const val SALT = "3252dce0de296b87"
-    fun deobfuscate(bytes: ByteArray): String {
-        val result = ByteArray(bytes.size)
-        val saltBytes = SALT.toByteArray()
-        for (i in bytes.indices) {
-            result[i] = (bytes[i].toInt() xor saltBytes[i % saltBytes.size].toInt()).toByte()
-        }
-        return String(result)
-    }
-}
 @Keep
 object FirebaseConfig {
     private val P_ID = byteArrayOf(71, 75, 71, 65, 0, 8, 72, 3, 86, 6, 4, 92)
