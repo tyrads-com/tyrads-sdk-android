@@ -21,8 +21,8 @@ android {
         applicationId = "com.tyrads.sdk.example"
         minSdk = 24
         targetSdk = 35
-        versionCode = 19
-        versionName = "3.3"
+        versionCode = 20
+        versionName = "3.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
