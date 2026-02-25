@@ -1,13 +1,15 @@
+package com.tyrads.sdk.acmo.modules.input_models
+
 import androidx.annotation.Keep
-import com.google.android.gms.common.annotation.KeepForSdkWithFieldsAndMethods
 import com.google.gson.annotations.SerializedName
+
 @Keep
 data class AcmoInitModel(
     @SerializedName("data")
-    val data: Data
+    val data: InitData
 )
 @Keep
-data class Data(
+data class InitData(
     @SerializedName("newRegisteredUser")
     val newRegisteredUser: Boolean = false,
     @SerializedName("user")
@@ -30,3 +32,4 @@ data class PublisherApp(
     @SerializedName("premiumColor")
     val premiumColor: String = ""
 )
+

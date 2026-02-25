@@ -4,9 +4,9 @@ package com.tyrads.sdk.acmo.core
 import AcmoKeyNames
 import AcmoUsagePermissionsPage
 import AcmoUsageStatsController
-import AcmoUsersUpdatePage
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -57,15 +57,17 @@ class AcmoApp : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
-                var initPath = "privacy"
                 val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermissionGranted(this)
-                if (Tyrads.getInstance().preferences.getBoolean(
-                        AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-                        false
-                    )
-                ) {
-                    initPath =
-                        if (!isUsagePermissionGranted) "usage-permissions" else if (Tyrads.getInstance().newUser) "update-user" else "webview"
+                val tyrads = Tyrads.getInstance()
+                val privacyAccepted = tyrads.preferences.getBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
+                    false)
+                val skipInitialPages = tyrads.config.skipInitialPages
+
+                val initPath = when {
+                    skipInitialPages -> "webview"
+                    !privacyAccepted -> "privacy"
+                    !isUsagePermissionGranted -> "usage-permissions"
+                    else -> "webview"
                 }
                 Tyrads.getInstance().navController = rememberNavController()
                 Scaffold(
@@ -85,9 +87,6 @@ class AcmoApp : ComponentActivity() {
                         composable("privacy") {
                             AcmoPrivacyPolicyPage()
                         }
-                        composable("update-user") {
-                            AcmoUsersUpdatePage()
-                        }
                         composable("usage-permissions") {
                             AcmoUsagePermissionsPage(
                             )
@@ -103,4 +102,17 @@ class AcmoApp : ComponentActivity() {
         outState.putBoolean(ACMO_KEY_ACTIVITY_KILLED, true)
         outState.putBoolean(ACMO_KEY_LANGUAGE_CHANGE, true)
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            Tyrads.getInstance().log(
+                "AcmoApp: Activity finishing - triggering preload for next open",
+                Log.INFO,
+                force = true
+            )
+            Tyrads.getInstance().preloadAfterClose()
+        }
+    }
+
 }
