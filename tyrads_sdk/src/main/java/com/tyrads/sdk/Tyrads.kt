@@ -2,7 +2,6 @@ package com.tyrads.sdk
 
 import AcmoConfig
 import AcmoEndpointNames
-import AcmoInitModel
 import AcmoKeyNames
 import AcmoTrackingController
 import AcmoUsageStatsController
@@ -41,12 +40,16 @@ import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
+import com.tyrads.sdk.acmo.modules.input_models.AcmoInitModel
+import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import com.tyrads.sdk.acmo.modules.push_notifications.FCMNotifications
 import com.tyrads.sdk.acmo.modules.push_notifications.FCMService
+import com.tyrads.sdk.acmo.modules.webview.WebViewManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 @Keep
 class Tyrads private constructor() {
@@ -55,6 +58,7 @@ class Tyrads private constructor() {
     internal var encKey: String? = null
     internal var engagementId: String? = null
     internal var token: String? = null
+    var config: TyradsConfig = TyradsConfig()
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
@@ -76,14 +80,12 @@ class Tyrads private constructor() {
         get() = _currentLanguageCode
     private val localizationService = LocalizationService.getInstance()
 
-
-    private var _isSecure: Boolean = false;
-    val isSecure: Boolean get() = _isSecure;
+    private var _isSecure: Boolean = false
+    val isSecure: Boolean get() = _isSecure
 
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
     var mainColor: String? = null
-
 
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
@@ -107,7 +109,6 @@ class Tyrads private constructor() {
         }
         _privacyAccepted.value = isAccepted
     }
-
 
     companion object {
         @Volatile
@@ -141,6 +142,7 @@ class Tyrads private constructor() {
         apiSecret: String,
         encKey: String? = null,
         engagementId: String? = null,
+        config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
         this@Tyrads.context = context.applicationContext
@@ -150,6 +152,7 @@ class Tyrads private constructor() {
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this@Tyrads.encKey = encKey
         this@Tyrads.engagementId = engagementId
+        setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
 
         Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
@@ -181,7 +184,7 @@ class Tyrads private constructor() {
         _currentLanguageCode.value = currentLanguage
         log("Selected Language: ${currentLanguageCode.value}")
 
-        // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
+        // Initialize localization service
         localizationService.init(currentLanguageCode.value)
 
         log("Tyrads SDK initialized", Log.INFO)
@@ -190,6 +193,7 @@ class Tyrads private constructor() {
             val integrityToken = getPlayIntegrityToken(context)
             log("Integrity Token: $integrityToken")
             preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+            // Initialize FCM and lifecycle callbacks (from notification branch)
             FCMService.initialize(context)
             registerLifecycleCallbacks(context)
         } catch (e: Exception) {
@@ -245,7 +249,7 @@ class Tyrads private constructor() {
                 "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
-            log("Initialization Data of rn-push notif: $fd")
+            log("Initialization Data: $fd")
             mediaSourceInfo?.let { info ->
                 info.sub1?.let { fd["sub1"] = it }
                 info.sub2?.let { fd["sub2"] = it }
@@ -285,7 +289,7 @@ class Tyrads private constructor() {
                     Log.e("Data", jsonString)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.user.publisherUserId
-                    preferences.edit().putString(AcmoKeyNames.USER_ID, publisherUserID).apply()
+                    preferences.edit { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     this@Tyrads.token = loginData.data.token
 
                     mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
@@ -309,6 +313,10 @@ class Tyrads private constructor() {
 
                     track(TyradsActivity.INITIALIZED)
                     _isLoggedIn.value = true
+
+                    // Preload WebView after successful login (from webview-preload branch)
+                    log("Calling _preloadWebView() after successful login", Log.INFO, force = true)
+                    _preloadWebView()
 
                     val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
                     val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
@@ -346,6 +354,55 @@ class Tyrads private constructor() {
         }
     }
 
+    internal fun getWebUri(route: String? = null, campaignID: Int? = null): String {
+        val skipUserInfo = getSkipUserInfo()
+        val currentRoute = route ?: ""
+
+        return Uri.Builder()
+            .scheme("https")
+            .authority("sdk.tyrads.com")
+            .appendQueryParameter(
+                "to",
+                when {
+                    campaignID == null -> currentRoute
+                    else -> "$currentRoute/$campaignID"
+                }
+            )
+            .appendQueryParameter("token", token)
+            .appendQueryParameter("lang", currentLanguageCode.value)
+            .appendQueryParameter("skipUserInfo", skipUserInfo.toString())
+            .build()
+            .toString()
+    }
+
+    private fun _preloadWebView() {
+        try {
+            log("_preloadWebView: Starting preload", Log.INFO, force = true)
+
+            // Build URL
+            url = getWebUri()
+            log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
+
+            // Preload the WebView
+            WebViewManager.getInstance().preload(context, url)
+
+            log("_preloadWebView: Preload initiated successfully", Log.INFO, force = true)
+        } catch (e: Exception) {
+            log("_preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
+        }
+    }
+
+    fun preloadAfterClose() {
+        tyradScope.launch {
+            try {
+                log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
+                _preloadWebView()
+            } catch (e: Exception) {
+                log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
+            }
+        }
+    }
+
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
             log("Preparing to show offers", Log.INFO)
@@ -357,24 +414,29 @@ class Tyrads private constructor() {
                 }
                 return@withContext
             }
-            log("Launching offers", Log.INFO)
-            url = Uri.Builder()
-                .scheme("https")
-                .authority("sdk.tyrads.com")
-                .appendQueryParameter("token", token)
-                .appendQueryParameter(
-                    "to",
-                    if (route == null) "" else if (campaignID == null) route else "$route/$campaignID"
+            // Build the requested URL
+            val requestedUrl = getWebUri(route, campaignID)
+            val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
+
+            if (url != requestedUrl || !hasPreloadedWebView) {
+                url = requestedUrl
+                log(
+                    "showOffers: URL changed or no preload available - preloading now: $url",
+                    Log.INFO,
+                    force = true
                 )
-                .appendQueryParameter("lang", currentLanguageCode.value)
-                .build()
-                .toString()
-            Log.i("url", url.toString())
+                WebViewManager.getInstance().preload(context, url)
+            } else {
+                log("showOffers: Using existing preloaded WebView", Log.INFO, force = true)
+            }
+
+            log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
-        }
 
+            track(TyradsActivity.opened)
+        }
 
     suspend fun changeLanguage(languageCode: String) = withContext(Dispatchers.Default) {
         try {
@@ -407,7 +469,6 @@ class Tyrads private constructor() {
                 return@withContext false
             }
         }
-
 
     enum class PremiumWidgetStyles { LIST, SLIDER_CARDS }
 
@@ -444,6 +505,16 @@ class Tyrads private constructor() {
         this.userInfo = userInfo
     }
 
+    private fun getSkipUserInfo(): Boolean {
+        val key = "${AcmoKeyNames.SKIP_USER_INFO}${publisherUserID}"
+        return preferences.getBoolean(key, false)
+    }
+
+    private fun setTyradsConfig(config: TyradsConfig) {
+        this.config = config
+    }
+
+    // Notification lifecycle callbacks (from notification branch)
     private fun registerLifecycleCallbacks(context: Context) {
         (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {

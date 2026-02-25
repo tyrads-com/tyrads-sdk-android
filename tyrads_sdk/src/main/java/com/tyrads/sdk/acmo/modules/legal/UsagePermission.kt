@@ -48,10 +48,8 @@ fun AcmoUsagePermissionsPage(
                 Spacer(modifier = Modifier.height(40.dp))
                 UsageStatsCard(
                     onGrant = {
-                        // Save privacy acceptance preference
                         Tyrads.getInstance().setPrivacyAccepted(true)
 
-                        // Save usage stats
                         Tyrads.getInstance().tyradScope.launch {
                             val usageStatsController = AcmoUsageStatsController()
                             usageStatsController.saveUsageStats()
@@ -61,11 +59,7 @@ fun AcmoUsagePermissionsPage(
                             return@UsageStatsCard
                         }
 
-                        val destination = if (Tyrads.getInstance().newUser) {
-                            "update-user"
-                        } else {
-                            "webview"
-                        }
+                        val destination = "webview"
 
                         Tyrads.getInstance().navController.navigate(destination) {
                             popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
