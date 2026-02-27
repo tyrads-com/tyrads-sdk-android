@@ -46,15 +46,52 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.core.content.edit
+
+private const val DEFAULT_USER_ID = "acmo_user_01"
+private const val DEFAULT_CONFIG = "belanda1"
+private data class ConfigKeys(val apiKey: String, val apiSecret: String, val encKey: String)
+
+private val configOptions = listOf(
+    "tyrreward" to "Tyrreward",
+    "belanda1" to "Belanda 1",
+    "belanda2" to "Belanda 2",
+    "belanda3" to "Belanda 3",
+)
+
+private fun getConfigKeys(selectedConfig: String): ConfigKeys = when (selectedConfig) {
+    "tyrreward" -> ConfigKeys(
+        apiKey = BuildConfig.TYRREWARD_API_KEY,
+        apiSecret = BuildConfig.TYRREWARD_API_SECRET,
+        encKey = BuildConfig.TYRREWARD_ENC_KEY,
+    )
+    "belanda2" -> ConfigKeys(
+        apiKey = BuildConfig.BELANDA2_API_KEY,
+        apiSecret = BuildConfig.BELANDA2_API_SECRET,
+        encKey = BuildConfig.BELANDA2_ENC_KEY,
+    )
+    "belanda3" -> ConfigKeys(
+        apiKey = BuildConfig.BELANDA3_API_KEY,
+        apiSecret = BuildConfig.BELANDA3_API_SECRET,
+        encKey = BuildConfig.BELANDA3_ENC_KEY,
+    )
+    else -> ConfigKeys(
+        apiKey = BuildConfig.BELANDA1_API_KEY,
+        apiSecret = BuildConfig.BELANDA1_API_SECRET,
+        encKey = BuildConfig.BELANDA1_ENC_KEY,
+    )
+}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,7 +113,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-
     }
 }
 
@@ -89,31 +125,25 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
     val sdkPrefs = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
 
-    var apiKeyInput by remember { mutableStateOf(sharedPreferences.getString("apiKey", "") ?: "") }
-    var apiSecretInput by remember {
-        mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "")
+    var selectedConfig by remember {
+        mutableStateOf(sharedPreferences.getString("selectedConfig", DEFAULT_CONFIG) ?: DEFAULT_CONFIG)
     }
-    var encryptionKey by remember {
-        mutableStateOf(
-            sharedPreferences.getString("encryptionKey", "") ?: ""
-        )
-    }
+
+    val initialKeys = remember(selectedConfig) { getConfigKeys(selectedConfig) }
+
+    var apiKeyInput by remember { mutableStateOf(initialKeys.apiKey) }
+    var apiSecretInput by remember { mutableStateOf(initialKeys.apiSecret) }
+    var encryptionKey by remember { mutableStateOf(initialKeys.encKey) }
     var engagementId by remember {
-        mutableStateOf(
-            sharedPreferences.getString("engagementId", "") ?: ""
-        )
+        mutableStateOf(sharedPreferences.getString("engagementId", "") ?: "")
     }
-    var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
+    var userIdInput by remember {
+        mutableStateOf(sharedPreferences.getString("userId", DEFAULT_USER_ID) ?: DEFAULT_USER_ID)
+    }
 
     var loggedIn by remember { mutableStateOf(false) }
-
-    var lastInitializedUserId by remember {
-        mutableStateOf(
-            sharedPreferences.getString("userId", "") ?: ""
-        )
-    }
+    var lastInitializedUserId by remember { mutableStateOf(userIdInput) }
     var widgetReloadKey by remember { mutableIntStateOf(0) }
-
 
     val clipboard = LocalClipboard.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -126,17 +156,44 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     LaunchedEffect(selectedOption) {
         fcmToken = sdkPrefs.getString("acmo_tyrads_sdk_fcm_token", null)
         Tyrads.getInstance().init(
-            context, apiKey = apiKeyInput.ifBlank { "0a55de10c58f459c9f65988d9d33e774" },
-            apiSecret = apiSecretInput.ifBlank { "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed" },
-            encryptionKey = encryptionKey.ifBlank { "VKdZsSz9&3WQqA6xfBJ4G2!5cUe8Y7yP" },
+            context,
+            apiKey = apiKeyInput.ifBlank { initialKeys.apiKey },
+            apiSecret = apiSecretInput.ifBlank { initialKeys.apiSecret },
+            encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
             engagementId = engagementId,
-            config = TyradsConfig(
-                skipInitialPages = selectedOption == options[1],
-            )
+            config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
         )
-        val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank{"acmo_user_05"})
+        val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
         loggedIn = success
         lastInitializedUserId = userIdInput
+    }
+
+    fun onConfigChange(newConfig: String) {
+        val newKeys = getConfigKeys(newConfig)
+        selectedConfig = newConfig
+        apiKeyInput = newKeys.apiKey
+        apiSecretInput = newKeys.apiSecret
+        encryptionKey = newKeys.encKey
+
+        sharedPreferences.edit { putString("selectedConfig", newConfig) }
+
+        // Using composable-scoped coroutine (scope.launch) instead of CoroutineScope(Dispatchers.Main).launch
+        // to avoid race conditions on rapid config switches — revert to CoroutineScope if needed.
+        scope.launch {
+            Tyrads.getInstance().init(
+                context,
+                apiKey = newKeys.apiKey,
+                apiSecret = newKeys.apiSecret,
+                encryptionKey = newKeys.encKey,
+                engagementId = engagementId,
+                config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+            )
+            val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
+            if (success) {
+                lastInitializedUserId = userIdInput
+                widgetReloadKey++
+            }
+        }
     }
 
     fun handleButtonClick() {
@@ -159,28 +216,24 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = apiKeyInput.ifBlank { "0a55de10c58f459c9f65988d9d33e774" },
-                apiSecret = apiSecretInput.ifBlank { "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed" },
-                encryptionKey = encryptionKey.ifBlank { "VKdZsSz9&3WQqA6xfBJ4G2!5cUe8Y7yP" },
+                apiKey = apiKeyInput.ifBlank { initialKeys.apiKey },
+                apiSecret = apiSecretInput.ifBlank { initialKeys.apiSecret },
+                encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
                 engagementId = engagementId,
-                config = TyradsConfig(
-                    skipInitialPages = selectedOption == options[1],
-                ),
-                debugMode = false
+                config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+                debugMode = false,
             )
 
-            val isSuccess = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
+            val isSuccess = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
             isLoadingOffers = false
-            if (!isSuccess) {
-                return@launch
-            }
+            if (!isSuccess) return@launch
             Tyrads.getInstance().showOffers()
             lastInitializedUserId = userIdInput
             lastSelectedOption = selectedOption
             widgetReloadKey++
-//            onReload()
         }
     }
+
     if (!loggedIn) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -190,7 +243,6 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             CircularProgressIndicator()
         }
     } else {
-
         Column(
             modifier = modifier
                 .fillMaxSize()
@@ -198,32 +250,41 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 .padding(horizontal = 20.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             Row {
-                Text(
-                    text = "Tyrads SDK Example",
-                    modifier = modifier
-                )
+                Text(text = "Tyrads SDK Example", modifier = modifier)
             }
-            key(userIdInput) {
+
+            key(widgetReloadKey) {
                 Tyrads.getInstance().TopPremiumOffers(
                     widgetStyle = Tyrads.PremiumWidgetStyles.SLIDER_CARDS
                 )
             }
+
             Spacer(modifier = Modifier.height(16.dp))
+
             SimpleDropdown(
                 options = options,
                 selectedOption = selectedOption,
-                onOptionSelected = { selectedOption = it }
+                onOptionSelected = { selectedOption = it },
             )
+
             Spacer(modifier = Modifier.height(16.dp))
+
+            ConfigDropdown(
+                selectedConfig = selectedConfig,
+                onConfigSelected = { onConfigChange(it) },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             TextField(
                 modifier = Modifier.fillMaxWidth(),
                 value = apiKeyInput,
                 onValueChange = { apiKeyInput = it },
                 label = { Text("Enter API Key") },
-                singleLine = true
+                singleLine = true,
             )
             Spacer(modifier = Modifier.height(16.dp))
             TextField(
@@ -231,7 +292,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 value = apiSecretInput,
                 onValueChange = { apiSecretInput = it },
                 label = { Text("Enter API Secret") },
-                singleLine = true
+                singleLine = true,
             )
             Spacer(modifier = Modifier.height(16.dp))
             TextField(
@@ -239,7 +300,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 value = encryptionKey,
                 onValueChange = { encryptionKey = it },
                 label = { Text("Encryption Key (optional)") },
-                singleLine = true
+                singleLine = true,
             )
             Spacer(modifier = Modifier.height(16.dp))
             TextField(
@@ -247,7 +308,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 value = engagementId,
                 onValueChange = { engagementId = it },
                 label = { Text("Engagement ID (optional)") },
-                singleLine = true
+                singleLine = true,
             )
             Spacer(modifier = Modifier.height(16.dp))
             TextField(
@@ -255,36 +316,35 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 value = userIdInput,
                 onValueChange = { userIdInput = it },
                 label = { Text("Enter User ID") },
-                singleLine = true
+                singleLine = true,
             )
             Spacer(modifier = Modifier.height(16.dp))
+
             if (fcmToken != null)
                 TextField(
                     value = fcmToken ?: "NA",
                     onValueChange = {},
                     enabled = false,
                     label = { Text("FCM Token") },
-                    singleLine = false
+                    singleLine = false,
                 )
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
                 Button(
-                    onClick = {
-                        handleButtonClick()
-                    },
-                    modifier = Modifier.padding(16.dp)
+                    onClick = { handleButtonClick() },
+                    modifier = Modifier.padding(16.dp),
                 ) {
                     if (isLoadingOffers) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(16.dp),
                             strokeWidth = 2.dp,
-                            color = Color.White
+                            color = Color.White,
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                     }
                     Text(text = "Show Offers")
                 }
+
                 if (fcmToken != null)
                     Button(
                         onClick = {
@@ -296,19 +356,73 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                                 snackbarHostState.showSnackbar("Token copied!")
                                 snackbarHostState.showSnackbar(
                                     "Token copied!",
-                                    duration = SnackbarDuration.Short
+                                    duration = SnackbarDuration.Short,
                                 )
                             }
                         },
                     ) {
-                        Text(
-                            "Copy Token",
-                            fontWeight = FontWeight.SemiBold,
-                        )
+                        Text("Copy Token", fontWeight = FontWeight.SemiBold)
                     }
             }
-
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ConfigDropdown(
+    selectedConfig: String,
+    onConfigSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = configOptions.firstOrNull { it.first == selectedConfig }?.second ?: selectedConfig
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+            text = "Select Config:",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color(0xFF333333),
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+        ) {
+            TextField(
+                readOnly = true,
+                value = selectedLabel,
+                onValueChange = {},
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+            )
+
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                configOptions.forEach { (value, label) ->
+                    DropdownMenuItem(
+                        text = { Text(label) },
+                        onClick = {
+                            onConfigSelected(value)
+                            expanded = false
+                        },
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "Platform: Android | Config: ${selectedConfig.uppercase()}",
+            fontSize = 12.sp,
+            fontStyle = FontStyle.Italic,
+            color = Color(0xFF666666),
+        )
     }
 }
 
@@ -322,24 +436,22 @@ fun SimpleDropdown(
     var expanded by remember { mutableStateOf(false) }
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
+        onExpandedChange = { expanded = !expanded },
     ) {
         TextField(
             readOnly = true,
             value = selectedOption,
             onValueChange = {},
             label = { Text("Select Initial Pages Settings") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .menuAnchor()
-                .fillMaxWidth()
+                .fillMaxWidth(),
         )
 
         ExposedDropdownMenu(
             expanded = expanded,
-            onDismissRequest = { expanded = false }
+            onDismissRequest = { expanded = false },
         ) {
             options.forEach { selectionOption ->
                 DropdownMenuItem(
@@ -347,13 +459,12 @@ fun SimpleDropdown(
                     onClick = {
                         onOptionSelected(selectionOption)
                         expanded = false
-                    }
+                    },
                 )
             }
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
