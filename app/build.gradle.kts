@@ -36,12 +36,22 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "TYRADS_API_KEY", "\"${localProperties.getProperty("tyrads.api.key")}\"")
-            buildConfigField(
-                "String",
-                "TYRADS_API_SECRET",
-                "\"${localProperties.getProperty("tyrads.api.secret")}\""
-            )
+            buildConfigField("String", "TYRREWARD_API_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_KEY")}\"")
+            buildConfigField("String", "TYRREWARD_API_SECRET", "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_SECRET")}\"")
+            buildConfigField("String", "TYRREWARD_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA1_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA1_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA1_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA2_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA2_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA2_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA3_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA3_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA3_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_ENC_KEY")}\"")
+
         }
         release {
             isMinifyEnabled = true
@@ -49,12 +59,22 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "TYRADS_API_KEY", "\"${localProperties.getProperty("tyrads.api.key")}\"")
-            buildConfigField(
-                "String",
-                "TYRADS_API_SECRET",
-                "\"${localProperties.getProperty("tyrads.api.secret")}\""
-            )
+            buildConfigField("String", "TYRREWARD_API_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_KEY")}\"")
+            buildConfigField("String", "TYRREWARD_API_SECRET", "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_SECRET")}\"")
+            buildConfigField("String", "TYRREWARD_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA1_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA1_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA1_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA2_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA2_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA2_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA3_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA3_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA3_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_ENC_KEY")}\"")
+
             signingConfig = signingConfigs.getByName("debug")
         }
     }
