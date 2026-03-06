@@ -39,6 +39,12 @@ class AcmoApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (!Tyrads.getInstance().isInitialized) {
+            Tyrads.getInstance().log("AcmoApp launched before Tyrads.init() — finishing (process death recovery)")
+            finish()
+            return
+        }
+
         Tyrads.getInstance().initializePrivacyStatus()
 
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&

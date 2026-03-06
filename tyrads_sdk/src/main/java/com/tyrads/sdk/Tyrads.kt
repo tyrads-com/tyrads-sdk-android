@@ -85,6 +85,8 @@ class Tyrads private constructor() {
     private var _isSecure: Boolean = false;
     val isSecure: Boolean get() = _isSecure;
 
+    val isInitialized: Boolean get() = ::preferences.isInitialized
+
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
     var mainColor: String? = null
