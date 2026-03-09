@@ -137,6 +137,9 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     var engagementId by remember {
         mutableStateOf(sharedPreferences.getString("engagementId", "") ?: "")
     }
+    var placementId by remember {
+        mutableStateOf(sharedPreferences.getString("placementId", "") ?: "")
+    }
     var userIdInput by remember {
         mutableStateOf(sharedPreferences.getString("userId", DEFAULT_USER_ID) ?: DEFAULT_USER_ID)
     }
@@ -161,6 +164,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             apiSecret = apiSecretInput.ifBlank { initialKeys.apiSecret },
             encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
             engagementId = engagementId,
+            placementId = placementId,
             config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
         )
         val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
@@ -186,6 +190,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 apiSecret = newKeys.apiSecret,
                 encryptionKey = newKeys.encKey,
                 engagementId = engagementId,
+                placementId = placementId,
                 config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
             )
             val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
@@ -211,6 +216,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 putString("apiSecret", apiSecretInput)
                 putString("userId", userIdInput)
                 putString("encryptionKey", encryptionKey)
+                putString("placementId", placementId)
                 apply()
             }
 
@@ -220,6 +226,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 apiSecret = apiSecretInput.ifBlank { initialKeys.apiSecret },
                 encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
                 engagementId = engagementId,
+                placementId = placementId,
                 config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
                 debugMode = false,
             )
@@ -308,6 +315,14 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 value = engagementId,
                 onValueChange = { engagementId = it },
                 label = { Text("Engagement ID (optional)") },
+                singleLine = true,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = placementId,
+                onValueChange = { placementId = it },
+                label = { Text("Placement ID (optional)") },
                 singleLine = true,
             )
             Spacer(modifier = Modifier.height(16.dp))
