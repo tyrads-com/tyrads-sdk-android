@@ -69,6 +69,7 @@ class Tyrads private constructor() {
     internal var apiSecret: String? = null
     internal var encKey: String? = null
     internal var engagementId: String? = null
+    internal var placementId: String? = null
     private var config: TyradsConfig = TyradsConfig()
     internal val tyradsConfig: TyradsConfig get() = config
     internal var token: String = ""
@@ -174,6 +175,7 @@ class Tyrads private constructor() {
         apiSecret: String,
         encryptionKey: String? = null,
         engagementId: String? = null,
+        placementId: String? = null,
         config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
@@ -182,6 +184,7 @@ class Tyrads private constructor() {
             ?: throw IllegalArgumentException("API key cannot be blank")
         this@Tyrads.encKey = encryptionKey
         this@Tyrads.engagementId = engagementId
+        this@Tyrads.placementId = placementId
         this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
         setTyradsConfig(config)
@@ -240,13 +243,14 @@ class Tyrads private constructor() {
         apiSecret: String,
         encryptionKey: String? = null,
         engagementId: String? = null,
+        placementId: String? = null,
         config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false,
         callback: TyradsCallback
     ) {
         tyradScope.launch {
             try {
-                init(context, apiKey, apiSecret, encryptionKey, engagementId, config, debugMode)
+                init(context, apiKey, apiSecret, encryptionKey, engagementId, placementId, config, debugMode)
                 safeCallback { callback.onSuccess() }
             } catch (e: Exception) {
                 log("Exception during init: ${e.message}", Log.ERROR)
@@ -330,15 +334,15 @@ class Tyrads private constructor() {
                     log("User login successful", Log.INFO)
                     val jsonString = String(response.data)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
-                    publisherUserID = loginData.data.user.publisherUserId
+                    publisherUserID = loginData.data.accountInfo.publisherUserId
                     preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     this@Tyrads.token = loginData.data.token
                     this@Tyrads.mainColor =
-                        loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                        loginData.data.appInfo.mainColor.ifBlank { "#1C90DF" }
                     this@Tyrads.premiumColor =
-                        loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
+                        loginData.data.appInfo.premiumColor.ifBlank { "#1C90DF" }
                     this@Tyrads.headerColor =
-                        loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+                        loginData.data.appInfo.headerColor.ifBlank { "#000000" }
                     initializePrivacyStatus()
 
                     try {
@@ -397,13 +401,12 @@ class Tyrads private constructor() {
     }
 
     internal fun getWebUri(route: String? = null, campaignID: Int? = null): String {
-        val skipUserInfo = getSkipUserInfo()
         val currentRoute = route ?: ""
         Log.w("bmd", "getWebUri: $currentRoute")
 
-        return Uri.Builder()
+        val builder = Uri.Builder()
             .scheme("https")
-            .authority("sdk.tyrads.com")
+            .authority("v4.sdk.tyrads.com")
             .appendQueryParameter(
                 "to",
                 when {
@@ -413,9 +416,12 @@ class Tyrads private constructor() {
             )
             .appendQueryParameter("token", token)
             .appendQueryParameter("lang", currentLanguageCode.value)
-            .appendQueryParameter("skipUserInfo", skipUserInfo.toString())
-            .build()
-            .toString()
+
+        if (!placementId.isNullOrBlank()) {
+            builder.appendQueryParameter("placementId", placementId)
+        }
+
+        return builder.build().toString()
     }
 
     private fun _preloadWebView(forceRebuildURL: Boolean = true) {
@@ -424,15 +430,15 @@ class Tyrads private constructor() {
 
             if (forceRebuildURL || url.isEmpty()) {
                 val newUrl = getWebUri()
-                
+
                 if (url.isNotEmpty() && !isDefaultUrl(url) && isDefaultUrl(newUrl)) {
                     log("_preloadWebView: Skipping default URL preload to preserve existing deep link: $url", Log.INFO, force = true)
                     return
                 }
-                
+
                 url = newUrl
             }
-            
+
             log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
 
             WebViewManager.getInstance().preload(context, url)
@@ -477,12 +483,12 @@ class Tyrads private constructor() {
             }
 
             val requestedUrl = getWebUri(route, campaignID)
-            
+
             url = requestedUrl
-            
+
             val preloadedUrl = WebViewManager.getInstance().getPreloadedUrl()
             val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
-            
+
             val needsNewPreload = !hasPreloadedWebView || (preloadedUrl != null && !urlsMatch(preloadedUrl, requestedUrl))
 
             if (needsNewPreload) {
@@ -602,11 +608,6 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
-    }
-
-    private fun getSkipUserInfo(): Boolean {
-        val key = "${AcmoKeyNames.SKIP_USER_INFO}${publisherUserID}"
-        return preferences.getBoolean(key, false)
     }
 
     private fun registerLifecycleCallbacks(context: Context) {
