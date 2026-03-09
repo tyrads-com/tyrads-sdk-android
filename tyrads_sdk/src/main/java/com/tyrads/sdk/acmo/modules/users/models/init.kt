@@ -1,32 +1,36 @@
 import androidx.annotation.Keep
 import com.google.android.gms.common.annotation.KeepForSdkWithFieldsAndMethods
 import com.google.gson.annotations.SerializedName
+
 @Keep
 data class AcmoInitModel(
     @SerializedName("data")
     val data: Data
 )
+
 @Keep
 data class Data(
     @SerializedName("newRegisteredUser")
     val newRegisteredUser: Boolean = false,
-    @SerializedName("user")
-    val user: User,
-    @SerializedName("publisherApp")
-    val publisherApp: PublisherApp,
+    @SerializedName("newRegisteredDevice")
+    val newRegisteredDevice: Boolean = false,
+    @SerializedName("accountInfo")
+    val accountInfo: AccountInfo,
+    @SerializedName("appInfo")
+    val appInfo: AppInfo,
     val token: String
 )
+
 @Keep
-data class User(
+data class AccountInfo(
+    @SerializedName("id")
+    val id: Long,
     @SerializedName("publisherUserId")
-    val publisherUserId: String,
-    @SerializedName("age")
-    val age: String?,
-    @SerializedName("gender")
-    val gender: String?
+    val publisherUserId: String
 )
+
 @Keep
-data class PublisherApp(
+data class AppInfo(
     @SerializedName("headerColor")
     val headerColor: String = "",
     @SerializedName("mainColor")
