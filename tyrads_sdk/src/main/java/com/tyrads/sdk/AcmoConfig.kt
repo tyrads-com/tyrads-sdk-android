@@ -1,11 +1,11 @@
 import android.graphics.Color
 
 object AcmoConfig {
-    const val API_VERSION = "3.0";
+    const val API_VERSION = "4.0";
     const val BUILD_VERSION = "1";
     const val AV = "4";
 
-    const val SDK_VERSION = "3.3.0-$BUILD_VERSION";
+    const val SDK_VERSION = "4.0.0-$BUILD_VERSION";
     const val SDK_PLATFORM = "Android";
     const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
     const val TAG = "TyrAds SDK"
