@@ -1,5 +1,7 @@
 package com.tyrads.sdk.acmo.modules.input_models
 
+import com.google.gson.annotations.SerializedName
+
 data class AcmoOffersResponseModel(
     val data: List<AcmoOffersModel>
 )
@@ -8,19 +10,56 @@ data class AcmoOffersModel(
     val campaignId: Int,
     val campaignName: String,
     val campaignDescription: String = "",
-    val active: String = "",
-    val status: String = "",
+    val campaignType: String = "",
+    val campaignStatus: String = "",
+    @SerializedName("campaignPremium")
+    val premium: Boolean = false,
     val app: App,
-    val currency: Currency,
-    val campaignPayout: CampaignPayout,
+    val availableCurrencies: Map<String, AvailableCurrency> = emptyMap(),
+    val payoutSummary: Map<String, PayoutSummary> = emptyMap(),
     val tracking: Tracking,
     val targeting: Targeting,
     val creative: Creative,
+    val validity: Validity = Validity(),
     val hasPlaytimeEvents: Boolean = false,
-    val premium: Boolean = false,
-    val isRetryDownload: Boolean = false,
-    val isInstalled: Boolean = false,
     val sortingScore: Double = 0.0,
+) {
+    val isRetryDownload: Boolean get() = validity.isRetryDownload
+    val isInstalled: Boolean get() = validity.isInstalled
+
+    // Returns the first available currency, or a default empty one
+    val currency: AvailableCurrency
+        get() = availableCurrencies.values.firstOrNull() ?: AvailableCurrency()
+
+    // Returns the payout for the first available currency, or a default empty one
+    val campaignPayout: PayoutSummary
+        get() = availableCurrencies.keys.firstOrNull()
+            ?.let { payoutSummary[it] } ?: PayoutSummary()
+}
+
+data class Validity(
+    val isRetryDownload: Boolean = false,
+    val isActivated: Boolean = false,
+    val isOldUser: Boolean = false,
+    val expiredOn: String? = null,
+    val expiredInSeconds: Long? = null,
+    val isInstalled: Boolean = false
+)
+
+data class AvailableCurrency(
+    val currencyId: Int = 0,
+    val currencyIcon: String = "",
+    val currencyName: String = ""
+) {
+    // Compatibility shim so existing UI code using currency.adUnitCurrencyIcon still compiles
+    val adUnitCurrencyIcon: String get() = currencyIcon
+    val adUnitCurrencyName: String get() = currencyName
+}
+
+data class PayoutSummary(
+    val totalPayoutConverted: Double = 0.0,
+    val totalPlayablePayoutConverted: Double = 0.0,
+    val totalMicrochargePayoutConverted: Double = 0.0
 )
 
 data class Creative(
@@ -47,25 +86,6 @@ data class Tracking(
     val clickUrl: String? = null,
     val impressionUrl: String? = null,
     val s2sClickUrl: String? = null
-)
-
-data class CampaignPayout(
-    val totalEvents: Int = 0,
-    val totalPayout: Double = 0.0,
-    val totalPayoutConverted: Double = 0.0,
-    val totalPlayablePayout: Double = 0.0,
-    val totalMicrochargePayout: Double = 0.0,
-    val totalPlayablePayoutConverted: Double = 0.0,
-    val totalMicrochargePayoutConverted: Double = 0.0
-)
-
-data class Currency(
-    val name: String = "",
-    val symbol: String = "",
-    val adUnitName: String = "",
-    val adUnitCurrencyName: String = "",
-    val adUnitCurrencyIcon: String = "",
-    val adUnitCurrencyConversion: Double = 0.0
 )
 
 data class App(
