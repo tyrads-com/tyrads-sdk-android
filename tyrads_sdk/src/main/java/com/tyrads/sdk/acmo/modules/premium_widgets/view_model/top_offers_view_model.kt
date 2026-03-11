@@ -31,6 +31,17 @@ class TopOffersViewModel : ViewModel() {
                 fetchData(lang)
             }
         }
+
+        // Re-fetch the active offers count whenever the Offerwall (AcmoApp) is closed.
+        // This ensures the counter on the Premium Widget syncs after campaigns are
+        // activated inside the Offerwall WebView.
+        viewModelScope.launch {
+            Tyrads.getInstance().offerwallClosedSignal.collect { signal ->
+                if (signal > 0L) {
+                    refreshActiveOffersCount()
+                }
+            }
+        }
     }
 
     private fun fetchData(lang: String) {
@@ -52,6 +63,25 @@ class TopOffersViewModel : ViewModel() {
                     isLoading = false,
                     error = e.message
                 )
+            }
+        }
+    }
+
+    /**
+     * Lightweight refresh that only updates the active offers counter badge.
+     * Does NOT show a loading state or reload offer cards — called silently
+     * after the Offerwall closes so the counter syncs without disrupting the UI.
+     */
+    private fun refreshActiveOffersCount() {
+        viewModelScope.launch {
+            try {
+                val count = networkCommons.fetchActiveOffersSummary(
+                    Tyrads.getInstance().currentLanguageCode.value
+                )
+                _uiState.value = _uiState.value.copy(activeOffersCount = count)
+            } catch (e: Exception) {
+                // Silently ignore — counter will refresh on next full fetch
+                Log.w("TopOffersViewModel", "Failed to refresh active offers count: ${e.message}")
             }
         }
     }
