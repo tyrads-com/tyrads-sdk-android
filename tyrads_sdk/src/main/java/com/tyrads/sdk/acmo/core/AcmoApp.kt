@@ -42,6 +42,15 @@ class AcmoApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Guard against Android process death: if the OS killed the process and is
+        // restoring this Activity from the back stack, Tyrads.init() has NOT been
+        // called in this new process. Accessing `preferences` (a lateinit var) would
+        // crash with UninitializedPropertyAccessException. Detect and finish cleanly.
+        if (!Tyrads.getInstance().isInitialized) {
+            finish()
+            return
+        }
+
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&
             !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)
         ) {
