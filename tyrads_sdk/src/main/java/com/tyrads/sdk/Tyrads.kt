@@ -85,7 +85,19 @@ class Tyrads private constructor() {
     private var _isSecure: Boolean = false;
     val isSecure: Boolean get() = _isSecure;
 
+    /** True only after [init] has completed and [preferences] is ready. */
     val isInitialized: Boolean get() = ::preferences.isInitialized
+
+    /**
+     * Emits a signal (current timestamp) whenever the Offerwall (AcmoApp) is closed.
+     * The Premium Widget ViewModel collects this to refresh the active offers count.
+     */
+    private val _offerwallClosedSignal = MutableStateFlow(0L)
+    val offerwallClosedSignal: StateFlow<Long> = _offerwallClosedSignal.asStateFlow()
+
+    internal fun notifyOfferwallClosed() {
+        _offerwallClosedSignal.value = System.currentTimeMillis()
+    }
 
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
