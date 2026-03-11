@@ -60,6 +60,9 @@ class Tyrads private constructor() {
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
 
+    /** True only after [init] has completed and [preferences] is ready. */
+    val isInitialized: Boolean get() = ::preferences.isInitialized
+
     val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
