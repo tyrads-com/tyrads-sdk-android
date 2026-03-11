@@ -113,4 +113,11 @@ class AcmoApp : ComponentActivity() {
         outState.putBoolean(ACMO_KEY_ACTIVITY_KILLED, true)
         outState.putBoolean(ACMO_KEY_LANGUAGE_CHANGE, true)
     }
+
+    override fun onStop() {
+        super.onStop()
+        // Notify the Premium Widget to refresh its active offers count when the
+        // Offerwall is dismissed (user navigates back or presses home).
+        Tyrads.getInstance().notifyOfferwallClosed()
+    }
 }
