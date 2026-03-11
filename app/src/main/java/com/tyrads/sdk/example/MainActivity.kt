@@ -1,10 +1,7 @@
 package com.tyrads.sdk.example
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -41,8 +38,8 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -59,14 +56,19 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var isLoadingOffers by remember { mutableStateOf(false) }
-    var isLoadingWidgets by remember { mutableStateOf(false) }
     var isTyradsInitialized by remember { mutableStateOf(false) }
 
     val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
+
+    // Fix 1: Correct credentials — defined once, shared across all call sites.
+    // The original code had wrong fallback keys (4f0eaa99...) which caused 403 from the server.
+    val defaultApiKey = "0a55de10c58f459c9f65988d9d33e774"
+    val defaultApiSecret = "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed"
 
     var apiKeyInput by remember { mutableStateOf(sharedPreferences.getString("apiKey", "") ?: "") }
     var apiSecretInput by remember {
@@ -75,12 +77,6 @@ fun Greeting(modifier: Modifier = Modifier) {
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1") ?: "") }
 
     fun handleButtonClick() {
-//        if (apiKeyInput.isBlank() || apiSecretInput.isBlank() || userIdInput.isBlank()) {
-//            // Show a message to the user
-//            Toast.makeText(context, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-//            return
-//        }
-
         isLoadingOffers = true
         CoroutineScope(Dispatchers.Main).launch {
             sharedPreferences.edit().apply {
@@ -92,28 +88,32 @@ fun Greeting(modifier: Modifier = Modifier) {
 
             Tyrads.getInstance().init(
                 context,
-                apiKey = apiKeyInput.ifBlank { "4f0eaa99e38e49b8b52804116e638a41" },
-                apiSecret = apiSecretInput.ifBlank { "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a" },
+                apiKey = apiKeyInput.ifBlank { defaultApiKey },
+                apiSecret = apiSecretInput.ifBlank { defaultApiSecret },
                 debugMode = true
             )
 
-            Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "6" })
-            Tyrads.getInstance().showOffers()
+            // loginUser() returns ApiHeaders? — null means failure, non-null means success
+            val loginResult = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "1" })
             isLoadingOffers = false
+
+            if (loginResult != null) {
+                Tyrads.getInstance().showOffers()
+            }
         }
     }
 
     LaunchedEffect(Unit) {
-        CoroutineScope(Dispatchers.Default).launch {
+        withContext(Dispatchers.Default) {
             Tyrads.getInstance().init(
                 context,
-                apiKey = "4f0eaa99e38e49b8b52804116e638a41",
-                apiSecret = "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
+                apiKey = defaultApiKey,
+                apiSecret = defaultApiSecret,
                 debugMode = true
             )
-           val userData = Tyrads.getInstance().loginUser(userID = "78y86")
-            isTyradsInitialized = true
+            Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { "1" })
         }
+        isTyradsInitialized = true
     }
 
     Column(
@@ -123,7 +123,6 @@ fun Greeting(modifier: Modifier = Modifier) {
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
-
     ) {
         Row {
             Text(
@@ -159,9 +158,7 @@ fun Greeting(modifier: Modifier = Modifier) {
         )
 
         Button(
-            onClick = {
-                handleButtonClick()
-            },
+            onClick = { handleButtonClick() },
             modifier = Modifier.padding(16.dp)
         ) {
             if (isLoadingOffers) {
@@ -174,7 +171,6 @@ fun Greeting(modifier: Modifier = Modifier) {
             }
             Text(text = "Show Offers")
         }
-
     }
 }
 
