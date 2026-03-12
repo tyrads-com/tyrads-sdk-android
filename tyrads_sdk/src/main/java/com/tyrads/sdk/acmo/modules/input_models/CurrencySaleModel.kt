@@ -3,11 +3,11 @@ package com.tyrads.sdk.acmo.modules.input_models
 import com.google.gson.annotations.SerializedName
 
 data class AcmoOfferCurrencySaleModel(
-    val data: Data? = null,
+    val data: EngagementData? = null,
     val message: String? = null
 )
 
-data class Data(
+data class EngagementData(
     @SerializedName("CurrencySales")
     val currencySales: CurrencySales? = null
 )
