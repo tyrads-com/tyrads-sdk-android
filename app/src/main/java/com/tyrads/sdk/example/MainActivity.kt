@@ -146,6 +146,8 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
 
     var loggedIn by remember { mutableStateOf(false) }
     var lastInitializedUserId by remember { mutableStateOf(userIdInput) }
+    var lastInitializedPlacementId by remember { mutableStateOf(placementId) }
+    var lastInitializedEngagementId by remember { mutableStateOf(engagementId) }
     var widgetReloadKey by remember { mutableIntStateOf(0) }
 
     val clipboard = LocalClipboard.current
@@ -181,8 +183,6 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
 
         sharedPreferences.edit { putString("selectedConfig", newConfig) }
 
-        // Using composable-scoped coroutine (scope.launch) instead of CoroutineScope(Dispatchers.Main).launch
-        // to avoid race conditions on rapid config switches — revert to CoroutineScope if needed.
         scope.launch {
             Tyrads.getInstance().init(
                 context,
@@ -202,7 +202,12 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     }
 
     fun handleButtonClick() {
-        if (userIdInput == lastInitializedUserId && selectedOption == lastSelectedOption) {
+        val needsReinit = userIdInput != lastInitializedUserId
+                || placementId != lastInitializedPlacementId
+                || engagementId != lastInitializedEngagementId
+                || selectedOption != lastSelectedOption
+
+        if (!needsReinit) {
             scope.launch {
                 Tyrads.getInstance().showOffers()
             }
@@ -217,6 +222,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 putString("userId", userIdInput)
                 putString("encryptionKey", encryptionKey)
                 putString("placementId", placementId)
+                putString("engagementId", engagementId)
                 apply()
             }
 
@@ -236,6 +242,8 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             if (!isSuccess) return@launch
             Tyrads.getInstance().showOffers()
             lastInitializedUserId = userIdInput
+            lastInitializedPlacementId = placementId
+            lastInitializedEngagementId = engagementId
             lastSelectedOption = selectedOption
             widgetReloadKey++
         }
