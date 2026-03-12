@@ -27,11 +27,9 @@ data class AcmoOffersModel(
     val isRetryDownload: Boolean get() = validity.isRetryDownload
     val isInstalled: Boolean get() = validity.isInstalled
 
-    // Returns the first available currency, or a default empty one
     val currency: AvailableCurrency
         get() = availableCurrencies.values.firstOrNull() ?: AvailableCurrency()
 
-    // Returns the payout for the first available currency, or a default empty one
     val campaignPayout: PayoutSummary
         get() = availableCurrencies.keys.firstOrNull()
             ?.let { payoutSummary[it] } ?: PayoutSummary()
@@ -51,7 +49,6 @@ data class AvailableCurrency(
     val currencyIcon: String = "",
     val currencyName: String = ""
 ) {
-    // Compatibility shim so existing UI code using currency.adUnitCurrencyIcon still compiles
     val adUnitCurrencyIcon: String get() = currencyIcon
     val adUnitCurrencyName: String get() = currencyName
 }
