@@ -115,8 +115,7 @@ class NetworkCommons {
                     })
 
                 result.data
-                    .sortedWith(compareByDescending<AcmoOffersModel> { it.premium }
-                        .thenByDescending { it.sortingScore })
+                    .sortedWith(compareByDescending<AcmoOffersModel> { it.premium })
                     .filter { it.campaignPayout.totalPlayablePayoutConverted > 0 }
                     .take(5)
             } catch (e: Exception) {
