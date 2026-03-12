@@ -159,8 +159,8 @@ class NetworkCommons {
         }
 
     suspend fun fetchActiveOffersSummary(langCode: String): Int = withContext(Dispatchers.IO) {
-        val url =
-            "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ACTIVE_OFFERS}/${AcmoEndpointNames.OFFER_SUMMARY}?lang=$langCode"
+        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.OFFER_SUMMARY}?lang=$langCode"
+//        val url = "${AcmoConfig.BASE_URL}${AcmoEndpointNames.ACTIVE_OFFERS}/${AcmoEndpointNames.OFFER_SUMMARY}?lang=$langCode"
 
         try {
             val result = Fuel.get(url)
