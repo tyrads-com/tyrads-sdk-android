@@ -134,6 +134,10 @@ class WebViewManager private constructor() {
                             view?.evaluateJavascript(
                                 """
                                 (function() {
+                                    if (window.tyradsJsBridgeInitialized) {
+                                        console.log('WebViewManager: Bridge already initialized - skipping');
+                                        return;
+                                    }
                                     window.addEventListener('message', function(event) {
                                         try {
                                             const message = typeof event.data === 'string' 
@@ -148,6 +152,7 @@ class WebViewManager private constructor() {
                                             console.error('WebViewManager JS Bridge error:', error);
                                         }
                                     });
+                                    window.tyradsJsBridgeInitialized = true;
                                     console.log('WebViewManager: JavaScript bridge initialized');
                                 })();
                                 """.trimIndent(), null
