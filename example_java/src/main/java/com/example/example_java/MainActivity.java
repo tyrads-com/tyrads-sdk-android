@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
                 "cd3c34a52a3b75a3fdd928774615d4e142dd2e6a8ce9da14df4205c7cc812ce81d3656e3dc2c0c58ed05c75c57f87a3431fed62725bb0286f9461521b6c9997a",
                 "dKWuxV#Ab9pBXNvg3UFrQPmk8aCn5SDL", // encryption key
                 "",
+                null, // placementId
                 new TyradsConfig(),
                 true, // debug mode
                 new TyradsCallback() {
@@ -148,6 +149,7 @@ public class MainActivity extends AppCompatActivity {
                 finalApiSecret,
                 finalEncryptionKey,
                 engagementId,
+                null, // placementId
                 new TyradsConfig(),
                 false,
                 new TyradsCallback() {
