@@ -57,6 +57,7 @@ class Tyrads private constructor() {
     internal var apiSecret: String? = null
     internal var encKey: String? = null
     internal var engagementId: String? = null
+    internal var placementId: String? = null
     internal var token: String? = null
     var config: TyradsConfig = TyradsConfig()
     internal var publisherUserID: String? = null
@@ -142,6 +143,7 @@ class Tyrads private constructor() {
         apiSecret: String,
         encKey: String? = null,
         engagementId: String? = null,
+        placementId: String? = null,
         config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
@@ -152,6 +154,7 @@ class Tyrads private constructor() {
             ?: throw IllegalArgumentException("API secret cannot be blank")
         this@Tyrads.encKey = encKey
         this@Tyrads.engagementId = engagementId
+        this@Tyrads.placementId = placementId
         setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
 
@@ -288,14 +291,14 @@ class Tyrads private constructor() {
                     val jsonString = String(response.data)
                     Log.e("Data", jsonString)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
-                    publisherUserID = loginData.data.user.publisherUserId
+                    publisherUserID = loginData.data.accountInfo.publisherUserId
                     preferences.edit { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     this@Tyrads.token = loginData.data.token
 
-                    mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
+                    mainColor = loginData.data.appInfo.mainColor.ifBlank { "#1C90DF" }
                     premiumColor =
-                        loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
-                    headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+                        loginData.data.appInfo.premiumColor.ifBlank { "#1C90DF" }
+                    headerColor = loginData.data.appInfo.headerColor.ifBlank { "#000000" }
 
                     if (preferences.getBoolean(
                             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
@@ -332,9 +335,9 @@ class Tyrads private constructor() {
                         xSdkVersion = sdkVersion,
                         userAgent = userAgent,
                         languageCode = currentLanguageCode.value,
-                        premiumColor = loginData.data.publisherApp.premiumColor,
-                        headerColor = loginData.data.publisherApp.headerColor,
-                        mainColor = loginData.data.publisherApp.mainColor,
+                        premiumColor = loginData.data.appInfo.premiumColor,
+                        headerColor = loginData.data.appInfo.headerColor,
+                        mainColor = loginData.data.appInfo.mainColor,
                     )
                 }
 
@@ -358,9 +361,9 @@ class Tyrads private constructor() {
         val skipUserInfo = getSkipUserInfo()
         val currentRoute = route ?: ""
 
-        return Uri.Builder()
+        val builder = Uri.Builder()
             .scheme("https")
-            .authority("sdk.tyrads.com")
+            .authority("v4.sdk.tyrads.com")
             .appendQueryParameter(
                 "to",
                 when {
@@ -371,8 +374,12 @@ class Tyrads private constructor() {
             .appendQueryParameter("token", token)
             .appendQueryParameter("lang", currentLanguageCode.value)
             .appendQueryParameter("skipUserInfo", skipUserInfo.toString())
-            .build()
-            .toString()
+
+        if (!placementId.isNullOrBlank()) {
+            builder.appendQueryParameter("placementId", placementId)
+        }
+
+        return builder.build().toString()
     }
 
     private fun _preloadWebView() {
