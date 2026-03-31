@@ -6,25 +6,32 @@ import com.google.gson.annotations.SerializedName
 @Keep
 data class AcmoInitModel(
     @SerializedName("data")
-    val data: InitData
+    val data: Data
 )
+
 @Keep
-data class InitData(
+data class Data(
     @SerializedName("newRegisteredUser")
     val newRegisteredUser: Boolean = false,
-    @SerializedName("user")
-    val user: User,
-    @SerializedName("publisherApp")
-    val publisherApp: PublisherApp,
+    @SerializedName("newRegisteredDevice")
+    val newRegisteredDevice: Boolean = false,
+    @SerializedName("accountInfo")
+    val accountInfo: AccountInfo,
+    @SerializedName("appInfo")
+    val appInfo: AppInfo,
     val token: String
 )
+
 @Keep
-data class User(
+data class AccountInfo(
+    @SerializedName("id")
+    val id: Long,
     @SerializedName("publisherUserId")
     val publisherUserId: String
 )
+
 @Keep
-data class PublisherApp(
+data class AppInfo(
     @SerializedName("headerColor")
     val headerColor: String = "",
     @SerializedName("mainColor")
@@ -32,4 +39,3 @@ data class PublisherApp(
     @SerializedName("premiumColor")
     val premiumColor: String = ""
 )
-

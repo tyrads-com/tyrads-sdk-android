@@ -71,6 +71,8 @@ fun Greeting(modifier: Modifier = Modifier) {
         mutableStateOf(sharedPreferences.getString("apiSecret", "") ?: "")
     }
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1322") ?: "") }
+    var engagementId by remember { mutableStateOf(sharedPreferences.getString("engagementId", "") ?: "") }
+    var placementId by remember { mutableStateOf(sharedPreferences.getString("placementId", "") ?: "") }
 
     fun handleButtonClick() {
         isLoadingOffers = true
@@ -79,11 +81,11 @@ fun Greeting(modifier: Modifier = Modifier) {
                 putString("apiKey", apiKeyInput)
                 putString("apiSecret", apiSecretInput)
                 putString("userId", userIdInput)
+                putString("engagementId", engagementId)
+                putString("placementId", placementId)
                 apply()
             }
 
-            // ✅ ONLY CHANGE: Removed init() and loginUser() calls here
-            // Just show offers directly
             Tyrads.getInstance().showOffers()
             isLoadingOffers = false
         }
@@ -96,6 +98,8 @@ fun Greeting(modifier: Modifier = Modifier) {
                 apiKey = "0a55de10c58f459c9f65988d9d33e774",
                 apiSecret = "418fc08c18a6715b48428568946e6f82f0ff06bfbc017944d22a19b3317a5ce2ad7028b0599a149534d957017d54650a9fa355cebf6971d7fdbc3eca372ca4ed",
                 debugMode = true,
+                engagementId = engagementId,
+                placementId = placementId,
                 config = TyradsConfig(
                     skipInitialPages = true
                 )
@@ -137,6 +141,20 @@ fun Greeting(modifier: Modifier = Modifier) {
             value = apiSecretInput,
             onValueChange = { apiSecretInput = it },
             label = { Text("Enter API Secret") },
+            modifier = Modifier.padding(16.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        TextField(
+            value = engagementId,
+            onValueChange = { engagementId = it },
+            label = { Text("Engagement ID (optional)") },
+            modifier = Modifier.padding(16.dp)
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        TextField(
+            value = placementId,
+            onValueChange = { placementId = it },
+            label = { Text("Placement ID (optional)") },
             modifier = Modifier.padding(16.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
