@@ -179,9 +179,14 @@ class Tyrads private constructor() {
         // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
         localizationService.init(currentLanguageCode.value)
 
-        val integrityToken = getPlayIntegrityToken(context)
-        log("Integrity Token: $integrityToken")
-        preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        try {
+            val integrityToken = getPlayIntegrityToken(context)
+            log("Integrity Token: $integrityToken")
+            preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        } catch (e: Exception) {
+            log("$e", Log.ERROR)
+        }
+
         log("Tyrads SDK initialized", Log.INFO)
         initializePrivacyStatus()
     }
