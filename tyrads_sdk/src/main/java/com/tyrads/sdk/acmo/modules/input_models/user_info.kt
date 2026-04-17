@@ -18,5 +18,8 @@ data class TyradsUserInfo(
      * allowing you to reward them a higher or lower % based on this group.
      * Example: "High purchasing user"
      */
-    val userGroup: String? = null
+    val userGroup: String? = null,
+
+    val age: Int? = null,
+    val gender: Int? = null,
 )
