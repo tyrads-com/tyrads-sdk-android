@@ -31,7 +31,8 @@ fun urlsMatch(url1: String, url2: String): Boolean {
         val to1 = uri1.getQueryParameter("to") ?: ""
         val to2 = uri2.getQueryParameter("to") ?: ""
         
-        uri1.host == uri2.host && to1 == to2
+        if (url1 == url2) return true
+        uri1.host != null && uri1.host == uri2.host && to1 == to2
     } catch (e: Exception) {
         url1 == url2
     }
