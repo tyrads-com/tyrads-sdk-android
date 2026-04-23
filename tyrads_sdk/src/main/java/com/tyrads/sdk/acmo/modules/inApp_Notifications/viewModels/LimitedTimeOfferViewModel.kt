@@ -14,9 +14,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class LimitedTimeOfferViewModel : ViewModel() {
-
-    private val networkCommons = NetworkCommons()
+class LimitedTimeOfferViewModel(
+    private val networkCommons: NetworkCommons = NetworkCommons()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LimitedOfferUiState())
     val uiState: StateFlow<LimitedOfferUiState> = _uiState.asStateFlow()
