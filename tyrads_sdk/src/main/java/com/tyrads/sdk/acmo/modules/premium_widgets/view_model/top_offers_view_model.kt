@@ -15,9 +15,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class TopOffersViewModel : ViewModel() {
-
-    private val networkCommons = NetworkCommons()
+class TopOffersViewModel(
+    private val networkCommons: NetworkCommons = NetworkCommons()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(TopOffersUiState())
     val uiState: StateFlow<TopOffersUiState> = _uiState.asStateFlow()
