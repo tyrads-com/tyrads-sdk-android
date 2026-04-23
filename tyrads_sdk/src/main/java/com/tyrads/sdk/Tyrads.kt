@@ -323,6 +323,8 @@ class Tyrads private constructor() {
                 info.email?.let { fd["email"] = it }
                 info.phoneNumber?.let { fd["phoneNumber"] = it }
                 info.userGroup?.let { fd["userGroup"] = it }
+                info.age?.let { fd["age"] = it }
+                info.gender?.let { fd["gender"] = it }
             }
             log("Initialization Data : $fd", force = true)
             val encData =
