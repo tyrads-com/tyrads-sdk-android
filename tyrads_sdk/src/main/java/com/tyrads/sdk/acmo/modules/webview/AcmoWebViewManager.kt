@@ -77,6 +77,10 @@ class WebViewManager private constructor() {
         mainHandler.post {
             try {
                 disposeInternal()
+                
+                // Restore these as disposeInternal() clears them
+                preloadedUrl = url
+                hasError = false
 
                 Tyrads.getInstance().log("WebViewManager: Creating headless WebView for URL: $url", Log.INFO, force = true)
 
