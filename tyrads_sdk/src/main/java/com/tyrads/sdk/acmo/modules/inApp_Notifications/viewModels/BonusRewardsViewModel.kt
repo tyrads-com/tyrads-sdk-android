@@ -11,9 +11,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class BonusRewardsViewModel : ViewModel() {
-
-    private val networkCommons = NetworkCommons()
+class BonusRewardsViewModel(
+    private val networkCommons: NetworkCommons = NetworkCommons()
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(BonusRewardsUiState())
     val uiState: StateFlow<BonusRewardsUiState> = _uiState.asStateFlow()
