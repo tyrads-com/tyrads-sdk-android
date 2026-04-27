@@ -41,8 +41,6 @@ class NetworkCommons {
         FuelManager.instance.addRequestInterceptor { next: (Request) -> Request ->
             { request: Request ->
                 runBlocking {
-                    request.header("X-SDK-Platform", "Android")
-                    request.header("X-SDK-Version", AcmoConfig.SDK_VERSION)
                     request.header("Content-Type", "application/json")
                     val sharedPreferences = Tyrads.getInstance().preferences
 
