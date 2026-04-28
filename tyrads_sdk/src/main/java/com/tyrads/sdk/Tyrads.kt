@@ -34,6 +34,7 @@ import android.os.Build
 import android.widget.Toast
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
@@ -161,23 +162,17 @@ class Tyrads private constructor() {
         if (!encKey.isNullOrBlank()) {
             _isSecure = true
         }
-        NetworkCommons()
-        var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
+        try {
+            NetworkCommons()
 
-        if (currentLanguage.isNullOrBlank()) {
-            currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                this@Tyrads.context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
-                    ?.split("-")?.first() ?: "en"
-            } else {
-                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first()
-                    ?: "en"
-            }
+            val currentLanguage = LocalizationHelper.getLanguageCode(context)
+            _currentLanguageCode.value = currentLanguage
+            log("Selected Language: ${currentLanguageCode.value}")
+
+            localizationService.init(currentLanguageCode.value)
+        } catch (e: Exception) {
+            log("Error during initialization setup: ${e.message}", Log.ERROR)
         }
-        _currentLanguageCode.value = currentLanguage
-        log("Selected Language: ${currentLanguageCode.value}")
-
-        // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
-        localizationService.init(currentLanguageCode.value)
 
         try {
             val integrityToken = getPlayIntegrityToken(context)
@@ -188,7 +183,12 @@ class Tyrads private constructor() {
         }
 
         log("Tyrads SDK initialized", Log.INFO)
-        initializePrivacyStatus()
+
+        try {
+            initializePrivacyStatus()
+        } catch (e: Exception) {
+            log("Error initializing privacy status: ${e.message}", Log.ERROR)
+        }
     }
 
     suspend fun loginUser(userID: String? = null): ApiHeaders? = withContext(Dispatchers.Default) {
@@ -234,7 +234,7 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
-                "engagementId" to if(engagementId.isNullOrBlank()) null else engagementId.toInt(),
+                "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
                 "deviceData" to deviceDetails
             )
             log("Initialization Data of rn-v3.0.x: $fd")
@@ -353,7 +353,10 @@ class Tyrads private constructor() {
                 .scheme("https")
                 .authority("sdk.tyrads.com")
                 .appendQueryParameter("token", token)
-                .appendQueryParameter("to", if(route == null) "" else if(campaignID == null) route else "$route/$campaignID")
+                .appendQueryParameter(
+                    "to",
+                    if (route == null) "" else if (campaignID == null) route else "$route/$campaignID"
+                )
                 .appendQueryParameter("lang", currentLanguageCode.value)
                 .build()
                 .toString()
@@ -385,18 +388,20 @@ class Tyrads private constructor() {
         return privacyAccepted.value
     }
 
-    suspend fun checkOnboardingProcess(context: Context): Boolean = withContext(Dispatchers.Default){
-        try {
-            val result = AcmoOnboardingGate.start(context)
-            return@withContext result
-        } catch (e: Exception){
-            log("Onboarding check failed: ${e.message}", Log.ERROR)
-            return@withContext false
+    suspend fun checkOnboardingProcess(context: Context): Boolean =
+        withContext(Dispatchers.Default) {
+            try {
+                val result = AcmoOnboardingGate.start(context)
+                return@withContext result
+            } catch (e: Exception) {
+                log("Onboarding check failed: ${e.message}", Log.ERROR)
+                return@withContext false
+            }
         }
-    }
 
 
-    enum class PremiumWidgetStyles {LIST, SLIDER_CARDS}
+    enum class PremiumWidgetStyles { LIST, SLIDER_CARDS }
+
     @Composable
     fun TopPremiumOffers(
         showMore: Boolean = true,
@@ -422,7 +427,7 @@ class Tyrads private constructor() {
         this.mediaSourceInfo = mediaSourceInfo
     }
 
-    fun setUpSDKVersion(sdkVersion: String){
+    fun setUpSDKVersion(sdkVersion: String) {
         AcmoConfig.SDK_VERSION = sdkVersion
     }
 
