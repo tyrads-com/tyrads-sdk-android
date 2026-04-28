@@ -36,6 +36,7 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
+import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
@@ -158,7 +159,7 @@ class Tyrads private constructor() {
         setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
 
-        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
+        Log.i("Tyrads", "apiKey: $apiKey \n apiSecret: $apiSecret")
         preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
         preferences.edit {
             putString(AcmoKeyNames.API_KEY, apiKey)
@@ -172,31 +173,28 @@ class Tyrads private constructor() {
         if (!encKey.isNullOrBlank()) {
             _isSecure = true
         }
-        NetworkCommons()
-        var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
+        try {
+            NetworkCommons()
 
-        if (currentLanguage.isNullOrBlank()) {
-            currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                this@Tyrads.context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
-                    ?.split("-")?.first() ?: "en"
-            } else {
-                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first()
-                    ?: "en"
-            }
+            val currentLanguage = LocalizationHelper.getLanguageCode(context)
+            _currentLanguageCode.value = currentLanguage
+            log("Selected Language: ${currentLanguageCode.value}")
+
+            localizationService.init(currentLanguageCode.value)
+        } catch (e: Exception) {
+            log("Error during initialization setup: ${e.message}", Log.ERROR)
         }
-        _currentLanguageCode.value = currentLanguage
-        log("Selected Language: ${currentLanguageCode.value}")
-
-        // Initialize localization service
-        localizationService.init(currentLanguageCode.value)
 
         log("Tyrads SDK initialized", Log.INFO)
-        initializePrivacyStatus()
+        try {
+            initializePrivacyStatus()
+        } catch (e: Exception) {
+            log("Error initializing privacy status: ${e.message}", Log.ERROR)
+        }
         try {
             val integrityToken = getPlayIntegrityToken(context)
             log("Integrity Token: $integrityToken")
             preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
-            // Initialize FCM and lifecycle callbacks (from notification branch)
             FCMService.initialize(context)
             registerLifecycleCallbacks(context)
         } catch (e: Exception) {
