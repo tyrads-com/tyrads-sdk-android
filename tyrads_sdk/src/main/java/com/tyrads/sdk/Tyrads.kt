@@ -36,7 +36,6 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
-import com.tyrads.sdk.acmo.core.localization.helper.LocalizationHelper
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
@@ -175,8 +174,17 @@ class Tyrads private constructor() {
         }
         try {
             NetworkCommons()
+            var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
 
-            val currentLanguage = LocalizationHelper.getLanguageCode(context)
+            if (currentLanguage.isNullOrBlank()) {
+                currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
+                        ?.split("-")?.first() ?: "en"
+                } else {
+                    AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")
+                        ?.first() ?: "en"
+                }
+            }
             _currentLanguageCode.value = currentLanguage
             log("Selected Language: ${currentLanguageCode.value}")
 
