@@ -44,6 +44,13 @@ class AcmoApp : ComponentActivity() {
             finish()
             return
         }
+
+        // Handle process death: if Tyrads is not initialized, finish the activity
+        if (!Tyrads.getInstance().isInitialized()) {
+            Log.e("Tyrads", "AcmoApp: Tyrads SDK is not initialized. Finishing activity.")
+            finish()
+            return
+        }
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
         }
@@ -63,7 +70,7 @@ class AcmoApp : ComponentActivity() {
                     !isUsagePermissionGranted -> "usage-permissions"
                     else -> "webview"
                 }
-                Tyrads.getInstance().navController = rememberNavController()
+                val navController = rememberNavController()
                 Scaffold(
                     modifier = Modifier
                         .fillMaxSize()
@@ -72,17 +79,18 @@ class AcmoApp : ComponentActivity() {
                     containerColor = Color.White,
                 ) { innerPadding ->
                     NavHost(
-                        navController = Tyrads.getInstance().navController,
+                        navController = navController,
                         startDestination = initPath
                     ) {
                         composable("webview") {
                             AcmoWebView()
                         }
                         composable("privacy") {
-                            AcmoPrivacyPolicyPage()
+                            AcmoPrivacyPolicyPage(navController = navController)
                         }
                         composable("usage-permissions") {
                             AcmoUsagePermissionsPage(
+                                navController = navController
                             )
                         }
                     }

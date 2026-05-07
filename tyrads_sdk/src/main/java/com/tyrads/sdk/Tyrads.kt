@@ -67,8 +67,9 @@ class Tyrads private constructor() {
     internal var newUser: Boolean = false
     var initWait: Job? = null
     var loginUserWait: Job? = null
-    lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
+    
+    fun isInitialized(): Boolean = ::context.isInitialized && ::preferences.isInitialized
 
     val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -147,6 +148,10 @@ class Tyrads private constructor() {
         config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
+        if (isInitialized()) {
+            log("Tyrads SDK already initialized", Log.INFO)
+            return@withContext
+        }
         this@Tyrads.context = context.applicationContext
         this@Tyrads.apiKey = apiKey.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API key cannot be blank")
@@ -210,8 +215,15 @@ class Tyrads private constructor() {
         }
     }
 
+    private fun checkInitialized() {
+        if (!isInitialized()) {
+            throw IllegalStateException("Tyrads SDK must be initialized before calling this method. Call Tyrads.getInstance().init(...) first.")
+        }
+    }
+
     suspend fun loginUser(userID: String? = null): ApiHeaders? = withContext(Dispatchers.Default) {
         try {
+            checkInitialized()
             // Wait for initialization to complete
             if (initWait?.isCompleted == false) {
                 log("Waiting for init setup to complete", Log.DEBUG, true)
@@ -285,9 +297,11 @@ class Tyrads private constructor() {
             }
 
             val body =
-                if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(
-                    data = fd
-                ) else fd
+                if (_isSecure) {
+                    encKey?.let { key ->
+                        AcmoEncrypt(encryptionKey = key).encryptDataAESGCM(data = fd)
+                    } ?: fd
+                } else fd
 
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(body))
@@ -446,9 +460,13 @@ class Tyrads private constructor() {
             }
 
             log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
-            val intent = Intent(context, AcmoApp::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
+            try {
+                val intent = Intent(context, AcmoApp::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                log("Error starting AcmoApp: ${e.message}", Log.ERROR)
+            }
 
             track(TyradsActivity.opened)
         }
@@ -505,6 +523,10 @@ class Tyrads private constructor() {
     }
 
     fun track(activity: String) {
+        if (!isInitialized()) {
+            Log.w("Tyrads", "track: SDK not initialized. Skipping tracking for $activity")
+            return
+        }
         tracker.trackUser(activity)
     }
 
