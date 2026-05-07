@@ -29,9 +29,19 @@ import com.tyrads.sdk.acmo.core.utils.ExtraDeviceDetails
 
 @Keep
 class AcmoDeviceDetailsController {
-    private val deviceInfoLazy by lazy { acmoGetDeviceInfo(Tyrads.getInstance().context) }
+    private val deviceInfoLazy by lazy { 
+        if (Tyrads.getInstance().isInitialized()) {
+            acmoGetDeviceInfo(Tyrads.getInstance().context)
+        } else {
+            // Fallback for uninitialized state (unlikely if called via public SDK but good for safety)
+            null
+        }
+    }
 
     suspend fun getDeviceDetails(): Map<String, Any?> = withContext(Dispatchers.IO) {
+        if (!Tyrads.getInstance().isInitialized()) {
+            return@withContext emptyMap<String, Any?>()
+        }
         val context = Tyrads.getInstance().context
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
         val deviceInfo = deviceInfoLazy
@@ -74,20 +84,20 @@ class AcmoDeviceDetailsController {
             "deviceId" to androidId,
             "androidId" to androidId,
             "device" to if (acmoIsTablet(context)) "tablet" else "phone",
-            "brand" to deviceInfo.brand,
-            "model" to deviceInfo.model,
-            "manufacturer" to deviceInfo.manufacturer,
-            "product" to deviceInfo.product,
-            "host" to deviceInfo.host,
-            "hardware" to deviceInfo.hardware,
-            "serialNumber" to deviceInfo.serialNumber,
-            "display" to deviceInfo.display,
-            "baseOs" to deviceInfo.version.baseOS,
-            "codename" to deviceInfo.version.codename,
-            "releaseVersion" to deviceInfo.version.release,
-            "type" to deviceInfo.type,
-            "tags" to deviceInfo.tags,
-            "fingerprint" to deviceInfo.fingerprint,
+            "brand" to (deviceInfo?.brand ?: Build.BRAND),
+            "model" to (deviceInfo?.model ?: Build.MODEL),
+            "manufacturer" to (deviceInfo?.manufacturer ?: Build.MANUFACTURER),
+            "product" to (deviceInfo?.product ?: Build.PRODUCT),
+            "host" to (deviceInfo?.host ?: Build.HOST),
+            "hardware" to (deviceInfo?.hardware ?: Build.HARDWARE),
+            "serialNumber" to (deviceInfo?.serialNumber ?: Build.UNKNOWN),
+            "display" to (deviceInfo?.display ?: Build.DISPLAY),
+            "baseOs" to (deviceInfo?.version?.baseOS),
+            "codename" to (deviceInfo?.version?.codename ?: Build.VERSION.CODENAME),
+            "releaseVersion" to (deviceInfo?.version?.release ?: Build.VERSION.RELEASE),
+            "type" to (deviceInfo?.type ?: Build.TYPE),
+            "tags" to (deviceInfo?.tags ?: Build.TAGS),
+            "fingerprint" to (deviceInfo?.fingerprint ?: Build.FINGERPRINT),
             "build" to PackageInfoCompat.getLongVersionCode(packageInfo).toString(),
             "buildSign" to buildSign,
             "version" to packageInfo.versionName,
@@ -237,34 +247,34 @@ class AcmoDeviceDetailsController {
         }
 
         return DeviceInfo(
-            board = build["board"] as String,
-            bootloader = build["bootloader"] as String,
-            brand = build["brand"] as String,
-            device = build["device"] as String,
-            display = build["display"] as String,
-            fingerprint = build["fingerprint"] as String,
-            hardware = build["hardware"] as String,
-            host = build["host"] as String,
-            id = build["id"] as String,
-            manufacturer = build["manufacturer"] as String,
-            model = build["model"] as String,
-            product = build["product"] as String,
-            supported32BitAbis = build["supported32BitAbis"] as List<String>,
-            supported64BitAbis = build["supported64BitAbis"] as List<String>,
-            supportedAbis = build["supportedAbis"] as List<String>,
-            tags = build["tags"] as String,
-            type = build["type"] as String,
+            board = (build["board"] as? String) ?: Build.BOARD,
+            bootloader = (build["bootloader"] as? String) ?: Build.BOOTLOADER,
+            brand = (build["brand"] as? String) ?: Build.BRAND,
+            device = (build["device"] as? String) ?: Build.DEVICE,
+            display = (build["display"] as? String) ?: Build.DISPLAY,
+            fingerprint = (build["fingerprint"] as? String) ?: Build.FINGERPRINT,
+            hardware = (build["hardware"] as? String) ?: Build.HARDWARE,
+            host = (build["host"] as? String) ?: Build.HOST,
+            id = (build["id"] as? String) ?: Build.ID,
+            manufacturer = (build["manufacturer"] as? String) ?: Build.MANUFACTURER,
+            model = (build["model"] as? String) ?: Build.MODEL,
+            product = (build["product"] as? String) ?: Build.PRODUCT,
+            supported32BitAbis = (build["supported32BitAbis"] as? List<String>) ?: emptyList(),
+            supported64BitAbis = (build["supported64BitAbis"] as? List<String>) ?: emptyList(),
+            supportedAbis = (build["supportedAbis"] as? List<String>) ?: emptyList(),
+            tags = (build["tags"] as? String) ?: Build.TAGS,
+            type = (build["type"] as? String) ?: Build.TYPE,
             version = VersionInfo(
-                baseOS = version["baseOS"] as String?,
-                previewSdkInt = version["previewSdkInt"] as Int?,
-                securityPatch = version["securityPatch"] as String?,
-                codename = version["codename"] as String,
-                incremental = version["incremental"] as String,
-                release = version["release"] as String,
-                sdkInt = version["sdkInt"] as Int
+                baseOS = version["baseOS"] as? String,
+                previewSdkInt = version["previewSdkInt"] as? Int,
+                securityPatch = version["securityPatch"] as? String,
+                codename = (version["codename"] as? String) ?: Build.VERSION.CODENAME,
+                incremental = (version["incremental"] as? String) ?: Build.VERSION.INCREMENTAL,
+                release = (version["release"] as? String) ?: Build.VERSION.RELEASE,
+                sdkInt = (version["sdkInt"] as? Int) ?: Build.VERSION.SDK_INT
             ),
-            isLowRamDevice = build["isLowRamDevice"] as Boolean,
-            serialNumber = build["serialNumber"] as String
+            isLowRamDevice = (build["isLowRamDevice"] as? Boolean) ?: false,
+            serialNumber = (build["serialNumber"] as? String) ?: Build.UNKNOWN
         )
     }
     // New implementation using screen size
