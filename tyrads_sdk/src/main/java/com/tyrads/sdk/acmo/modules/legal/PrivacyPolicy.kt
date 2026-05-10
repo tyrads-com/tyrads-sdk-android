@@ -36,10 +36,12 @@ import com.tyrads.sdk.R
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.helpers.acmoLaunchURL
+import androidx.navigation.NavHostController
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 
 @Composable
 fun AcmoPrivacyPolicyPage(
+    navController: NavHostController,
     onAccepted: (() -> Unit)? = null,
     onCancelled: (() -> Unit)? = null,
     returnToWidget: Boolean? = false
@@ -82,7 +84,7 @@ fun AcmoPrivacyPolicyPage(
                         onAccepted?.invoke()
                     } else {
                         Tyrads.getInstance().setPrivacyAccepted(true)
-                        Tyrads.getInstance().navController.navigate("usage-permissions")
+                        navController.navigate("usage-permissions")
                     }
                 },
                 rejectOntap = {
