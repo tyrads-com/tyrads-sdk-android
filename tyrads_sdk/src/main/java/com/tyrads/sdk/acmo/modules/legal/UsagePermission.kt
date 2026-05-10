@@ -18,9 +18,11 @@ import com.tyrads.sdk.acmo.modules.legal.CloseonTap
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.launch
 import androidx.core.content.edit
+import androidx.navigation.NavHostController
 
 @Composable
 fun AcmoUsagePermissionsPage(
+    navController: NavHostController,
     onCancel: (() -> Unit)? = null,
     returnToWidget: Boolean? = false
 ) {
@@ -61,8 +63,8 @@ fun AcmoUsagePermissionsPage(
 
                         val destination = "webview"
 
-                        Tyrads.getInstance().navController.navigate(destination) {
-                            popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
+                        navController.navigate(destination) {
+                            popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
                         }
