@@ -23,7 +23,9 @@ class AcmoPrivacyPolicyActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val actionType = intent.getBooleanExtra("returnToWidget", false)
         setContent {
+            val navController = androidx.navigation.compose.rememberNavController()
             AcmoPrivacyPolicyPage(
+                navController = navController,
                 onAccepted = {
                     Tyrads.getInstance().setPrivacyAccepted(true)
                     finish()
