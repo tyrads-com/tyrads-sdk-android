@@ -24,7 +24,9 @@ class AcmoUsagePermissionActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val actionType = intent.getBooleanExtra("returnToWidget", false)
         setContent {
+            val navController = androidx.navigation.compose.rememberNavController()
             AcmoUsagePermissionsPage(
+                navController = navController,
                 onCancel = {
                     finish()
                     AcmoOnboardingGate.cancel()
