@@ -10,11 +10,13 @@ import kotlinx.coroutines.withContext
 @Keep
 class AcmoTrackingRepository {
     suspend fun track(fd: Map<String, Any>): Any = withContext(Dispatchers.IO) {
+        val tyrads = Tyrads.getInstance()
+        val currentEncKey = tyrads.encKey
         val encData =
-            if (Tyrads.getInstance().isSecure) AcmoEncrypt(encryptionKey = Tyrads.getInstance().encKey!!).encryptDataAESGCM(
+            if (tyrads.isSecure && !currentEncKey.isNullOrBlank()) AcmoEncrypt(encryptionKey = currentEncKey).encryptDataAESGCM(
                 data = fd
             ) else emptyMap()
-        val body = Gson().toJson(if (Tyrads.getInstance().isSecure) encData else fd)
+        val body = Gson().toJson(if (tyrads.isSecure && !currentEncKey.isNullOrBlank()) encData else fd)
         val (_, response, result) = Fuel.post(AcmoEndpointNames.USER_ACTIVITIES)
             .body(body)
             .response()

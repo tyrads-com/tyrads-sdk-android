@@ -42,9 +42,8 @@ class LocalizationService private constructor() {
     private val gson = Gson()
     private var translations: Map<String, Any> = emptyMap()
     private var supportedLocales: MutableList<String> = mutableListOf()
-    private val prefs: SharedPreferences by lazy {
-        Tyrads.getInstance().preferences
-    }
+    private val prefs: SharedPreferences?
+        get() = Tyrads.getInstance().safePreferences
     private val fallbackLocale = "en"
 
     // Deserializers for Fuel HTTP responses
@@ -70,7 +69,7 @@ class LocalizationService private constructor() {
 
         // Match Dart behavior: only check cache if no update is available
         if (!hasUpdate) {
-            val cachedData = prefs.getString("translations_$locale", null)
+            val cachedData = prefs?.getString("translations_$locale", null)
             if (cachedData != null) {
                 try {
                     val type = object : TypeToken<Map<String, Any>>() {}.type
@@ -106,7 +105,7 @@ class LocalizationService private constructor() {
 
                 // Cache the translations
                 val jsonString = gson.toJson(result)
-                prefs.edit {
+                prefs?.edit {
                     putString("translations_$actualLocale", jsonString)
                 }
 
@@ -139,11 +138,11 @@ class LocalizationService private constructor() {
                 }
 
                 val currentLocaleSha256 = currentLocaleInfo.sha256
-                val cachedVersion = prefs.getString("cached_version_$locale", null)
+                val cachedVersion = prefs?.getString("cached_version_$locale", null)
 
                 if (currentLocaleSha256 != cachedVersion) {
                     // Match Dart behavior: remove then set
-                    prefs.edit {
+                    prefs?.edit {
                         remove("cached_version_$locale")
                         putString("cached_version_$locale", currentLocaleSha256)
                     }

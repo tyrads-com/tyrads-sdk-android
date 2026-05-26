@@ -48,7 +48,7 @@ object InAppNotificationManager {
 
     init {
         if (sharedPreferences == null) {
-            sharedPreferences = Tyrads.getInstance().preferences
+            sharedPreferences = Tyrads.getInstance().safePreferences
         }
     }
 
@@ -92,6 +92,9 @@ object InAppNotificationManager {
 
     fun setLimitedTimeVisible(visible: Boolean, hasEvents: Boolean = true) {
         if (sharedPreferences == null) {
+            sharedPreferences = Tyrads.getInstance().safePreferences
+        }
+        if (sharedPreferences == null) {
             Log.d("Check 1", "11" )
             limitedTimeVisible.value = false
             return
@@ -117,6 +120,9 @@ object InAppNotificationManager {
     }
 
     fun setCurrencySaleVisible(visible: Boolean) {
+        if (sharedPreferences == null) {
+            sharedPreferences = Tyrads.getInstance().safePreferences
+        }
         if (sharedPreferences == null) {
             currencySaleVisible.value = false
             return

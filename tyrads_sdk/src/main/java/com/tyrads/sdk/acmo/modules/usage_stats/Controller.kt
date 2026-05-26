@@ -168,7 +168,7 @@ class AcmoUsageStatsController() {
                 if (firstInstallTime > 1293840000000) { // After Gingerbread
                     installTimeCount[firstInstallTime] =
                         installTimeCount.getOrDefault(firstInstallTime, 0) + 1
-                    highestCount = maxOf(highestCount, installTimeCount[firstInstallTime]!!)
+                    highestCount = maxOf(highestCount, installTimeCount[firstInstallTime] ?: 0)
                 }
             }
 
