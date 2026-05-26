@@ -46,22 +46,22 @@ class NetworkCommons {
                     request.header("X-SDK-Platform", "Android")
                     request.header("X-SDK-Version", AcmoConfig.SDK_VERSION)
                     request.header("Content-Type", "application/json")
-                    val sharedPreferences = Tyrads.getInstance().preferences
+                    val sharedPreferences = Tyrads.getInstance().safePreferences
 
                     if (!request.url.path.endsWith(AcmoEndpointNames.INITIALIZE)) {
                         request.headers["X-User-ID"] =
-                            sharedPreferences.getString(AcmoKeyNames.USER_ID, null) ?: ""
+                            sharedPreferences?.getString(AcmoKeyNames.USER_ID, null) ?: ""
                     }
                     request.headers["X-API-Key"] =
-                        sharedPreferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
+                        sharedPreferences?.getString(AcmoKeyNames.API_KEY, null) ?: ""
                     request.headers["X-API-Secret"] =
-                        sharedPreferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
+                        sharedPreferences?.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     request.headers["X-SDK-Platform"] = AcmoConfig.SDK_PLATFORM
                     request.headers["X-SDK-Version"] = AcmoConfig.SDK_VERSION
                     request.headers["X-Secure-Mode"] =
                         if (Tyrads.getInstance().isSecure) "BASIC" else "PLAIN"
                     request.headers["X-Play-Integrity"] =
-                        sharedPreferences.getString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, "") ?: ""
+                        sharedPreferences?.getString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, "") ?: ""
                     Tyrads.getInstance().log("Request headers set: ${request}")
                 }
                 next(request)

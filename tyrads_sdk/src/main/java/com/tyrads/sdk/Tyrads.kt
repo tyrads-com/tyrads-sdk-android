@@ -76,6 +76,8 @@ class Tyrads private constructor() {
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
+    val safePreferences: SharedPreferences?
+        get() = if (::preferences.isInitialized) preferences else null
     internal lateinit var loginData: AcmoInitModel
     internal var newUser: Boolean = false
     lateinit var navController: NavHostController
@@ -327,8 +329,9 @@ class Tyrads private constructor() {
                 info.gender?.let { fd["gender"] = it }
             }
             log("Initialization Data : $fd", force = true)
+            val currentEncKey = encKey
             val encData =
-                if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(data = fd) else emptyMap()
+                if (_isSecure && !currentEncKey.isNullOrBlank()) AcmoEncrypt(encryptionKey = currentEncKey).encryptDataAESGCM(data = fd) else emptyMap()
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
             when (result) {
@@ -513,9 +516,12 @@ class Tyrads private constructor() {
             log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
             val intent = Intent(context, AcmoApp::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-            context.startActivity(intent)
-
-            track(TyradsActivity.opened)
+            try {
+                context.startActivity(intent)
+                track(TyradsActivity.opened)
+            } catch (e: android.content.ActivityNotFoundException) {
+                log("showOffers: AcmoApp Activity not found. Please ensure it is declared in AndroidManifest.xml.", Log.ERROR)
+            }
         }
 
     @JvmOverloads
