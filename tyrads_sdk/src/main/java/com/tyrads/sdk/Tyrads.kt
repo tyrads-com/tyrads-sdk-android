@@ -97,7 +97,7 @@ class Tyrads private constructor() {
 
     internal fun initializePrivacyStatus() {
         _privacyAccepted.value = preferences.getBoolean(
-            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+            AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + (publisherUserID ?: ""),
             false
         )
     }
@@ -105,7 +105,7 @@ class Tyrads private constructor() {
     internal fun setPrivacyAccepted(isAccepted: Boolean) {
         preferences.edit {
             putBoolean(
-                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
+                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + (publisherUserID ?: ""),
                 isAccepted
             )
         }
@@ -267,7 +267,7 @@ class Tyrads private constructor() {
                 "devicePushToken" to fcmToken,
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
-                "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
+                "engagementId" to engagementId?.toIntOrNull(),
                 "deviceData" to deviceDetails
             )
             log("Initialization Data: $fd")
