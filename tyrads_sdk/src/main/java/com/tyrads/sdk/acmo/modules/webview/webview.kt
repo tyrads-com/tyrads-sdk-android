@@ -46,19 +46,14 @@ import kotlinx.coroutines.launch
 fun AcmoWebView() {
     val context = LocalContext.current
     val mUrl = Tyrads.getInstance().url
-    val webViewManager = WebViewManager.getInstance()
     val webViewState = rememberWebViewState()
     val coroutineScope = rememberCoroutineScope()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
     var hasError by remember { mutableStateOf(false) }
-
-    val preloadedWebViewAvailable = remember { webViewManager.getHeadlessWebView() != null }
-    var isLoading by remember { mutableStateOf(!preloadedWebViewAvailable) }
-
-    var isUsingPreloadedWebView by remember { mutableStateOf(preloadedWebViewAvailable) }
+    var isLoading by remember { mutableStateOf(true) }
 
     Tyrads.getInstance().log(
-        "AcmoWebView: Composing - URL: $mUrl, Preload available: $preloadedWebViewAvailable",
+        "AcmoWebView: Composing - URL: $mUrl",
         Log.INFO,
         force = true
     )
@@ -70,14 +65,7 @@ fun AcmoWebView() {
             webViewState.filePathCallback = null
         }
 
-    DisposableEffect(Unit) {
-        webViewManager.onErrorChanged = { error ->
-            hasError = error
-        }
-        onDispose {
-            webViewManager.onErrorChanged = null
-        }
-    }
+
 
     Box(modifier = Modifier.fillMaxSize()) {
         AndroidView(
@@ -85,124 +73,44 @@ fun AcmoWebView() {
             factory = { factoryContext ->
                 Tyrads.getInstance().log("AcmoWebView: Factory executing", Log.INFO, force = true)
 
-                // Try to get preloaded WebView
-                val preloadedWebView = webViewManager.getHeadlessWebView()
-                val preloadError = webViewManager.hasPreloadError()
-
-                Tyrads.getInstance().log(
-                    "AcmoWebView: Preloaded=${preloadedWebView != null}, Error=$preloadError",
-                    Log.INFO,
-                    force = true
-                )
-
-                val webView = if (preloadedWebView != null) {
-                    Tyrads.getInstance().log(
-                        "AcmoWebView: Using preloaded WebView - instant display",
-                        Log.INFO,
-                        force = true
-                    )
-
-                    isUsingPreloadedWebView = true
-
-                    // Remove from container
-                    (preloadedWebView.parent as? ViewGroup)?.removeView(preloadedWebView)
-
-                    preloadedWebView.layoutParams = ViewGroup.LayoutParams(
+                val webView = WebView(factoryContext).apply {
+                    this.layoutParams = ViewGroup.LayoutParams(
                         ViewGroup.LayoutParams.MATCH_PARENT,
                         ViewGroup.LayoutParams.MATCH_PARENT
                     )
 
-                    preloadedWebView.webViewClient = AcmoWebViewClient(
+                    this.webViewClient = AcmoWebViewClient(
                         context = factoryContext,
-                        onLoadingChanged = { loading ->
-                            Tyrads.getInstance().log(
-                                "AcmoWebView: Preloaded WebView loading state change ignored (loading=$loading)",
-                                Log.DEBUG
-                            )
-                        },
-                        onError = { error ->
-                            hasError = error
-                            if (error) {
-                                isUsingPreloadedWebView = false
-                            }
-                        }
+                        onLoadingChanged = { loading -> isLoading = loading },
+                        onError = { error -> hasError = error }
                     )
 
-                    preloadedWebView.webChromeClient = AcmoWebChromeClient(
+                    this.webChromeClient = AcmoWebChromeClient(
                         webViewState = webViewState,
                         fileChooserLauncher = fileChooserLauncher,
-                        onLoadingChanged = { loading ->
-                            Tyrads.getInstance().log(
-                                "AcmoWebView: Preloaded WebView progress change ignored (loading=$loading)",
-                                Log.DEBUG
-                            )
-                        }
+                        onLoadingChanged = { loading -> isLoading = loading }
                     )
 
-                    webViewManager.setActivityContext(factoryContext as? Activity)
+                    this.settings.apply {
+                        javaScriptEnabled = true
+                        domStorageEnabled = true
+                        allowFileAccess = true
+                        allowContentAccess = true
+                        mediaPlaybackRequiresUserGesture = false
+                        javaScriptCanOpenWindowsAutomatically = true
+                    }
+
+                    this.addJavascriptInterface(
+                        WebAppInterface(factoryContext, coroutineScope),
+                        "AndroidInterface"
+                    )
 
                     Tyrads.getInstance().log(
-                        "AcmoWebView: Activity context set in WebViewManager for back button",
+                        "AcmoWebView: Loading URL in new WebView: $mUrl",
                         Log.INFO,
                         force = true
                     )
-
-                    // Make visible
-                    preloadedWebView.visibility = android.view.View.VISIBLE
-                    preloadedWebView.requestLayout()
-
-                    webViewManager.clearPreload()
-                    isLoading = false
-
-                    preloadedWebView
-                } else {
-                    Tyrads.getInstance().log(
-                        "AcmoWebView: No preload - creating new WebView",
-                        Log.WARN,
-                        force = true
-                    )
-
-                    isUsingPreloadedWebView = false
-
-                    WebView(factoryContext).apply {
-                        this.layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT
-                        )
-
-                        this.webViewClient = AcmoWebViewClient(
-                            context = factoryContext,
-                            onLoadingChanged = { loading -> isLoading = loading },
-                            onError = { error -> hasError = error }
-                        )
-
-                        this.webChromeClient = AcmoWebChromeClient(
-                            webViewState = webViewState,
-                            fileChooserLauncher = fileChooserLauncher,
-                            onLoadingChanged = { loading -> isLoading = loading }
-                        )
-
-                        this.settings.apply {
-                            javaScriptEnabled = true
-                            domStorageEnabled = true
-                            allowFileAccess = true
-                            allowContentAccess = true
-                            mediaPlaybackRequiresUserGesture = false
-                            javaScriptCanOpenWindowsAutomatically = true
-                        }
-
-                        this.addJavascriptInterface(
-                            WebAppInterface(factoryContext, coroutineScope),
-                            "AndroidInterface"
-                        )
-
-                        Tyrads.getInstance().log(
-                            "AcmoWebView: Loading URL in new WebView: $mUrl",
-                            Log.INFO,
-                            force = true
-                        )
-                        this.loadUrl(mUrl)
-                    }
+                    this.loadUrl(mUrl)
                 }
 
                 webViewRef = webView
@@ -210,9 +118,8 @@ fun AcmoWebView() {
             },
             update = { webView ->
                 val currentUrl = webView.url
-                val wasPreloaded = webView.tag == "preloaded"
 
-                if (currentUrl == null && !wasPreloaded && !isUsingPreloadedWebView) {
+                if (currentUrl == null) {
                     Tyrads.getInstance().log(
                         "AcmoWebView: Update block - loading URL: $mUrl",
                         Log.INFO,
@@ -222,14 +129,14 @@ fun AcmoWebView() {
                     webView.loadUrl(mUrl)
                 } else {
                     Tyrads.getInstance().log(
-                        "AcmoWebView: Update block - skipping load (url=$currentUrl, preloaded=$wasPreloaded, usingPreloaded=$isUsingPreloadedWebView)",
+                        "AcmoWebView: Update block - skipping load (url=$currentUrl)",
                         Log.DEBUG
                     )
                 }
             }
         )
 
-        if (isLoading && !isUsingPreloadedWebView) {
+        if (isLoading) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
