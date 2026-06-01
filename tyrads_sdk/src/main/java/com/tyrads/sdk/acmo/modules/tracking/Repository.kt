@@ -11,7 +11,7 @@ import kotlinx.coroutines.withContext
 class AcmoTrackingRepository {
     suspend fun track(fd: Map<String, Any>): Any = withContext(Dispatchers.IO) {
         val encData =
-            if (Tyrads.getInstance().isSecure) AcmoEncrypt(encryptionKey = Tyrads.getInstance().encKey!!).encryptDataAESGCM(
+            if (Tyrads.getInstance().isSecure) AcmoEncrypt(encryptionKey = Tyrads.getInstance().encKey ?: "").encryptDataAESGCM(
                 data = fd
             ) else emptyMap()
         val body = Gson().toJson(if (Tyrads.getInstance().isSecure) encData else fd)

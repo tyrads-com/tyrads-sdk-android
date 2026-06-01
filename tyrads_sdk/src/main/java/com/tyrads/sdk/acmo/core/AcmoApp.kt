@@ -60,7 +60,7 @@ class AcmoApp : ComponentActivity() {
             TyradsSdkTheme {
                 val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermissionGranted(this)
                 val tyrads = Tyrads.getInstance()
-                val privacyAccepted = tyrads.preferences.getBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
+                val privacyAccepted = tyrads.preferences.getBoolean(AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + (tyrads.publisherUserID ?: ""),
                     false)
                 val skipInitialPages = tyrads.config.skipInitialPages
 
