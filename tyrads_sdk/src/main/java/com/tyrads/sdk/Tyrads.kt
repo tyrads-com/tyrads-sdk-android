@@ -45,7 +45,7 @@ import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import com.tyrads.sdk.acmo.modules.push_notifications.FCMNotifications
 import com.tyrads.sdk.acmo.modules.push_notifications.FCMService
-import com.tyrads.sdk.acmo.modules.webview.WebViewManager
+
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -339,10 +339,6 @@ class Tyrads private constructor() {
                     track(TyradsActivity.INITIALIZED)
                     _isLoggedIn.value = true
 
-                    // Preload WebView after successful login (from webview-preload branch)
-                    log("Calling _preloadWebView() after successful login", Log.INFO, force = true)
-                    _preloadWebView()
-
                     val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
                     val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
                     val sdkPlatform = AcmoConfig.SDK_PLATFORM
@@ -404,33 +400,7 @@ class Tyrads private constructor() {
         return builder.build().toString()
     }
 
-    private fun _preloadWebView() {
-        try {
-            log("_preloadWebView: Starting preload", Log.INFO, force = true)
 
-            // Build URL
-            url = getWebUri()
-            log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
-
-            // Preload the WebView
-            WebViewManager.getInstance().preload(context, url)
-
-            log("_preloadWebView: Preload initiated successfully", Log.INFO, force = true)
-        } catch (e: Exception) {
-            log("_preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
-        }
-    }
-
-    fun preloadAfterClose() {
-        tyradScope.launch {
-            try {
-                log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
-                _preloadWebView()
-            } catch (e: Exception) {
-                log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
-            }
-        }
-    }
 
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
@@ -445,18 +415,14 @@ class Tyrads private constructor() {
             }
             // Build the requested URL
             val requestedUrl = getWebUri(route, campaignID)
-            val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
 
-            if (url != requestedUrl || !hasPreloadedWebView) {
+            if (url != requestedUrl) {
                 url = requestedUrl
                 log(
-                    "showOffers: URL changed or no preload available - preloading now: $url",
+                    "showOffers: URL changed: $url",
                     Log.INFO,
                     force = true
                 )
-                WebViewManager.getInstance().preload(context, url)
-            } else {
-                log("showOffers: Using existing preloaded WebView", Log.INFO, force = true)
             }
 
             log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
