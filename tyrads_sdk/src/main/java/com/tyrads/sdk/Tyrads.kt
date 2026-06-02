@@ -25,7 +25,6 @@ import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
-import com.tyrads.sdk.acmo.helpers.urlsMatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -42,7 +41,6 @@ import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
-import com.tyrads.sdk.acmo.modules.webview.WebViewManager
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -372,10 +370,6 @@ class Tyrads private constructor() {
                     _isLoggedIn.value = true
                     track(TyradsActivity.INITIALIZED)
 
-                    // ✅ Preload WebView after successful login
-                    log("Calling _preloadWebView() after successful login", Log.INFO, force = true)
-                    _preloadWebView()
-
                     return@withContext true
                 }
 
@@ -437,59 +431,6 @@ class Tyrads private constructor() {
         return builder.build().toString()
     }
 
-    private fun _preloadWebView(forceRebuildURL: Boolean = true) {
-        // M4: If we're only re-preloading after a close (forceRebuildURL=false) and no URL has
-        // been established yet (login never completed), there is nothing safe to preload.
-        if (!forceRebuildURL && url.isEmpty()) {
-            log("_preloadWebView: Skipping — URL is empty and forceRebuildURL=false", Log.WARN, force = true)
-            return
-        }
-
-        try {
-            log("_preloadWebView: Starting preload (forceRebuildURL=$forceRebuildURL)", Log.INFO, force = true)
-
-            if (forceRebuildURL || url.isEmpty()) {
-                val newUrl = getWebUri()
-
-                if (url.isNotEmpty() && !isDefaultUrl(url) && isDefaultUrl(newUrl)) {
-                    log("_preloadWebView: Skipping default URL preload to preserve existing deep link: $url", Log.INFO, force = true)
-                    return
-                }
-
-                url = newUrl
-            }
-
-            log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
-
-            WebViewManager.getInstance().preload(context, url)
-
-            log("_preloadWebView: Preload initiated successfully", Log.INFO, force = true)
-        } catch (e: Exception) {
-            log("_preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
-        }
-    }
-
-    private fun isDefaultUrl(testUrl: String): Boolean {
-        return try {
-            val uri = testUrl.toUri()
-            val toParam = uri.getQueryParameter("to")
-            toParam.isNullOrEmpty()
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    fun preloadAfterClose() {
-        tyradScope.launch {
-            try {
-                log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
-                _preloadWebView(forceRebuildURL = false)
-            } catch (e: Exception) {
-                log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
-            }
-        }
-    }
-
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
             log("showOffers: Preparing to show offers", Log.INFO, force = true)
@@ -505,23 +446,6 @@ class Tyrads private constructor() {
             val requestedUrl = getWebUri(route, campaignID)
 
             url = requestedUrl
-
-            val preloadedUrl = WebViewManager.getInstance().getPreloadedUrl()
-            val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
-
-            val needsNewPreload = !hasPreloadedWebView || (preloadedUrl != null && !urlsMatch(preloadedUrl, requestedUrl))
-
-            if (needsNewPreload) {
-                log(
-                    "showOffers: Preload missing or URL mismatch ($preloadedUrl vs $requestedUrl) - preloading now",
-                    Log.INFO,
-                    force = true
-                )
-
-                WebViewManager.getInstance().preload(context, url)
-            } else {
-                log("showOffers: Using existing matching preloaded WebView ($preloadedUrl)", Log.INFO, force = true)
-            }
 
             if (currentActivity is AcmoApp) {
                 log("showOffers: AcmoApp already in foreground, skipping startActivity", Log.INFO, force = true)
