@@ -34,6 +34,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import AcmoConfig
 import com.tyrads.sdk.Tyrads
 import org.json.JSONException
 import org.json.JSONObject
@@ -373,7 +374,7 @@ private class AcmoWebViewClient(
     private fun handleUrl(url: String?): Boolean {
         return when {
             url == null -> false
-            url.contains("sdk.tyrads.com") -> false
+            url.contains(AcmoConfig.WEBVIEW_HOST) -> false
             else -> {
                 try {
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
