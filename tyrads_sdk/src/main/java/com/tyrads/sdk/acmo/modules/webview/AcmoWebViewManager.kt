@@ -12,6 +12,7 @@ import android.webkit.*
 import android.widget.FrameLayout
 import androidx.annotation.Keep
 import androidx.core.net.toUri
+import AcmoConfig
 import com.tyrads.sdk.Tyrads
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -239,7 +240,7 @@ class WebViewManager private constructor() {
     private fun handleUrlOverride(context: Context, url: String?): Boolean {
         return when {
             url == null -> false
-            url.contains("sdk.tyrads.com") -> false
+            url.contains(AcmoConfig.WEBVIEW_HOST) -> false
             else -> {
                 try {
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
