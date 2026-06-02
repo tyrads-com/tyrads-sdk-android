@@ -54,10 +54,25 @@ class FCMService : FirebaseMessagingService() {
 
                 requestNotificationPermissionIfNeeded(context)
 
-                val token = FirebaseMessaging.getInstance().token.await()
+                var token: String? = null
+                var retries = 0
+                var maxRetries = 3
+                while (token == null && retries < maxRetries) {
+                    try {
+                        token = FirebaseMessaging.getInstance().token.await()
+                        saveToken(token)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to get FCM token: ${e.message}", e)
+                        retries++
+                        if (retries < maxRetries) {
+                            Log.d(TAG, "Retrying FCM token retrieval...")
+                        } else {
+                            Log.e(TAG, "Max retries reached, unable to get FCM token")
+                            kotlinx.coroutines.delay(2000L * retries)
+                        }
+                    }
+                }
                 Log.d(TAG, "FCM Token: $token")
-
-                saveToken(token)
 
                 Log.d(TAG, "FCM service initialized successfully")
             } catch (e: Exception) {
