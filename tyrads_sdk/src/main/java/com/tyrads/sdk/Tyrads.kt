@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import android.os.Bundle
 import androidx.core.net.toUri
+import kotlinx.coroutines.tasks.await
 
 interface TyradsCallback {
     fun onSuccess()
@@ -82,7 +83,15 @@ class Tyrads private constructor() {
     internal var newUser: Boolean = false
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
-    internal var currentActivity: Activity? = null
+    // WeakReference prevents this field from keeping a destroyed Activity alive across
+    // configuration changes (M1 — memory-leak fix).
+    @Volatile
+    private var _currentActivityRef: java.lang.ref.WeakReference<Activity>? = null
+    internal var currentActivity: Activity?
+        get() = _currentActivityRef?.get()
+        set(value) {
+            _currentActivityRef = value?.let { java.lang.ref.WeakReference(it) }
+        }
 
     internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -191,7 +200,6 @@ class Tyrads private constructor() {
             ?: throw IllegalArgumentException("API secret cannot be blank")
         setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
-        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
         preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
         preferences.edit {
             putString(AcmoKeyNames.API_KEY, apiKey)
@@ -411,7 +419,7 @@ class Tyrads private constructor() {
 
         val builder = Uri.Builder()
             .scheme("https")
-            .authority("v4.sdk.tyrads.com")
+            .authority(AcmoConfig.WEBVIEW_HOST) // M3: single source of truth for the host
             .appendQueryParameter(
                 "to",
                 when {
@@ -430,6 +438,13 @@ class Tyrads private constructor() {
     }
 
     private fun _preloadWebView(forceRebuildURL: Boolean = true) {
+        // M4: If we're only re-preloading after a close (forceRebuildURL=false) and no URL has
+        // been established yet (login never completed), there is nothing safe to preload.
+        if (!forceRebuildURL && url.isEmpty()) {
+            log("_preloadWebView: Skipping — URL is empty and forceRebuildURL=false", Log.WARN, force = true)
+            return
+        }
+
         try {
             log("_preloadWebView: Starting preload (forceRebuildURL=$forceRebuildURL)", Log.INFO, force = true)
 
@@ -524,6 +539,18 @@ class Tyrads private constructor() {
             }
         }
 
+    /**
+     * Launches the TyrAds offerwall activity.
+     *
+     * **Host-app note:** This method starts [AcmoApp] with
+     * `FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TOP`. If an existing instance of
+     * [AcmoApp] is already in your task's back stack, Android will clear all activities above
+     * it. Ensure your navigation stack handles this gracefully (Minor 1).
+     *
+     * @param route      Optional in-app route to open directly (e.g. `"offers/123"`).
+     * @param campaignID Optional campaign ID appended to [route].
+     * @param callback   Optional callback invoked on success or failure.
+     */
     @JvmOverloads
     fun showOffers(
         route: String? = null,
@@ -619,7 +646,18 @@ class Tyrads private constructor() {
     }
 
     private fun registerLifecycleCallbacks(context: Context) {
-        (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object :
+        val app = context.applicationContext as? Application
+        if (app == null) {
+            log(
+                "registerLifecycleCallbacks: applicationContext is not an Application — " +
+                    "activity lifecycle tracking will be unavailable",
+                Log.WARN,
+                force = true
+            )
+            return
+        }
+
+        app.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 currentActivity = activity
