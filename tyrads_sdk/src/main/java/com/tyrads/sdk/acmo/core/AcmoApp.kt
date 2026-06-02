@@ -109,15 +109,4 @@ class AcmoApp : ComponentActivity() {
         outState.putBoolean(ACMO_KEY_LANGUAGE_CHANGE, true)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        if (isFinishing) {
-            Tyrads.getInstance().log(
-                "AcmoApp: Activity finishing - triggering preload for next open",
-                Log.INFO,
-                force = true
-            )
-            Tyrads.getInstance().preloadAfterClose()
-        }
-    }
 }
