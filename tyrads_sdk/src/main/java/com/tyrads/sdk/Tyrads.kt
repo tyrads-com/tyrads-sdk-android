@@ -233,7 +233,6 @@ class Tyrads private constructor() {
             log("An Error Occurred: ${error.message}", Log.ERROR)
         }
 
-        // Initialize FCM Service
         try {
             FCMService.initialize(context)
             registerLifecycleCallbacks(context)
@@ -413,7 +412,7 @@ class Tyrads private constructor() {
 
         val builder = Uri.Builder()
             .scheme("https")
-            .authority(AcmoConfig.WEBVIEW_HOST) // M3: single source of truth for the host
+            .authority(AcmoConfig.WEBVIEW_HOST)
             .appendQueryParameter(
                 "to",
                 when {
@@ -462,19 +461,6 @@ class Tyrads private constructor() {
                 log("showOffers: AcmoApp Activity not found. Please ensure it is declared in AndroidManifest.xml.", Log.ERROR)
             }
         }
-
-    /**
-     * Launches the TyrAds offerwall activity.
-     *
-     * **Host-app note:** This method starts [AcmoApp] with
-     * `FLAG_ACTIVITY_NEW_TASK or FLAG_ACTIVITY_CLEAR_TOP`. If an existing instance of
-     * [AcmoApp] is already in your task's back stack, Android will clear all activities above
-     * it. Ensure your navigation stack handles this gracefully (Minor 1).
-     *
-     * @param route      Optional in-app route to open directly (e.g. `"offers/123"`).
-     * @param campaignID Optional campaign ID appended to [route].
-     * @param callback   Optional callback invoked on success or failure.
-     */
     @JvmOverloads
     fun showOffers(
         route: String? = null,

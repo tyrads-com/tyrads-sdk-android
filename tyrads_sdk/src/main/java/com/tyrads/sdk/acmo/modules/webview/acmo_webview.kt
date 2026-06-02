@@ -205,8 +205,6 @@ private class AcmoWebViewClient(
         onLoadingChanged(false)
         Tyrads.getInstance().log("AcmoWebViewClient: Page finished: $url", Log.INFO, force = true)
 
-        // Only inject JS bridge if not already injected by preload
-        // This prevents duplicate injection
         view?.evaluateJavascript(
             """
                 (function() {
