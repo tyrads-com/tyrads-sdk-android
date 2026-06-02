@@ -57,11 +57,7 @@ fun AcmoUsagePermissionsPage(
                             return@UsageStatsCard
                         }
 
-                        val destination = if (Tyrads.getInstance().newUser) {
-                            "users-update"
-                        } else {
-                            "webview"
-                        }
+                        val destination = "webview"
 
                         Tyrads.getInstance().navController.navigate(destination) {
                             popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
