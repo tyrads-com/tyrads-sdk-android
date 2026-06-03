@@ -81,8 +81,6 @@ class Tyrads private constructor() {
     internal var newUser: Boolean = false
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
-    // WeakReference prevents this field from keeping a destroyed Activity alive across
-    // configuration changes (M1 — memory-leak fix).
     @Volatile
     private var _currentActivityRef: java.lang.ref.WeakReference<Activity>? = null
     internal var currentActivity: Activity?
