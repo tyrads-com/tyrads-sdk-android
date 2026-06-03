@@ -25,7 +25,6 @@ import com.google.gson.Gson
 import com.tyrads.sdk.acmo.core.AcmoApp
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.isGooglePlayServicesAvailable
-import com.tyrads.sdk.acmo.helpers.urlsMatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -42,7 +41,6 @@ import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
-import com.tyrads.sdk.acmo.modules.webview.WebViewManager
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,6 +50,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import android.os.Bundle
 import androidx.core.net.toUri
+import kotlinx.coroutines.tasks.await
 
 interface TyradsCallback {
     fun onSuccess()
@@ -82,7 +81,13 @@ class Tyrads private constructor() {
     internal var newUser: Boolean = false
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
-    internal var currentActivity: Activity? = null
+    @Volatile
+    private var _currentActivityRef: java.lang.ref.WeakReference<Activity>? = null
+    internal var currentActivity: Activity?
+        get() = _currentActivityRef?.get()
+        set(value) {
+            _currentActivityRef = value?.let { java.lang.ref.WeakReference(it) }
+        }
 
     internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -191,7 +196,6 @@ class Tyrads private constructor() {
             ?: throw IllegalArgumentException("API secret cannot be blank")
         setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
-        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
         preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
         preferences.edit {
             putString(AcmoKeyNames.API_KEY, apiKey)
@@ -227,7 +231,6 @@ class Tyrads private constructor() {
             log("An Error Occurred: ${error.message}", Log.ERROR)
         }
 
-        // Initialize FCM Service
         try {
             FCMService.initialize(context)
             registerLifecycleCallbacks(context)
@@ -301,7 +304,7 @@ class Tyrads private constructor() {
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
                 "devicePushToken" to fcmToken,
-                "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
+                "engagementId" to engagementId?.toIntOrNull(),
                 "deviceData" to deviceDetails
             )
             mediaSourceInfo?.let { info ->
@@ -364,10 +367,6 @@ class Tyrads private constructor() {
                     _isLoggedIn.value = true
                     track(TyradsActivity.INITIALIZED)
 
-                    // ✅ Preload WebView after successful login
-                    log("Calling _preloadWebView() after successful login", Log.INFO, force = true)
-                    _preloadWebView()
-
                     return@withContext true
                 }
 
@@ -411,7 +410,7 @@ class Tyrads private constructor() {
 
         val builder = Uri.Builder()
             .scheme("https")
-            .authority("v4.sdk.tyrads.com")
+            .authority(AcmoConfig.WEBVIEW_HOST)
             .appendQueryParameter(
                 "to",
                 when {
@@ -427,52 +426,6 @@ class Tyrads private constructor() {
         }
 
         return builder.build().toString()
-    }
-
-    private fun _preloadWebView(forceRebuildURL: Boolean = true) {
-        try {
-            log("_preloadWebView: Starting preload (forceRebuildURL=$forceRebuildURL)", Log.INFO, force = true)
-
-            if (forceRebuildURL || url.isEmpty()) {
-                val newUrl = getWebUri()
-
-                if (url.isNotEmpty() && !isDefaultUrl(url) && isDefaultUrl(newUrl)) {
-                    log("_preloadWebView: Skipping default URL preload to preserve existing deep link: $url", Log.INFO, force = true)
-                    return
-                }
-
-                url = newUrl
-            }
-
-            log("_preloadWebView: Built URL: $url", Log.INFO, force = true)
-
-            WebViewManager.getInstance().preload(context, url)
-
-            log("_preloadWebView: Preload initiated successfully", Log.INFO, force = true)
-        } catch (e: Exception) {
-            log("_preloadWebView: Error: ${e.message}", Log.ERROR, force = true)
-        }
-    }
-
-    private fun isDefaultUrl(testUrl: String): Boolean {
-        return try {
-            val uri = testUrl.toUri()
-            val toParam = uri.getQueryParameter("to")
-            toParam.isNullOrEmpty()
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    fun preloadAfterClose() {
-        tyradScope.launch {
-            try {
-                log("preloadAfterClose: Re-preloading WebView after close", Log.INFO, force = true)
-                _preloadWebView(forceRebuildURL = false)
-            } catch (e: Exception) {
-                log("preloadAfterClose: Error: ${e.message}", Log.ERROR, force = true)
-            }
-        }
     }
 
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
@@ -491,23 +444,6 @@ class Tyrads private constructor() {
 
             url = requestedUrl
 
-            val preloadedUrl = WebViewManager.getInstance().getPreloadedUrl()
-            val hasPreloadedWebView = WebViewManager.getInstance().getHeadlessWebView() != null
-
-            val needsNewPreload = !hasPreloadedWebView || (preloadedUrl != null && !urlsMatch(preloadedUrl, requestedUrl))
-
-            if (needsNewPreload) {
-                log(
-                    "showOffers: Preload missing or URL mismatch ($preloadedUrl vs $requestedUrl) - preloading now",
-                    Log.INFO,
-                    force = true
-                )
-
-                WebViewManager.getInstance().preload(context, url)
-            } else {
-                log("showOffers: Using existing matching preloaded WebView ($preloadedUrl)", Log.INFO, force = true)
-            }
-
             if (currentActivity is AcmoApp) {
                 log("showOffers: AcmoApp already in foreground, skipping startActivity", Log.INFO, force = true)
                 return@withContext
@@ -523,7 +459,6 @@ class Tyrads private constructor() {
                 log("showOffers: AcmoApp Activity not found. Please ensure it is declared in AndroidManifest.xml.", Log.ERROR)
             }
         }
-
     @JvmOverloads
     fun showOffers(
         route: String? = null,
@@ -619,7 +554,18 @@ class Tyrads private constructor() {
     }
 
     private fun registerLifecycleCallbacks(context: Context) {
-        (context.applicationContext as? Application)?.registerActivityLifecycleCallbacks(object :
+        val app = context.applicationContext as? Application
+        if (app == null) {
+            log(
+                "registerLifecycleCallbacks: applicationContext is not an Application — " +
+                    "activity lifecycle tracking will be unavailable",
+                Log.WARN,
+                force = true
+            )
+            return
+        }
+
+        app.registerActivityLifecycleCallbacks(object :
             Application.ActivityLifecycleCallbacks {
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 currentActivity = activity
