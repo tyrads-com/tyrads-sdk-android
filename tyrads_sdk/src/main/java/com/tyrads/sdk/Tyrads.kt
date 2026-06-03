@@ -304,7 +304,7 @@ class Tyrads private constructor() {
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
                 "devicePushToken" to fcmToken,
-                "engagementId" to if (engagementId.isNullOrBlank()) null else engagementId.toInt(),
+                "engagementId" to engagementId?.toIntOrNull(),
                 "deviceData" to deviceDetails
             )
             mediaSourceInfo?.let { info ->
