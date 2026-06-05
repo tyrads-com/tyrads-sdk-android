@@ -28,8 +28,3 @@
 ##-printseeds seeds.txt
 ##-printusage usage.txt
 ##-printmapping mapping.txt
-
-# Fix: Java 11 invokedynamic / StringConcatFactory not available on Android ART.
-# The Kotlin compiler targeting JVM 11 emits StringConcatFactory calls for
-# string interpolation/toString(). R8 cannot resolve this class on Android.
--dontwarn java.lang.invoke.StringConcatFactory
