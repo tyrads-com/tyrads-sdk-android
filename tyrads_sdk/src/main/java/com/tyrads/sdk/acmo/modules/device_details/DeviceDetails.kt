@@ -25,6 +25,7 @@ import com.tyrads.sdk.acmo.core.utils.getNetworkType
 import com.tyrads.sdk.acmo.core.utils.getSystemClockInfo
 import com.tyrads.sdk.acmo.core.utils.isVpnActive
 import com.tyrads.sdk.acmo.core.utils.getTrackingInfo
+import com.tyrads.sdk.acmo.core.utils.ExtraDeviceDetails
 
 @Keep
 class AcmoDeviceDetailsController {
@@ -41,13 +42,32 @@ class AcmoDeviceDetailsController {
         val trackingInfo = getTrackingInfo(context)
         val installerPackageName = getInstallerPackageName(context)
         val networkType = if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && ContextCompat.checkSelfPermission(context, Manifest.permission.READ_BASIC_PHONE_STATE) == PackageManager.PERMISSION_GRANTED))  {
-                getNetworkType(context)
-            } else {
-                null
-            }
+            getNetworkType(context)
+        } else {
+            null
+        }
         val usageController = AcmoUsageStatsController()
         val androidId =
             Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+
+        // Get build signature based on API level
+        val buildSign = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            packageInfo.signingInfo?.apkContentsSigners?.joinToString { it.toCharsString() }
+        } else {
+            @Suppress("DEPRECATION")
+            packageInfo.signatures?.joinToString { it.toCharsString() }
+        }
+
+        // Get extra device details
+        val extraDeviceDetails = ExtraDeviceDetails.getExtraDeviceDetailsMap(context)
+
+        // Try to get Google AppSet ID asynchronously (optional - for v4.0)
+        var googleAppSetId: String? = null
+        try {
+            googleAppSetId = ExtraDeviceDetails.getGoogleAppSetIdSync(context)
+        } catch (e: Exception) {
+            // If AppSet library is not available or fails, set to null
+        }
 
         var deviceDetails = mapOf(
             "deviceAge" to usageController.getDeviceAgeTime(),
@@ -70,7 +90,7 @@ class AcmoDeviceDetailsController {
             "tags" to deviceInfo.tags,
             "fingerprint" to deviceInfo.fingerprint,
             "build" to PackageInfoCompat.getLongVersionCode(packageInfo).toString(),
-            "buildSign" to packageInfo.signatures?.joinToString { it.toCharsString() },
+            "buildSign" to buildSign,
             "version" to packageInfo.versionName,
             "package" to packageInfo.packageName,
             "platform" to AcmoConfig.SDK_PLATFORM,
@@ -130,7 +150,33 @@ class AcmoDeviceDetailsController {
             // Tracking Info - Screen Metrics
             "screenDensity" to trackingInfo["screen_density"],
             "screenWidth" to trackingInfo["screen_width"],
-            "screenHeight" to trackingInfo["screen_height"]
+            "screenHeight" to trackingInfo["screen_height"],
+
+            // Extra Device Details - GPU, Bluetooth, Touch Support
+            "gpu" to extraDeviceDetails["gpu"],
+            "bluetooth" to extraDeviceDetails["bluetooth"],
+            "bluetoothSupported" to extraDeviceDetails["bluetooth_supported"],
+            "bluetoothLESupported" to extraDeviceDetails["bluetooth_le_supported"],
+            "bluetoothAdapterName" to extraDeviceDetails["bluetooth_adapter_name"],
+            "touchSupport" to extraDeviceDetails["touch_support"],
+            "touchMultitouch" to extraDeviceDetails["touch_multitouch"],
+            "touchMultitouchDistinct" to extraDeviceDetails["touch_multitouch_distinct"],
+            "touchMultitouchJazzhand" to extraDeviceDetails["touch_multitouch_jazzhand"],
+            "touchPressure" to extraDeviceDetails["touch_pressure"],
+
+            // Event Tracking
+            "clipboardNumEvents" to extraDeviceDetails["clipboard_num_events"],
+            "clipboardScore" to extraDeviceDetails["clipboard_score"],
+            "clickNumEvents" to extraDeviceDetails["click_num_events"],
+            "mouseNumEvents" to extraDeviceDetails["mouse_num_events"],
+            "touchNumEvents" to extraDeviceDetails["touch_num_events"],
+
+            // Keyboard Tracking
+            "keyboardNumEvents" to extraDeviceDetails["keyboard_num_events"],
+            "keyboardScore" to extraDeviceDetails["keyboard_score"],
+
+            // Google AppSet ID
+            "googleAppSetID" to googleAppSetId
         )
         return@withContext deviceDetails
     }
@@ -187,6 +233,7 @@ class AcmoDeviceDetailsController {
                 Build.UNKNOWN
             }
         } else {
+            @Suppress("DEPRECATION")
             build["serialNumber"] = Build.SERIAL
         }
 

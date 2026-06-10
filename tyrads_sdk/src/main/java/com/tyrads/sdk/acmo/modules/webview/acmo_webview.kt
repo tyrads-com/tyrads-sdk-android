@@ -11,21 +11,34 @@ import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import AcmoConfig
 import com.tyrads.sdk.Tyrads
 import org.json.JSONException
 import org.json.JSONObject
 import androidx.core.net.toUri
-import com.tyrads.sdk.acmo.core.services.LocalizationService
+import com.tyrads.sdk.acmo.helpers.urlsMatch
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -34,52 +47,194 @@ import kotlinx.coroutines.launch
 @Composable
 fun AcmoWebView() {
     val context = LocalContext.current
-    val mUrl = Tyrads.getInstance().url
+    val mUrl by Tyrads.getInstance().urlState.collectAsState()
+    val webViewState = rememberWebViewState()
     val coroutineScope = rememberCoroutineScope()
     var webViewRef by remember { mutableStateOf<WebView?>(null) }
+    var hasError by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(true) }
 
-    val fileChooserLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri ->
-        webViewRef?.let { webView ->
-            val filePathCallback = webView.getFilePathCallback()
-            if (uri != null) {
-                filePathCallback?.onReceiveValue(arrayOf(uri))
-            } else {
-                filePathCallback?.onReceiveValue(null)
-            }
-            webView.clearFilePathCallback()
+    Tyrads.getInstance().log(
+        "AcmoWebView: Composing - URL: $mUrl",
+        Log.INFO,
+        force = true
+    )
+
+    val fileChooserLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            val result = uri?.let { arrayOf(it) }
+            webViewState.filePathCallback?.onReceiveValue(result)
+            webViewState.filePathCallback = null
         }
-    }
 
-    AndroidView(factory = {
-        WebView(it).apply {
-            this.layoutParams = ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            this.webViewClient = AcmoWebViewClient(context)
-            this.webChromeClient = AcmoWebChromeClient(
-                onShowFileChooser = { filePathCallback ->
-                    this.setFilePathCallback(filePathCallback)
-                    fileChooserLauncher.launch("*/*")
-                    true
+    Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { factoryContext ->
+                Tyrads.getInstance().log("AcmoWebView: Factory executing - creating new WebView", Log.INFO, force = true)
+
+                WebView(factoryContext).apply {
+                    this.layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+
+                    this.webViewClient = AcmoWebViewClient(
+                        context = factoryContext,
+                        onLoadingChanged = { loading -> isLoading = loading },
+                        onError = { error -> hasError = error }
+                    )
+
+                    this.webChromeClient = AcmoWebChromeClient(
+                        webViewState = webViewState,
+                        fileChooserLauncher = fileChooserLauncher,
+                        onLoadingChanged = { loading -> isLoading = loading }
+                    )
+
+                    this.settings.apply {
+                        javaScriptEnabled = true
+                        domStorageEnabled = true
+                        allowFileAccess = true
+                        allowContentAccess = true
+                        mediaPlaybackRequiresUserGesture = false
+                        javaScriptCanOpenWindowsAutomatically = true
+                    }
+
+                    this.addJavascriptInterface(
+                        WebAppInterface(factoryContext, coroutineScope),
+                        "AndroidInterface"
+                    )
+
+                    Tyrads.getInstance().log(
+                        "AcmoWebView: WebView created, update block will load: $mUrl",
+                        Log.INFO,
+                        force = true
+                    )
+                }.also { webViewRef = it }
+            },
+            update = { webView ->
+                val currentUrl = webView.url
+
+                val needsLoad = when {
+                    currentUrl == null && mUrl.isNotEmpty() -> true
+                    currentUrl != null && mUrl.isNotEmpty() && !urlsMatch(currentUrl, mUrl) -> {
+                        Tyrads.getInstance().log("AcmoWebView: URL changed - reloading. Current: $currentUrl, New: $mUrl", Log.INFO, force = true)
+                        true
+                    }
+                    else -> false
+                }
+
+                if (needsLoad) {
+                    Tyrads.getInstance().log(
+                        "AcmoWebView: Update block - loading URL: $mUrl",
+                        Log.INFO,
+                        force = true
+                    )
+                    isLoading = true
+                    webView.loadUrl(mUrl)
+                } else {
+                    Tyrads.getInstance().log(
+                        "AcmoWebView: Update block - skipping load (url=$currentUrl)",
+                        Log.DEBUG
+                    )
+                }
+            }
+        )
+
+        if (isLoading) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        }
+
+        if (hasError) {
+            ErrorView(
+                onRetry = {
+                    hasError = false
+                    webViewRef?.reload()
                 }
             )
-            this.settings.apply {
-                javaScriptEnabled = true
-                domStorageEnabled = true
-                allowFileAccess = true
-                allowContentAccess = true
-            }
-            this.addJavascriptInterface(WebAppInterface(it, coroutineScope), "AndroidInterface")
         }
-    }, update = {
-        it.loadUrl(mUrl)
-    })
+    }
 }
 
-private class AcmoWebViewClient(private val context: Context) : WebViewClient() {
+@Composable
+private fun ErrorView(onRetry: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = "Failed to load content. Please try again.",
+                color = Color.Red,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = onRetry) {
+                Text("Retry")
+            }
+        }
+    }
+}
+
+private class AcmoWebViewClient(
+    private val context: Context,
+    private val onLoadingChanged: (Boolean) -> Unit = {},
+    private val onError: (Boolean) -> Unit = {}
+) : WebViewClient() {
+
+    override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+        super.onPageStarted(view, url, favicon)
+        onLoadingChanged(true)
+        onError(false)
+        Tyrads.getInstance().log("AcmoWebViewClient: Page started: $url", Log.INFO, force = true)
+    }
+
+    override fun onPageFinished(view: WebView?, url: String?) {
+        super.onPageFinished(view, url)
+        onLoadingChanged(false)
+        Tyrads.getInstance().log("AcmoWebViewClient: Page finished: $url", Log.INFO, force = true)
+
+        view?.evaluateJavascript(
+            """
+                (function() {
+                    // Check if bridge already exists
+                    if (window.tyradsJsBridgeInitialized) {
+                        console.log('AcmoWebView: JavaScript bridge already initialized - skipping');
+                        return;
+                    }
+                    
+                    window.addEventListener('message', function(event) {
+                        try {
+                            const message = typeof event.data === 'string' 
+                                ? JSON.parse(event.data) 
+                                : event.data;
+                                
+                            if (message && window.AndroidInterface) {
+                                AndroidInterface.postMessage(JSON.stringify(message));
+                            }
+                        } catch (error) {
+                            console.error('Error handling message:', error);
+                        }
+                    });
+                    
+                    window.tyradsJsBridgeInitialized = true;
+                    console.log('AcmoWebView: JavaScript bridge initialized');
+                })();
+            """.trimIndent(), null
+        )
+    }
+
     override fun shouldOverrideUrlLoading(
         view: WebView?,
         request: WebResourceRequest?
@@ -94,11 +249,9 @@ private class AcmoWebViewClient(private val context: Context) : WebViewClient() 
     }
 
     private fun handleUrl(url: String?): Boolean {
-        Log.d("WebView", "Intercepting URL: $url")
-
         return when {
             url == null -> false
-            url.contains("sdk.tyrads.com") -> false
+            url.contains(AcmoConfig.WEBVIEW_HOST) -> false
             else -> {
                 try {
                     val intent = Intent(Intent.ACTION_VIEW, url.toUri())
@@ -106,70 +259,98 @@ private class AcmoWebViewClient(private val context: Context) : WebViewClient() 
                     context.startActivity(intent)
                     true
                 } catch (e: Exception) {
-                    Log.e("WebView", "Failed to handle URL: $url", e)
+                    Log.e("AcmoWebViewClient", "Failed to handle URL: $url", e)
                     false
                 }
             }
         }
     }
 
-    override fun onPageFinished(view: WebView?, url: String?) {
-        super.onPageFinished(view, url)
+    override fun onReceivedError(
+        view: WebView?,
+        request: WebResourceRequest?,
+        error: WebResourceError?
+    ) {
+        super.onReceivedError(view, request, error)
+        if (request?.isForMainFrame == true) {
+            onError(true)
+            onLoadingChanged(false)
+            Tyrads.getInstance().log(
+                "AcmoWebViewClient: Error: ${error?.description}",
+                Log.ERROR,
+                force = true
+            )
+        }
+    }
 
-        view?.evaluateJavascript(
-            """
-                (function() {
-                    window.addEventListener('message', function(event) {
-                        try {
-                            const message = typeof event.data === 'string' 
-                                ? JSON.parse(event.data) 
-                                : event.data;
-                                
-                            if (message) {
-                                AndroidInterface.postMessage(JSON.stringify(message));
-                            }
-                        } catch (error) {
-                            console.error('Error handling message:', error);
-                        }
-                    });
-                    
-                    // Debug log
-                    console.log('WebView JavaScript bridge initialized');
-                })();
-            """.trimIndent(), null
+    @Deprecated("Deprecated in Java")
+    override fun onReceivedError(
+        view: WebView?,
+        errorCode: Int,
+        description: String?,
+        failingUrl: String?
+    ) {
+        super.onReceivedError(view, errorCode, description, failingUrl)
+        onError(true)
+        onLoadingChanged(false)
+        Tyrads.getInstance().log(
+            "AcmoWebViewClient: Error: $description",
+            Log.ERROR,
+            force = true
         )
     }
 }
 
 private class AcmoWebChromeClient(
-    private val onShowFileChooser: (ValueCallback<Array<Uri>>) -> Boolean
+    private val webViewState: WebViewState,
+    private val fileChooserLauncher: ActivityResultLauncher<String>,
+    private val onLoadingChanged: (Boolean) -> Unit = {}
 ) : WebChromeClient() {
+
     override fun onShowFileChooser(
-        webView: WebView?,
-        filePathCallback: ValueCallback<Array<Uri>>?,
-        fileChooserParams: FileChooserParams?
+        webView: WebView,
+        filePathCallback: ValueCallback<Array<Uri>>,
+        fileChooserParams: FileChooserParams
     ): Boolean {
-        return onShowFileChooser(filePathCallback ?: return false)
+        webViewState.filePathCallback?.onReceiveValue(null)
+        webViewState.filePathCallback = filePathCallback
+        fileChooserLauncher.launch("image/*")
+        return true
+    }
+
+    override fun onProgressChanged(view: WebView?, newProgress: Int) {
+        super.onProgressChanged(view, newProgress)
+        onLoadingChanged(newProgress < 100)
+    }
+
+    override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+        consoleMessage?.let {
+            Tyrads.getInstance().log(
+                "WebView Console: ${it.message()}",
+                Log.DEBUG
+            )
+        }
+        return true
     }
 }
 
-private var filePathCallback: ValueCallback<Array<Uri>>? = null
-
-private fun WebView.getFilePathCallback(): ValueCallback<Array<Uri>>? = filePathCallback
-
-private fun WebView.setFilePathCallback(callback: ValueCallback<Array<Uri>>?) {
-    filePathCallback = callback
+@Keep
+class WebViewState {
+    var webView: WebView? by mutableStateOf(null)
+    var filePathCallback: ValueCallback<Array<Uri>>? by mutableStateOf(null)
 }
 
-private fun WebView.clearFilePathCallback() {
-    filePathCallback = null
-}
+@Composable
+fun rememberWebViewState() = remember { WebViewState() }
 
 @Keep
-private class WebAppInterface(private val context: Context, private val coroutineScope: CoroutineScope) {
+private class WebAppInterface(
+    private val context: Context,
+    private val coroutineScope: CoroutineScope
+) {
     private val mainHandler = Handler(Looper.getMainLooper())
-    private val localizationService = LocalizationService.getInstance()
-     @JavascriptInterface
+
+    @JavascriptInterface
     fun postMessage(jsonMessage: String) {
         try {
             Log.d("WebAppInterface", "Received message: $jsonMessage")
@@ -188,7 +369,7 @@ private class WebAppInterface(private val context: Context, private val coroutin
                     if (langCode.isNotEmpty()) {
                         mainHandler.post {
                             coroutineScope.launch {
-                                Tyrads.getInstance().changeLanguage(  langCode)
+                                Tyrads.getInstance().changeLanguage(langCode)
                             }
                         }
                     }
@@ -203,4 +384,3 @@ private class WebAppInterface(private val context: Context, private val coroutin
         }
     }
 }
-

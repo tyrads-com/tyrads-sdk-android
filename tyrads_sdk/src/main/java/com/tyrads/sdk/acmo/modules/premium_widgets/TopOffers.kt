@@ -26,8 +26,10 @@ import com.tyrads.sdk.Tyrads.PremiumWidgetStyles
 import com.tyrads.sdk.acmo.core.extensions.toColor
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.helpers.launchUrlForce
+import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
 import com.tyrads.sdk.acmo.modules.input_models.cardElevation
 import com.tyrads.sdk.acmo.modules.input_models.errorPadding
+import com.tyrads.sdk.acmo.modules.notifications.inApp_Notifications.InAppNotificationHost
 import com.tyrads.sdk.acmo.modules.premium_widgets.components.*
 import com.tyrads.sdk.acmo.modules.premium_widgets.view_model.TopOffersViewModel
 import com.tyrads.sdk.ui.theme.RedColor
@@ -110,12 +112,9 @@ fun TopOffers(
                                 }
                             },
                             onButtonTap = {
-                                if (privacyAccepted.value) {
-                                    viewModel.onOfferClick(offer, index)
-                                } else {
-                                    coroutineScope.launch {
-                                        Tyrads.getInstance()
-                                            .showOffers(route = "offers/${offer.campaignId}")
+                                coroutineScope.launch {
+                                    AcmoOnboardingGate.start(context) {
+                                        viewModel.onOfferClick(offer, index)
                                     }
                                 }
                             },
@@ -141,12 +140,9 @@ fun TopOffers(
                                 item = offer,
                                 currencySales = uiState.currencySales,
                                 onButtonClick = {
-                                    if (privacyAccepted.value) {
-                                        viewModel.onOfferClick(offer, index)
-                                    } else {
-                                        coroutineScope.launch {
-                                            Tyrads.getInstance()
-                                                .showOffers(route = "offers/${offer.campaignId}")
+                                    coroutineScope.launch {
+                                        AcmoOnboardingGate.start(context) {
+                                            viewModel.onOfferClick(offer, index)
                                         }
                                     }
                                 },
@@ -176,6 +172,7 @@ fun TopOffers(
                 }
             )
         }
+        InAppNotificationHost()
     }
 }
 
@@ -214,7 +211,9 @@ private fun EmptyOffersView(
             Button(
                 onClick = {
                     coroutineScope.launch {
-                        Tyrads.getInstance().showOffers()
+                        Tyrads.getInstance().showOffers(
+                            "active-offers"
+                        )
                     }
                 },
                 colors = ButtonDefaults.buttonColors(
@@ -236,8 +235,6 @@ private fun EmptyOffersView(
                 } else {
                     translatedText
                 }
-
-                Log.d("TopOffers", "Original translation: '$translatedText', Final button text: '$buttonText'")
 
                 Text(
                     text = buttonText,

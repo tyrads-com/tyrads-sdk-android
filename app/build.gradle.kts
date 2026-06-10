@@ -21,8 +21,8 @@ android {
         applicationId = "com.tyrads.sdk.example"
         minSdk = 24
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 24
+        versionName = "4.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -36,12 +36,22 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "TYRADS_API_KEY", "\"${localProperties.getProperty("tyrads.api.key")}\"")
-            buildConfigField(
-                "String",
-                "TYRADS_API_SECRET",
-                "\"${localProperties.getProperty("tyrads.api.secret")}\""
-            )
+            buildConfigField("String", "TYRREWARD_API_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_KEY")}\"")
+            buildConfigField("String", "TYRREWARD_API_SECRET", "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_SECRET")}\"")
+            buildConfigField("String", "TYRREWARD_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA1_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA1_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA1_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA2_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA2_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA2_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA3_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA3_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA3_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_ENC_KEY")}\"")
+
         }
         release {
             isMinifyEnabled = true
@@ -49,15 +59,35 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            buildConfigField("String", "TYRADS_API_KEY", "\"${localProperties.getProperty("tyrads.api.key")}\"")
-            buildConfigField(
-                "String",
-                "TYRADS_API_SECRET",
-                "\"${localProperties.getProperty("tyrads.api.secret")}\""
-            )
+            buildConfigField("String", "TYRREWARD_API_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_KEY")}\"")
+            buildConfigField("String", "TYRREWARD_API_SECRET", "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_SECRET")}\"")
+            buildConfigField("String", "TYRREWARD_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_TYRREWARD_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA1_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA1_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA1_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA1_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA2_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA2_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA2_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA2_TYRADS_SDK_ENC_KEY")}\"")
+
+            buildConfigField("String", "BELANDA3_API_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_KEY")}\"")
+            buildConfigField("String", "BELANDA3_API_SECRET", "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_SECRET")}\"")
+            buildConfigField("String", "BELANDA3_ENC_KEY",    "\"${localProperties.getProperty("ANDROID_BELANDA3_TYRADS_SDK_ENC_KEY")}\"")
+
             signingConfig = signingConfigs.getByName("debug")
         }
     }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
+        }
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8

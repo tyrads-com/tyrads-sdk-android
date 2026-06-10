@@ -1,20 +1,17 @@
 package com.tyrads.sdk.acmo.core
 
-
-import AcmoKeyNames
 import AcmoUsagePermissionsPage
-import AcmoUsersUpdatePage
-import android.content.Context
+import AcmoUsageStatsController
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.Keep
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.Scaffold
@@ -27,15 +24,15 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.AcmoPrivacyPolicyPage
 import com.tyrads.sdk.acmo.modules.webview.AcmoWebView
 import com.tyrads.sdk.ui.theme.TyradsSdkTheme
+import androidx.compose.runtime.collectAsState
+import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 
 @Keep
 class AcmoApp : ComponentActivity() {
     companion object {
         private const val ACMO_KEY_ACTIVITY_KILLED = "acmo_activity_killed"
         private const val ACMO_KEY_LANGUAGE_CHANGE = "acmo_language_change"
-
     }
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,11 +40,15 @@ class AcmoApp : ComponentActivity() {
         Tyrads.getInstance().initializePrivacyStatus()
 
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&
-            !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)) {
+            !savedInstanceState.getBoolean(ACMO_KEY_LANGUAGE_CHANGE, false)
+        ) {
             Tyrads.getInstance().log("Offerwall closed")
             finish()
             return
         }
+
+        FCMNotifications.getInstance().handleNotificationIntent(intent)
+
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
         }
@@ -55,18 +56,25 @@ class AcmoApp : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TyradsSdkTheme {
-                var initPath = "privacy"
-                Log.e("Privacy", Tyrads.getInstance().privacyAccepted.value.toString())
-                if (Tyrads.getInstance().preferences.getBoolean(
-                        AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-                        false
-                    )
-                ) {
-                    initPath = "webview"
+                val tyrads = Tyrads.getInstance()
+                val isUsagePermissionGranted = AcmoUsageStatsController().isUsagePermission(this)
+                val privacyAccepted = tyrads.privacyAccepted.collectAsState().value
+
+                val initPath = when {
+                    tyrads.tyradsConfig.skipInitialPages -> "webview"
+
+                    privacyAccepted && !isUsagePermissionGranted -> "usage-permissions"
+                    privacyAccepted -> "webview"
+
+                    else -> "privacy"
                 }
+
                 Tyrads.getInstance().navController = rememberNavController()
                 Scaffold(
-                    modifier = Modifier.fillMaxSize().statusBarsPadding(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .statusBarsPadding()
+                        .navigationBarsPadding(),
                     contentWindowInsets = WindowInsets.systemBars
                 ) { innerPadding ->
                     NavHost(
@@ -77,15 +85,10 @@ class AcmoApp : ComponentActivity() {
                             AcmoWebView()
                         }
                         composable("privacy") {
-                            AcmoPrivacyPolicyPage(
-                            )
-                        }
-                        composable("users-update") {
-                            AcmoUsersUpdatePage()
+                            AcmoPrivacyPolicyPage()
                         }
                         composable("usage-permissions") {
-                            AcmoUsagePermissionsPage(
-                            )
+                            AcmoUsagePermissionsPage()
                         }
                     }
                 }
@@ -93,9 +96,17 @@ class AcmoApp : ComponentActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        Tyrads.getInstance().log("AcmoApp: onNewIntent received", Log.INFO, force = true)
+        FCMNotifications.getInstance().handleNotificationIntent(intent)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(ACMO_KEY_ACTIVITY_KILLED, true)
         outState.putBoolean(ACMO_KEY_LANGUAGE_CHANGE, true)
     }
+
 }

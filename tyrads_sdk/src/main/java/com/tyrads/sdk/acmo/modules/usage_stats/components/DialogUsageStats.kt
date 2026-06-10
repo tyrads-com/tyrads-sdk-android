@@ -1,5 +1,3 @@
-import android.os.Handler
-import android.os.Looper
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,7 +31,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.tyrads.sdk.R
+import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -72,6 +70,7 @@ fun UsageStatsCard(
     var usagePermissionsLoader by remember { mutableStateOf(false) }
     val lifecycleOwner = LocalLifecycleOwner.current
     var hasNavigatedAway by remember { mutableStateOf(false) }
+    val localizationService = LocalizationService.getInstance()
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -114,7 +113,6 @@ fun UsageStatsCard(
     ) {
         Column(
             modifier = modifier
-                .height(176.dp)
                 .padding(horizontal = 38.dp, vertical = 10.dp)
         ) {
             Row(
@@ -122,7 +120,7 @@ fun UsageStatsCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = stringResource(id = R.string.usage_permissions_permit_title),
+                    text = localizationService.translate("data.initialization.usagePermission.label"),
                     style = TextStyle(fontSize = 16.sp),
                     modifier = Modifier.weight(1f),
                     color = Color.Black
@@ -175,7 +173,7 @@ fun UsageStatsCard(
                 }
             }
             Text(
-                text = stringResource(id = R.string.usage_permissions_description),
+                text = localizationService.translate("data.initialization.usagePermission.description"),
                 modifier = Modifier.padding(top = 8.dp),
                 color = Color.Black,
                 fontWeight = FontWeight.Light,

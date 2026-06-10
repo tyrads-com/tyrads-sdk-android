@@ -8,6 +8,8 @@ import AcmoTrackingController
 import AcmoUsageStatsController
 import TyradsActivity
 import android.app.LocaleManager
+import android.app.Activity
+import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -27,6 +29,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import java.util.UUID
 import android.net.Uri
 import android.os.Build
@@ -37,28 +40,63 @@ import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
 import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
+import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
+import com.tyrads.sdk.acmo.modules.notifications.FCMService
+import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
+import android.os.Bundle
+import androidx.core.net.toUri
+import kotlinx.coroutines.tasks.await
+
+interface TyradsCallback {
+    fun onSuccess()
+    fun onFailure(error: String)
+}
+
+interface TyradsLoginCallback {
+    fun onSuccess(isNewUser: Boolean)
+    fun onFailure(error: String)
+}
 
 @Keep
 class Tyrads private constructor() {
     internal var apiKey: String? = null
     internal var apiSecret: String? = null
     internal var encKey: String? = null
+    internal var engagementId: String? = null
+    internal var placementId: String? = null
+    private var config: TyradsConfig = TyradsConfig()
+    internal val tyradsConfig: TyradsConfig get() = config
     internal var token: String = ""
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
     internal lateinit var preferences: SharedPreferences
+    val safePreferences: SharedPreferences?
+        get() = if (::preferences.isInitialized) preferences else null
     internal lateinit var loginData: AcmoInitModel
     internal var newUser: Boolean = false
     lateinit var navController: NavHostController
     internal var debugMode: Boolean = false
+    @Volatile
+    private var _currentActivityRef: java.lang.ref.WeakReference<Activity>? = null
+    internal var currentActivity: Activity?
+        get() = _currentActivityRef?.get()
+        set(value) {
+            _currentActivityRef = value?.let { java.lang.ref.WeakReference(it) }
+        }
 
     internal val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     var tracker = AcmoTrackingController()
-    internal var url: String = ""
+    private val _urlState = MutableStateFlow("")
+    val urlState: StateFlow<String> = _urlState.asStateFlow()
+    var url: String
+        get() = _urlState.value
+        set(value) { _urlState.value = value }
     private var mediaSourceInfo: TyradsMediaSourceInfo? = null
     private var userInfo: TyradsUserInfo? = null
 
@@ -67,15 +105,18 @@ class Tyrads private constructor() {
         get() = _currentLanguageCode
     private val localizationService = LocalizationService.getInstance()
 
-    private var _isSecure: Boolean = false;
-    val isSecure: Boolean get() = _isSecure;
+    private var _isSecure: Boolean = false
+    val isSecure: Boolean get() = _isSecure
 
-    // need these variables outside
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
     var mainColor: String? = null
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
+
+    private val _isLoggedIn = MutableStateFlow(false)
+    val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
+
 
     internal fun initializePrivacyStatus() {
         _privacyAccepted.value = preferences.getBoolean(
@@ -125,21 +166,36 @@ class Tyrads private constructor() {
         }
     }
 
+    private suspend inline fun safeCallback(crossinline block: () -> Unit) {
+        withContext(Dispatchers.Main) {
+            try {
+                block()
+            } catch (e: Exception) {
+                log("Error in callback execution: ${e.message}", Log.ERROR)
+            }
+        }
+    }
+
     suspend fun init(
         context: Context,
         apiKey: String,
         apiSecret: String,
         encryptionKey: String? = null,
+        engagementId: String? = null,
+        placementId: String? = null,
+        config: TyradsConfig = TyradsConfig(),
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
         this@Tyrads.context = context.applicationContext
         this@Tyrads.apiKey = apiKey.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API key cannot be blank")
         this@Tyrads.encKey = encryptionKey
+        this@Tyrads.engagementId = engagementId
+        this@Tyrads.placementId = placementId
         this@Tyrads.apiSecret = apiSecret.takeIf { it.isNotBlank() }
             ?: throw IllegalArgumentException("API secret cannot be blank")
+        setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
-        Log.i("bmd", "apiKey: $apiKey \n apiSecret: $apiSecret")
         preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
         preferences.edit {
             putString(AcmoKeyNames.API_KEY, apiKey)
@@ -165,13 +221,47 @@ class Tyrads private constructor() {
         _currentLanguageCode.value = currentLanguage
         log("Selected Language: ${currentLanguageCode.value}")
 
-        // Initialize localization service - similar to Dart's LocalizationService().init(selectedLanguage)
         localizationService.init(currentLanguageCode.value)
 
-        val integrityToken = getPlayIntegrityToken(context)
-        log("Integrity Token: $integrityToken")
-        preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        try {
+            val integrityToken = getPlayIntegrityToken(context)
+            log("Integrity Token: $integrityToken")
+            preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+        } catch (error: Exception) {
+            log("An Error Occurred: ${error.message}", Log.ERROR)
+        }
+
+        try {
+            FCMService.initialize(context)
+            registerLifecycleCallbacks(context)
+        } catch (error: Exception) {
+            log("Failed to initialize FCM: ${error.message}", Log.ERROR)
+        }
+
         log("Tyrads SDK initialized", Log.INFO)
+    }
+
+    @JvmOverloads
+    fun init(
+        context: Context,
+        apiKey: String,
+        apiSecret: String,
+        encryptionKey: String? = null,
+        engagementId: String? = null,
+        placementId: String? = null,
+        config: TyradsConfig = TyradsConfig(),
+        debugMode: Boolean = false,
+        callback: TyradsCallback
+    ) {
+        tyradScope.launch {
+            try {
+                init(context, apiKey, apiSecret, encryptionKey, engagementId, placementId, config, debugMode)
+                safeCallback { callback.onSuccess() }
+            } catch (e: Exception) {
+                log("Exception during init: ${e.message}", Log.ERROR)
+                safeCallback { callback.onFailure(e.message ?: "Unknown error during initialization") }
+            }
+        }
     }
 
     suspend fun loginUser(userID: String? = null): Boolean = withContext(Dispatchers.Default) {
@@ -204,6 +294,8 @@ class Tyrads private constructor() {
 
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
+            val fcmToken = preferences.getString(AcmoKeyNames.FCM_TOKEN, null)
+            val engagementId = this@Tyrads.engagementId
             log("Device Details: $deviceDetails")
 
             val fd = mutableMapOf(
@@ -211,6 +303,8 @@ class Tyrads private constructor() {
                 "platform" to "Android",
                 "identifierType" to identifierType,
                 "identifier" to advertisingId,
+                "devicePushToken" to fcmToken,
+                "engagementId" to engagementId?.toIntOrNull(),
                 "deviceData" to deviceDetails
             )
             mediaSourceInfo?.let { info ->
@@ -234,35 +328,45 @@ class Tyrads private constructor() {
                 info.email?.let { fd["email"] = it }
                 info.phoneNumber?.let { fd["phoneNumber"] = it }
                 info.userGroup?.let { fd["userGroup"] = it }
+                info.age?.let { fd["age"] = it }
+                info.gender?.let { fd["gender"] = it }
             }
-            log("Initialization Data : $fd")
+            log("Initialization Data : $fd", force = true)
+            val currentEncKey = encKey
             val encData =
-                if (_isSecure) AcmoEncrypt(encryptionKey = encKey!!).encryptDataAESGCM(data = fd) else emptyMap()
+                if (_isSecure && !currentEncKey.isNullOrBlank()) AcmoEncrypt(encryptionKey = currentEncKey).encryptDataAESGCM(data = fd) else emptyMap()
             val (request, response, result) = Fuel.post(AcmoEndpointNames.INITIALIZE)
                 .body(Gson().toJson(if (isSecure) encData else fd)).response()
-
             when (result) {
                 is Result.Success -> {
                     log("User login successful", Log.INFO)
                     val jsonString = String(response.data)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
-                    publisherUserID = loginData.data.user.publisherUserId
+                    publisherUserID = loginData.data.accountInfo.publisherUserId
                     preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
-                    newUser = loginData.data.newRegisteredUser
-                    token = loginData.data.token
-
-                    // check for empty
-                    mainColor = loginData.data.publisherApp.mainColor.ifBlank { "#1C90DF" }
-                    premiumColor = loginData.data.publisherApp.premiumColor.ifBlank { "#1C90DF" }
-                    headerColor = loginData.data.publisherApp.headerColor.ifBlank { "#000000" }
+                    this@Tyrads.token = loginData.data.token
+                    this@Tyrads.mainColor =
+                        loginData.data.appInfo.mainColor.ifBlank { "#1C90DF" }
+                    this@Tyrads.premiumColor =
+                        loginData.data.appInfo.premiumColor.ifBlank { "#1C90DF" }
+                    this@Tyrads.headerColor =
+                        loginData.data.appInfo.headerColor.ifBlank { "#000000" }
                     initializePrivacyStatus()
+
+                    try {
+                        this@Tyrads.newUser = NetworkCommons().isNewUser()
+                    } catch (e: Exception) {
+                        this@Tyrads.newUser = loginData.data.newRegisteredUser
+                    }
 
                     if (privacyAccepted.value) {
                         val usageStatsController = AcmoUsageStatsController()
                         usageStatsController.saveUsageStats()
                     }
 
+                    _isLoggedIn.value = true
                     track(TyradsActivity.INITIALIZED)
+
                     return@withContext true
                 }
 
@@ -270,8 +374,8 @@ class Tyrads private constructor() {
                     log("User login failed", Log.ERROR, force = true)
                     val error = result.getException()
                     val errorMessage = String(response.data)
-                    log("Error: ${error.message}")
-                    log("Server Message: $errorMessage")
+                    log("Error: ${error.message}", force = true)
+                    log("Server Message: $errorMessage", force = true)
                     return@withContext false
                 }
             }
@@ -281,9 +385,53 @@ class Tyrads private constructor() {
         }
     }
 
+    @JvmOverloads
+    fun loginUser(userID: String? = null, callback: TyradsLoginCallback) {
+        tyradScope.launch {
+            try {
+                val success = loginUser(userID)
+                safeCallback {
+                    if (success) {
+                        callback.onSuccess(newUser)
+                    } else {
+                        callback.onFailure("Login failed - Please check your credentials and try again")
+                    }
+                }
+            } catch (e: Exception) {
+                log("Exception during loginUser: ${e.message}", Log.ERROR)
+                safeCallback { callback.onFailure(e.message ?: "Unknown error during login") }
+            }
+        }
+    }
+
+    internal fun getWebUri(route: String? = null, campaignID: Int? = null): String {
+        val currentRoute = route ?: ""
+        Log.w("bmd", "getWebUri: $currentRoute")
+
+        val builder = Uri.Builder()
+            .scheme("https")
+            .authority(AcmoConfig.WEBVIEW_HOST)
+            .appendQueryParameter(
+                "to",
+                when {
+                    campaignID == null -> currentRoute
+                    else -> "$currentRoute/$campaignID"
+                }
+            )
+            .appendQueryParameter("token", token)
+            .appendQueryParameter("lang", currentLanguageCode.value)
+
+        if (!placementId.isNullOrBlank()) {
+            builder.appendQueryParameter("placementId", placementId)
+        }
+
+        return builder.build().toString()
+    }
+
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
-            log("Preparing to show offers", Log.INFO)
+            log("showOffers: Preparing to show offers", Log.INFO, force = true)
+
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
                 withContext(Dispatchers.Main) {
@@ -291,43 +439,49 @@ class Tyrads private constructor() {
                 }
                 return@withContext
             }
-            log("Launching offers", Log.INFO)
-            url = Uri
-                .Builder()
-                .scheme("https")
-                .authority("sdk.tyrads.com")
-                .appendQueryParameter("token", token)
-                .appendQueryParameter("to", if(route == null) "" else if(campaignID == null) route else "$route/$campaignID")
-                .appendQueryParameter("lang", currentLanguageCode.value)
-                .build()
-                .toString()
-            Log.i("url", url.toString())
-            val intent = Intent(context, AcmoApp::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            context.startActivity(intent)
-        }
 
-    /**
-     * Changes the language of the SDK - similar to Dart implementation
-     *
-     * This method is used to change the language of the SDK.
-     *
-     * The [languageCode] parameter is the language code of the language
-     * to be used. For example, "en" for English, or "es" for Spanish.
-     *
-     * The method is asynchronous and returns when the language has been changed.
-     *
-     * The Tyrads SDK supports the following languages:
-     * - English (en)
-     * - Spanish (es)
-     * - Indonesian (id)
-     * - Japanese (ja)
-     * - Korean (ko)
-     * - Chinese (China, Simplified) (zh-Hans-CN)
-     *
-     * Note that the language change is persisted in the app's preferences,
-     * so the next time the app is started, the SDK will use the new language.
-     */
+            val requestedUrl = getWebUri(route, campaignID)
+
+            url = requestedUrl
+
+            if (currentActivity is AcmoApp) {
+                log("showOffers: AcmoApp already in foreground, skipping startActivity", Log.INFO, force = true)
+                return@withContext
+            }
+
+            log("showOffers: Launching AcmoApp activity", Log.INFO, force = true)
+            val intent = Intent(context, AcmoApp::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            try {
+                context.startActivity(intent)
+                track(TyradsActivity.opened)
+            } catch (e: android.content.ActivityNotFoundException) {
+                log("showOffers: AcmoApp Activity not found. Please ensure it is declared in AndroidManifest.xml.", Log.ERROR)
+            }
+        }
+    @JvmOverloads
+    fun showOffers(
+        route: String? = null,
+        campaignID: Int? = null,
+        callback: TyradsCallback? = null
+    ) {
+        tyradScope.launch {
+            try {
+                showOffers(route, campaignID)
+                callback?.let { safeCallback { it.onSuccess() } }
+            } catch (e: Exception) {
+                log("Exception during showOffers: ${e.message}", Log.ERROR)
+                callback?.let {
+                    safeCallback {
+                        it.onFailure(
+                            e.message ?: "Unknown error showing offers"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     suspend fun changeLanguage(languageCode: String) = withContext(Dispatchers.Default) {
         try {
             _currentLanguageCode.value = languageCode
@@ -341,6 +495,25 @@ class Tyrads private constructor() {
             log("Language changed to: $languageCode")
         } catch (e: Exception) {
             log("Error changing language: ${e.message}", Log.ERROR)
+        }
+    }
+
+    @JvmOverloads
+    fun changeLanguage(languageCode: String, callback: TyradsCallback? = null) {
+        tyradScope.launch {
+            try {
+                changeLanguage(languageCode)
+                callback?.let { safeCallback { it.onSuccess() } }
+            } catch (e: Exception) {
+                log("Exception during changeLanguage: ${e.message}", Log.ERROR)
+                callback?.let {
+                    safeCallback {
+                        it.onFailure(
+                            e.message ?: "Unknown error changing language"
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -371,7 +544,66 @@ class Tyrads private constructor() {
         this.mediaSourceInfo = mediaSourceInfo
     }
 
+    private fun setTyradsConfig(config: TyradsConfig) {
+        this.config = config
+        Log.d("Tyrads", "Config updated: $config")
+    }
+
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+
+    private fun registerLifecycleCallbacks(context: Context) {
+        val app = context.applicationContext as? Application
+        if (app == null) {
+            log(
+                "registerLifecycleCallbacks: applicationContext is not an Application — " +
+                    "activity lifecycle tracking will be unavailable",
+                Log.WARN,
+                force = true
+            )
+            return
+        }
+
+        app.registerActivityLifecycleCallbacks(object :
+            Application.ActivityLifecycleCallbacks {
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+                currentActivity = activity
+                FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
+            }
+
+            override fun onActivityStarted(activity: Activity) {
+                currentActivity = activity
+            }
+
+            override fun onActivityResumed(activity: Activity) {
+                currentActivity = activity
+                FCMNotifications.getInstance().handleNotificationIntent(activity.intent)
+            }
+
+            override fun onActivityPaused(activity: Activity) {
+                if (currentActivity == activity) {
+                    currentActivity = null
+                }
+            }
+
+            override fun onActivityStopped(activity: Activity) {
+                if (currentActivity == activity) {
+                    currentActivity = null
+                }
+            }
+
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+            override fun onActivityDestroyed(activity: Activity) {
+                if (currentActivity == activity) {
+                    currentActivity = null
+                }
+            }
+        })
+
+        if (context is Activity) {
+            FCMNotifications.getInstance().handleNotificationIntent(context.intent)
+        }
     }
 }

@@ -17,11 +17,12 @@ import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.legal.CloseonTap
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import kotlinx.coroutines.launch
-import androidx.core.content.edit
 
 @Composable
-fun AcmoUsagePermissionsPage() {
-    // Initialize LocalizationService similar to Flutter implementation
+fun AcmoUsagePermissionsPage(
+    onGrantClicked: (() -> Unit)? = null,
+    returnToWidget: Boolean? = false
+) {
     val localizationService = LocalizationService.getInstance()
 
     Scaffold (
@@ -45,12 +46,6 @@ fun AcmoUsagePermissionsPage() {
                     onGrant = {
                         // Save privacy acceptance preference
                         Tyrads.getInstance().setPrivacyAccepted(true)
-//                        Tyrads.getInstance().preferences.edit {
-//                            putBoolean(
-//                                AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + Tyrads.getInstance().publisherUserID,
-//                                true
-//                            )
-//                        }
 
                         // Save usage stats
                         Tyrads.getInstance().tyradScope.launch {
@@ -58,11 +53,11 @@ fun AcmoUsagePermissionsPage() {
                             usageStatsController.saveUsageStats()
                         }
 
-                        val destination = if (Tyrads.getInstance().newUser) {
-                            "users-update"
-                        } else {
-                            "webview"
+                        if(returnToWidget == true){
+                            return@UsageStatsCard
                         }
+
+                        val destination = "webview"
 
                         Tyrads.getInstance().navController.navigate(destination) {
                             popUpTo(Tyrads.getInstance().navController.graph.startDestinationId) {
@@ -79,7 +74,6 @@ fun AcmoUsagePermissionsPage() {
 @Composable
 fun Body(localizationService: LocalizationService) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        // Title using localization - matching Flutter implementation
         Text(
             text = localizationService.translate("data.initialization.usagePermission.title"),
             style = MaterialTheme.typography.titleMedium.copy(
@@ -88,10 +82,12 @@ fun Body(localizationService: LocalizationService) {
                 color = Color.Black
             ),
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 10.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 20.dp),
+            maxLines = Int.MAX_VALUE
         )
 
-        // Privacy banner image - matching Flutter sizing
         Image(
             painter = painterResource(id = R.drawable.privacy_banner),
             contentDescription = "Privacy Banner",

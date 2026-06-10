@@ -51,8 +51,21 @@ class AcmoUsageStatsController() {
 
 
     fun isUsagePermission(context: Context): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager?
-        val mode = appOps!!.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.packageName)
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            appOps.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName
+            )
+        }
         if (mode == AppOpsManager.MODE_ALLOWED) {
             Log.d("UTILS", "Usage permission is granted")
             return true
@@ -155,7 +168,7 @@ class AcmoUsageStatsController() {
                 if (firstInstallTime > 1293840000000) { // After Gingerbread
                     installTimeCount[firstInstallTime] =
                         installTimeCount.getOrDefault(firstInstallTime, 0) + 1
-                    highestCount = maxOf(highestCount, installTimeCount[firstInstallTime]!!)
+                    highestCount = maxOf(highestCount, installTimeCount[firstInstallTime] ?: 0)
                 }
             }
 
