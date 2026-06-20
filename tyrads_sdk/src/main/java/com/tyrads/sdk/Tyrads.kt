@@ -41,6 +41,8 @@ import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
+import com.tyrads.sdk.acmo.modules.input_models.TyradsUpdateUserInfo
+import com.tyrads.sdk.acmo.modules.update_account.AcmoUpdateUserAccountController
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -551,6 +553,23 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+   
+    suspend fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo): Boolean = withContext(Dispatchers.Default) {
+        log("updateUserAccount: $userUpdateInfo")
+        return@withContext AcmoUpdateUserAccountController().updateUserAccount(userUpdateInfo)
+    }
+
+    @JvmOverloads
+    fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo, callback: TyradsCallback) {
+        tyradScope.launch {
+            val success = updateUserAccount(userUpdateInfo)
+            if (success) {
+                safeCallback { callback.onSuccess() }
+            } else {
+                safeCallback { callback.onFailure("Failed to update user account") }
+            }
+        }
     }
 
     private fun registerLifecycleCallbacks(context: Context) {
