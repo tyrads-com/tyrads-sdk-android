@@ -12,4 +12,5 @@ object AcmoEndpointNames {
     const val USAGE_STATS = "usage-stats"
     const val USER_ACTIVITIES = "account/activity"
     const val CHECK_PROFILE_COMPLETION = "check-profile-completion"
+    const val ACCOUNT = "account"
 }
