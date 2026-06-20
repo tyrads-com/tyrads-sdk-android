@@ -168,15 +168,6 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             engagementId = engagementId,
             placementId = placementId,
             config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
-            debugMode = true,
-        )
-        Tyrads.getInstance().setUserInfo(
-            TyradsUserInfo(
-                email = "acmouser@example.com",
-                phoneNumber = "9876543210",
-                age = 26,
-                gender = 1,
-            )
         )
         val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
         loggedIn = success
