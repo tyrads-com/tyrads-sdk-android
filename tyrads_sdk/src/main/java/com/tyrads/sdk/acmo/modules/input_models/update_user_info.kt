@@ -23,9 +23,6 @@ data class TyradsUpdateUserInfo(
     val gender: Int? = null,
 
     /** Custom field for storing additional data. */
-//    val sub1: String? = null,
-
-    /** Custom field for storing additional data. */
     val sub2: String? = null,
 
     /** Custom field for storing additional data. */
@@ -33,7 +30,4 @@ data class TyradsUpdateUserInfo(
 
     /** Custom field for storing additional data. */
     val sub4: String? = null,
-
-    /** Custom field for storing additional data. */
-//    val sub5: String? = null,
 )

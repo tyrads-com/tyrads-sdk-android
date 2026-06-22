@@ -556,18 +556,17 @@ class Tyrads private constructor() {
     }
    
     suspend fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo): Boolean = withContext(Dispatchers.Default) {
-        log("updateUserAccount: $userUpdateInfo")
         return@withContext AcmoUpdateUserAccountController().updateUserAccount(userUpdateInfo)
     }
 
     @JvmOverloads
-    fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo, callback: TyradsCallback) {
+    fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo, callback: TyradsCallback? = null) {
         tyradScope.launch {
             val success = updateUserAccount(userUpdateInfo)
             if (success) {
-                safeCallback { callback.onSuccess() }
+                callback?.let { safeCallback { it.onSuccess() } }
             } else {
-                safeCallback { callback.onFailure("Failed to update user account") }
+                callback?.let { safeCallback { it.onFailure("Failed to update user account") } }
             }
         }
     }
