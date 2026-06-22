@@ -15,11 +15,7 @@ class AcmoUpdateUserAccountController {
     suspend fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo): Boolean {
         return withContext(Dispatchers.IO) {
             try {
-              val isSuccess =  repository.updateUserAccount(userUpdateInfo)
-                Tyrads.getInstance().log(
-                    "AcmoUpdateUserAccountController: Account updated successfully",
-                    Log.INFO
-                )
+                val isSuccess =  repository.updateUserAccount(userUpdateInfo)
                 isSuccess
             } catch (e: Exception) {
                 Tyrads.getInstance().log(
