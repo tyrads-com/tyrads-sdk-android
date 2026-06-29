@@ -37,7 +37,7 @@ class NetworkCommonsTest {
         mockkObject(Tyrads)
         val mockTyrads = mockk<Tyrads>(relaxed = true)
         val mockPrefs = mockk<android.content.SharedPreferences>(relaxed = true)
-        every { mockTyrads.preferences } returns mockPrefs
+        every { mockTyrads.safePreferences } returns mockPrefs
         every { Tyrads.getInstance() } returns mockTyrads
 
         networkCommons = NetworkCommons()

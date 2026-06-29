@@ -35,7 +35,7 @@ class InAppNotificationManagerInstrumentedTest {
         mockkObject(Tyrads)
         mockTyrads = mockk(relaxed = true)
         every { Tyrads.getInstance() } returns mockTyrads
-        every { mockTyrads.preferences } returns mockPrefs
+        every { mockTyrads.safePreferences } returns mockPrefs
         every { mockTyrads.publisherUserID } returns "test_user_123"
 
         // Use reflection to inject mockPrefs since object init happens before @Before
