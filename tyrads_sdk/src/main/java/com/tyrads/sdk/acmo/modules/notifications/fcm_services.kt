@@ -105,9 +105,9 @@ class FCMService : FirebaseMessagingService() {
         private fun saveToken(token: String) {
             try {
                 val tyrads = Tyrads.getInstance()
-                tyrads.preferences.edit()
-                    .putString(AcmoKeyNames.FCM_TOKEN, token)
-                    .apply()
+                tyrads.safePreferences?.edit()
+                    ?.putString(AcmoKeyNames.FCM_TOKEN, token)
+                    ?.apply()
                 Log.d(TAG, "FCM token saved: $token")
             } catch (e: UninitializedPropertyAccessException) {
                 Log.w(TAG, "Tyrads not initialized yet, FCM token will be saved later")
