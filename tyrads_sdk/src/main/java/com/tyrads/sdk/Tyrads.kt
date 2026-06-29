@@ -121,6 +121,7 @@ class Tyrads private constructor() {
 
 
     internal fun initializePrivacyStatus() {
+        if (!::preferences.isInitialized) return
         _privacyAccepted.value = preferences.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
             false

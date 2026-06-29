@@ -37,6 +37,11 @@ class AcmoApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (Tyrads.getInstance().safePreferences == null) {
+            finish()
+            return
+        }
+
         Tyrads.getInstance().initializePrivacyStatus()
 
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&
