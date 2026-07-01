@@ -76,6 +76,8 @@ class Tyrads private constructor() {
     internal var token: String = ""
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
+    val safeContext: Context?
+        get() = if (::context.isInitialized) context else null
     internal lateinit var preferences: SharedPreferences
     val safePreferences: SharedPreferences?
         get() = if (::preferences.isInitialized) preferences else null
