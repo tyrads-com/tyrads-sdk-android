@@ -7,12 +7,19 @@ import androidx.annotation.Keep
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import androidx.core.net.toUri
+import com.tyrads.sdk.Tyrads
+import android.util.Log
 
 @Keep
 fun acmoLaunchURL(context: Context, url: String) {
-    val intent = Intent(Intent.ACTION_VIEW)
-    intent.data = Uri.parse(url)
-    context.startActivity(intent)
+    try {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(url)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        Tyrads.getInstance().log("Failed to launch URL: ${e.message}", Log.ERROR)
+    }
 }
 
 @Keep
