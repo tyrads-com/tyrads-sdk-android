@@ -29,12 +29,11 @@ import com.tyrads.sdk.acmo.core.utils.ExtraDeviceDetails
 
 @Keep
 class AcmoDeviceDetailsController {
-    private val deviceInfoLazy by lazy { acmoGetDeviceInfo(Tyrads.getInstance().context) }
-
     suspend fun getDeviceDetails(): Map<String, Any?> = withContext(Dispatchers.IO) {
-        val context = Tyrads.getInstance().context
+        val context = Tyrads.getInstance().safeContext
+            ?: return@withContext emptyMap()
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        val deviceInfo = deviceInfoLazy
+        val deviceInfo = acmoGetDeviceInfo(context)
         val deviceMetrics = getDeviceMetrics()
         val networkSpeed = getNetworkSpeed(context)
         val systemClockInfo = getSystemClockInfo()

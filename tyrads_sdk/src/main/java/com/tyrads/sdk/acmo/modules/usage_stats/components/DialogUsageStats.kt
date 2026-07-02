@@ -71,6 +71,7 @@ fun UsageStatsCard(
     val lifecycleOwner = LocalLifecycleOwner.current
     var hasNavigatedAway by remember { mutableStateOf(false) }
     val localizationService = LocalizationService.getInstance()
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -80,10 +81,10 @@ fun UsageStatsCard(
                 }
                 Lifecycle.Event.ON_RESUME -> {
                     if (hasNavigatedAway) {
-                        CoroutineScope(Dispatchers.Main).launch {
+                        scope.launch {
                             delay(500)
                             val permissionStatus = usageStatsController.checkUsagePermission()
-                            if (permissionStatus) {
+                            if (permissionStatus && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
                                 onGrant()
                             }
                             usagePermissionsLoader = false
@@ -145,13 +146,12 @@ fun UsageStatsCard(
                                 if (!permissionStatus) {
                                     usageStatsController.grantUsagePermission()
                                     usagePermissionsLoader = true
-                                    CoroutineScope(Dispatchers.Main).launch {
+                                    scope.launch {
                                         delay(500) // 1 second dela
                                         permissionStatus = usageStatsController.checkUsagePermission()
-                                        if (permissionStatus) {
+                                        if (permissionStatus && lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) {
                                             onGrant()
                                         }
-
                                     }
                                 } else {
                                     onGrant()

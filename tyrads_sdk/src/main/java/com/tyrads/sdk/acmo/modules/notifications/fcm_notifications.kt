@@ -170,20 +170,27 @@ class FCMNotifications private constructor() {
              val deepLinkRoute = data["deepLink"]
             if (!deepLinkRoute.isNullOrEmpty() && eventType == "onClick") {
                 tyrads.tyradScope.launch {
-                    if (!tyrads.isLoggedIn.value) {
-                        try {
-                            withTimeout(15000) {
-                                tyrads.isLoggedIn.first { it }
+                    try {
+                        if (!tyrads.isLoggedIn.value) {
+                            try {
+                                withTimeout(15000) {
+                                    tyrads.isLoggedIn.first { it }
+                                }
+                            } catch (e: Exception) {
+                                tyrads.log("Timeout waiting for SDK initialization: ${e.message}", Log.ERROR)
+                                val context = tyrads.safeContext
+                                if (context != null) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(context, "Initialization timed out. Please try again.", Toast.LENGTH_LONG).show()
+                                    }
+                                }
+                                return@launch
                             }
-                        } catch (e: Exception) {
-                            tyrads.log("Timeout waiting for SDK initialization: ${e.message}", Log.ERROR)
-                            withContext(Dispatchers.Main) {
-                                Toast.makeText(tyrads.context, "Initialization timed out. Please try again.", Toast.LENGTH_LONG).show()
-                            }
-                            return@launch
                         }
+                        tyrads.showOffers(route = deepLinkRoute)
+                    } catch (e: Exception) {
+                        tyrads.log("Error handling notification deep link: ${e.message}", Log.ERROR)
                     }
-                    tyrads.showOffers(route = deepLinkRoute)
                 }
             }
         } catch (e: Exception) {

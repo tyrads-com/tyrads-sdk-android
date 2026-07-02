@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import com.tyrads.sdk.Tyrads
+import android.util.Log
 import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
 
 class AcmoUsagePermissionActivity : ComponentActivity() {
@@ -15,6 +17,7 @@ class AcmoUsagePermissionActivity : ComponentActivity() {
         fun start(context: Context, actionType: Boolean) {
             val intent = Intent(context, AcmoUsagePermissionActivity::class.java)
             intent.putExtra("returnToWidget", actionType)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             context.startActivity(intent)
         }
     }
@@ -25,7 +28,11 @@ class AcmoUsagePermissionActivity : ComponentActivity() {
         setContent {
             AcmoUsagePermissionsPage(
                 onGrantClicked = {
-                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    try {
+                        startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                    } catch (e: Exception) {
+                        Tyrads.getInstance().log("Usage access settings not found: ${e.message}", Log.ERROR)
+                    }
                 },
                 returnToWidget = actionType
             )
