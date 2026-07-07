@@ -4,6 +4,9 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
+
 }
 val localProperties = Properties()
 val localPropertiesFile = rootProject.file("local.properties")
@@ -130,4 +133,9 @@ dependencies {
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation ("com.google.android.material:material:1.9.0")
     implementation ("com.google.code.gson:gson:2.10.1")
+
+    // Firebase BOM + Crashlytics
+    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
+    implementation("com.google.firebase:firebase-crashlytics")
+
 }
