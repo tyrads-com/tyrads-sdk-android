@@ -214,9 +214,9 @@ class Tyrads private constructor() {
         var currentLanguage = safePreferences?.getString(AcmoKeyNames.LANGUAGE, null)
 
         if (currentLanguage.isNullOrBlank()) {
-            currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
-                    ?.split("-")?.first() ?: "en"
+            val perAppLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.getSystemService(LocaleManager::class.java).applicationLocales[0]
+                    ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
             } else {
                 AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first()
                     ?: "en"
