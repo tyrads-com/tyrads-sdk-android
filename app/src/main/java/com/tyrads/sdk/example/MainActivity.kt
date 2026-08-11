@@ -398,18 +398,6 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                     Text("Update Account")
                 }
             }
-                // Test Crash button — comment out after Crashlytics is verified in Firebase Console
-                Button(
-                    onClick = { throw RuntimeException("Test Crash — Crashlytics verification") },
-                    modifier = Modifier
-                        .width(200.dp)
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
-                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFD32F2F)
-                    )
-                ) {
-                    Text("Test Crash", color = Color.White)
-                }
             }
         }
         SnackbarHost(
