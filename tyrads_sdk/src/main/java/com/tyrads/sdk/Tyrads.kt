@@ -218,8 +218,8 @@ class Tyrads private constructor() {
                 context.getSystemService(LocaleManager::class.java).applicationLocales[0]
                     ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
             } else {
-                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first()
-                    ?: "en"
+                AppCompatDelegate.getApplicationLocales()[0]
+                    ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
             }
         }
         _currentLanguageCode.value = currentLanguage
