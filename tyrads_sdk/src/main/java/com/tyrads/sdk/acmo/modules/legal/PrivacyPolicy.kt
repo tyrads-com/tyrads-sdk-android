@@ -292,9 +292,9 @@ fun Info2(localizationService: LocalizationService) {
 
                 val tag = if (matchResult.value.startsWith("<tos>")) "TOS" else "PP"
                 val annotation = if (tag == "TOS") {
-                    "https://tyrads.com/tyrsdk-terms-of-service/${Tyrads.getInstance().currentLanguageCode.value}"
+                    "https://tyrads.com/tyrsdk-terms-of-service/"
                 } else {
-                    "https://tyrads.com/tyrsdk-privacy-policy/${Tyrads.getInstance().currentLanguageCode.value}"
+                    "https://tyrads.com/tyrsdk-privacy-policy/"
                 }
                 val linkText = matchResult.groupValues[1]
 

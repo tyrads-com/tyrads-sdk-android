@@ -26,8 +26,6 @@ rootbeerLib = "0.1.1"
 navigationCompose = "2.9.0"
 constraintlayout = "2.2.1"
 webkit = "1.14.0"
-googleServices = "4.5.0"
-firebaseCrashlyticsGradle = "3.0.7"
 
 [libraries]
 androidx-animation = { module = "androidx.compose.animation:animation" }
@@ -72,5 +70,3 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 android-library = { id = "com.android.library", version.ref = "agp" }
-google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
-firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsGradle" }
