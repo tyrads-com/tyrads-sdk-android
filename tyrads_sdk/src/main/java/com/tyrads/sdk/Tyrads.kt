@@ -221,6 +221,9 @@ class Tyrads private constructor() {
                 AppCompatDelegate.getApplicationLocales()[0]
                     ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
             }
+
+            currentLanguage = perAppLocale?.takeIf { it.isNotBlank() }
+                ?: getFormattedLocaleCode()
         }
         _currentLanguageCode.value = currentLanguage
         log("Selected Language: ${currentLanguageCode.value}")
