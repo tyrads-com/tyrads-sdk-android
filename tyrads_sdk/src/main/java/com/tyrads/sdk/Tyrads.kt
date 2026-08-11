@@ -214,16 +214,13 @@ class Tyrads private constructor() {
         var currentLanguage = safePreferences?.getString(AcmoKeyNames.LANGUAGE, null)
 
         if (currentLanguage.isNullOrBlank()) {
-            val perAppLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context.getSystemService(LocaleManager::class.java).applicationLocales[0]
-                    ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
+            currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
+                    ?.split("-")?.first() ?: "en"
             } else {
-                AppCompatDelegate.getApplicationLocales()[0]
-                    ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
+                AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")?.first()
+                    ?: "en"
             }
-
-            currentLanguage = perAppLocale?.takeIf { it.isNotBlank() }
-                ?: getFormattedLocaleCode()
         }
         _currentLanguageCode.value = currentLanguage
         log("Selected Language: ${currentLanguageCode.value}")
