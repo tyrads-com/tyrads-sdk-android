@@ -52,6 +52,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import android.os.Bundle
 import androidx.core.net.toUri
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import kotlinx.coroutines.tasks.await
 
 interface TyradsCallback {
@@ -426,6 +427,7 @@ class Tyrads private constructor() {
                 }
             )
             .appendQueryParameter("token", token)
+            .appendQueryParameter("skipUserInfo", tyradsConfig.skipUserInfo.toString())
             .appendQueryParameter("lang", currentLanguageCode.value)
 
         if (!placementId.isNullOrBlank()) {
