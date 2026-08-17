@@ -159,6 +159,11 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     var selectedOption by remember { mutableStateOf(options[0]) }
     var lastSelectedOption by remember { mutableStateOf(selectedOption) }
 
+    val userInfoOptions = listOf("Show User Update Page", "Hide User Update Page")
+    var selectedUserInfoOption by remember { mutableStateOf(userInfoOptions[0]) }
+    var lastSelectedUserInfoOption by remember { mutableStateOf(selectedUserInfoOption) }
+
+
     LaunchedEffect(selectedOption) {
         Tyrads.getInstance().init(
             context,
@@ -167,7 +172,10 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
             engagementId = engagementId,
             placementId = placementId,
-            config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+            config = TyradsConfig(
+                skipInitialPages = selectedOption == options[1],
+                skipUserInfo = selectedUserInfoOption == userInfoOptions[1]
+            ),
         )
         val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
         loggedIn = success
@@ -191,7 +199,10 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 encryptionKey = newKeys.encKey,
                 engagementId = engagementId,
                 placementId = placementId,
-                config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+                config = TyradsConfig(
+                    skipInitialPages = selectedOption == options[1],
+                    skipUserInfo = selectedUserInfoOption == userInfoOptions[1]
+                ),
             )
             val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
             if (success) {
@@ -206,6 +217,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 || placementId != lastInitializedPlacementId
                 || engagementId != lastInitializedEngagementId
                 || selectedOption != lastSelectedOption
+                || selectedUserInfoOption != lastSelectedUserInfoOption
 
         if (!needsReinit) {
             scope.launch {
@@ -233,7 +245,10 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
                 engagementId = engagementId,
                 placementId = placementId,
-                config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+                config = TyradsConfig(
+                    skipInitialPages = selectedOption == options[1],
+                    skipUserInfo = selectedUserInfoOption == userInfoOptions[1],
+                ),
                 debugMode = false,
             )
 
@@ -245,6 +260,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             lastInitializedPlacementId = placementId
             lastInitializedEngagementId = engagementId
             lastSelectedOption = selectedOption
+            lastSelectedUserInfoOption = selectedUserInfoOption
             widgetReloadKey++
         }
     }
@@ -284,6 +300,14 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 options = options,
                 selectedOption = selectedOption,
                 onOptionSelected = { selectedOption = it },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+           UserInfoDropdown(
+                options = userInfoOptions,
+                selectedOption = selectedUserInfoOption,
+                onOptionSelected = { selectedUserInfoOption = it },
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -500,6 +524,45 @@ fun SimpleDropdown(
                 .fillMaxWidth(),
         )
 
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption) },
+                    onClick = {
+                        onOptionSelected(selectionOption)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserInfoDropdown(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+    ) {
+        TextField(
+            readOnly = true,
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text("Select Skip User Info Setting") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+        )
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
