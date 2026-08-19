@@ -45,6 +45,7 @@ import com.tyrads.sdk.acmo.modules.input_models.TyradsUpdateUserInfo
 import com.tyrads.sdk.acmo.modules.update_account.AcmoUpdateUserAccountController
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -226,7 +227,7 @@ class Tyrads private constructor() {
             currentLanguage = perAppLocale?.takeIf { it.isNotBlank() }
                 ?: getFormattedLocaleCode()
         }
-        _currentLanguageCode.value = currentLanguage
+        _currentLanguageCode.value = currentLanguage ?: "en"
         log("Selected Language: ${currentLanguageCode.value}")
 
         localizationService.init(currentLanguageCode.value)
