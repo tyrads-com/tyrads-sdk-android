@@ -37,6 +37,12 @@ class AcmoApp : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (Tyrads.getInstance().safePreferences == null) {
+            Tyrads.getInstance().log("AcmoApp started without SDK initialization, finishing.", Log.ERROR, force = true)
+            finish()
+            return
+        }
+
         Tyrads.getInstance().initializePrivacyStatus()
 
         if (savedInstanceState?.getBoolean(ACMO_KEY_ACTIVITY_KILLED, false) == true &&

@@ -41,8 +41,11 @@ import com.tyrads.sdk.acmo.modules.premium_widgets.TopOffers
 import androidx.core.content.edit
 import com.tyrads.sdk.acmo.helpers.TyradsViewHelper
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
+import com.tyrads.sdk.acmo.modules.input_models.TyradsUpdateUserInfo
+import com.tyrads.sdk.acmo.modules.update_account.AcmoUpdateUserAccountController
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,6 +53,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import android.os.Bundle
 import androidx.core.net.toUri
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import kotlinx.coroutines.tasks.await
 
 interface TyradsCallback {
@@ -74,6 +78,8 @@ class Tyrads private constructor() {
     internal var token: String = ""
     internal var publisherUserID: String? = null
     internal lateinit var context: Context
+    val safeContext: Context?
+        get() = if (::context.isInitialized) context else null
     internal lateinit var preferences: SharedPreferences
     val safePreferences: SharedPreferences?
         get() = if (::preferences.isInitialized) preferences else null
@@ -119,14 +125,14 @@ class Tyrads private constructor() {
 
 
     internal fun initializePrivacyStatus() {
-        _privacyAccepted.value = preferences.getBoolean(
+        _privacyAccepted.value = safePreferences?.getBoolean(
             AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
             false
-        )
+        ) ?: false
     }
 
     internal fun setPrivacyAccepted(isAccepted: Boolean) {
-        preferences.edit {
+        safePreferences?.edit {
             putBoolean(
                 AcmoKeyNames.PRIVACY_ACCEPTED_FOR_USER_ID + publisherUserID,
                 isAccepted
@@ -197,7 +203,7 @@ class Tyrads private constructor() {
         setTyradsConfig(config)
         this@Tyrads.debugMode = debugMode
         preferences = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
-        preferences.edit {
+        safePreferences?.edit {
             putString(AcmoKeyNames.API_KEY, apiKey)
             putString(AcmoKeyNames.API_SECRET, apiSecret)
         }
@@ -207,7 +213,7 @@ class Tyrads private constructor() {
 
         NetworkCommons()
 
-        var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
+        var currentLanguage = safePreferences?.getString(AcmoKeyNames.LANGUAGE, null)
 
         if (currentLanguage.isNullOrBlank()) {
             currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -218,7 +224,7 @@ class Tyrads private constructor() {
                     ?: "en"
             }
         }
-        _currentLanguageCode.value = currentLanguage
+        _currentLanguageCode.value = currentLanguage ?: "en"
         log("Selected Language: ${currentLanguageCode.value}")
 
         localizationService.init(currentLanguageCode.value)
@@ -226,7 +232,7 @@ class Tyrads private constructor() {
         try {
             val integrityToken = getPlayIntegrityToken(context)
             log("Integrity Token: $integrityToken")
-            preferences.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
+            safePreferences?.edit { putString(AcmoKeyNames.PLAY_INTEGRITY_TOKEN, integrityToken) }
         } catch (error: Exception) {
             log("An Error Occurred: ${error.message}", Log.ERROR)
         }
@@ -271,7 +277,7 @@ class Tyrads private constructor() {
                 return@withContext false
             }
             log("Starting user login process", Log.INFO)
-            val userId = userID ?: preferences.getString(AcmoKeyNames.USER_ID, "") ?: ""
+            val userId = userID ?: safePreferences?.getString(AcmoKeyNames.USER_ID, "") ?: ""
             var advertisingId: String? = ""
             var identifierType = ""
             try {
@@ -284,9 +290,9 @@ class Tyrads private constructor() {
             }
 
             if (advertisingId.isNullOrBlank()) {
-                advertisingId = preferences.getString("uuid", null) ?: run {
+                advertisingId = safePreferences?.getString("uuid", null) ?: run {
                     val newUuid = UUID.randomUUID().toString()
-                    preferences.edit() { putString("uuid", newUuid) }
+                    safePreferences?.edit() { putString("uuid", newUuid) }
                     newUuid
                 }
                 identifierType = "OTHER"
@@ -294,7 +300,7 @@ class Tyrads private constructor() {
 
             val deviceDetailsController = AcmoDeviceDetailsController()
             val deviceDetails = deviceDetailsController.getDeviceDetails()
-            val fcmToken = preferences.getString(AcmoKeyNames.FCM_TOKEN, null)
+            val fcmToken = safePreferences?.getString(AcmoKeyNames.FCM_TOKEN, null)
             val engagementId = this@Tyrads.engagementId
             log("Device Details: $deviceDetails")
 
@@ -343,7 +349,7 @@ class Tyrads private constructor() {
                     val jsonString = String(response.data)
                     loginData = Gson().fromJson(jsonString, AcmoInitModel::class.java)
                     publisherUserID = loginData.data.accountInfo.publisherUserId
-                    preferences.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
+                    safePreferences?.edit() { putString(AcmoKeyNames.USER_ID, publisherUserID) }
                     this@Tyrads.token = loginData.data.token
                     this@Tyrads.mainColor =
                         loginData.data.appInfo.mainColor.ifBlank { "#1C90DF" }
@@ -419,10 +425,16 @@ class Tyrads private constructor() {
                 }
             )
             .appendQueryParameter("token", token)
+            .appendQueryParameter("skipUserInfo", tyradsConfig.skipUserInfo.toString())
+            .appendQueryParameter("enableSkipOnboarding", tyradsConfig.enableSkipOnboarding.toString())
             .appendQueryParameter("lang", currentLanguageCode.value)
 
         if (!placementId.isNullOrBlank()) {
             builder.appendQueryParameter("placementId", placementId)
+        }
+
+        if (tyradsConfig.defaultAge != null) {
+            builder.appendQueryParameter("defaultAge", tyradsConfig.defaultAge.toString())
         }
 
         return builder.build().toString()
@@ -431,6 +443,11 @@ class Tyrads private constructor() {
     suspend fun showOffers(route: String? = null, campaignID: Int? = null) =
         withContext(Dispatchers.Default) {
             log("showOffers: Preparing to show offers", Log.INFO, force = true)
+
+            if (!::preferences.isInitialized) {
+                log("showOffers: Tyrads SDK not initialized", Log.ERROR)
+                return@withContext
+            }
 
             if (!::loginData.isInitialized) {
                 log("showOffers: User initialization error", Log.ERROR)
@@ -486,7 +503,7 @@ class Tyrads private constructor() {
         try {
             _currentLanguageCode.value = languageCode
 
-            preferences.edit {
+            safePreferences?.edit {
                 putString(AcmoKeyNames.LANGUAGE, languageCode)
             }
 
@@ -551,6 +568,22 @@ class Tyrads private constructor() {
 
     fun setUserInfo(userInfo: TyradsUserInfo) {
         this.userInfo = userInfo
+    }
+   
+    suspend fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo): Boolean = withContext(Dispatchers.Default) {
+        return@withContext AcmoUpdateUserAccountController().updateUserAccount(userUpdateInfo)
+    }
+
+    @JvmOverloads
+    fun updateUserAccount(userUpdateInfo: TyradsUpdateUserInfo, callback: TyradsCallback? = null) {
+        tyradScope.launch {
+            val success = updateUserAccount(userUpdateInfo)
+            if (success) {
+                callback?.let { safeCallback { it.onSuccess() } }
+            } else {
+                callback?.let { safeCallback { it.onFailure("Failed to update user account") } }
+            }
+        }
     }
 
     private fun registerLifecycleCallbacks(context: Context) {

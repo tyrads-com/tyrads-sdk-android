@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,7 +28,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -43,8 +44,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -53,11 +52,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.Tyrads
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
+import com.tyrads.sdk.acmo.modules.input_models.TyradsUpdateUserInfo
+import com.google.gson.Gson
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.core.content.edit
+import com.tyrads.sdk.TyradsUserInfo
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 private const val DEFAULT_USER_ID = "acmo_user_01"
 private const val DEFAULT_CONFIG = "belanda1"
@@ -120,10 +124,8 @@ class MainActivity : ComponentActivity() {
 fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     val context = LocalContext.current
     var isLoadingOffers by remember { mutableStateOf(false) }
-    var fcmToken: String? by remember { mutableStateOf("") }
 
     val sharedPreferences = context.getSharedPreferences("TyradsPrefs", Context.MODE_PRIVATE)
-    val sdkPrefs = context.getSharedPreferences("tyrads_sdk_prefs", Context.MODE_PRIVATE)
 
     var selectedConfig by remember {
         mutableStateOf(sharedPreferences.getString("selectedConfig", DEFAULT_CONFIG) ?: DEFAULT_CONFIG)
@@ -145,12 +147,13 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     }
 
     var loggedIn by remember { mutableStateOf(false) }
+    var updateUserInfoJson by remember { mutableStateOf("{\n  \"email\": \"user@example.com\",\n  \"phoneNumber\": \"1234567890\",\n  \"age\": 25,\n  \"gender\": 1\n}") }
+    var isUpdatingAccount by remember { mutableStateOf(false) }
     var lastInitializedUserId by remember { mutableStateOf(userIdInput) }
     var lastInitializedPlacementId by remember { mutableStateOf(placementId) }
     var lastInitializedEngagementId by remember { mutableStateOf(engagementId) }
     var widgetReloadKey by remember { mutableIntStateOf(0) }
 
-    val clipboard = LocalClipboard.current
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
@@ -158,8 +161,18 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     var selectedOption by remember { mutableStateOf(options[0]) }
     var lastSelectedOption by remember { mutableStateOf(selectedOption) }
 
+    val userInfoOptions = listOf("Show User Update Page", "Hide User Update Page")
+    var selectedUserInfoOption by remember { mutableStateOf(userInfoOptions[0]) }
+    var lastSelectedUserInfoOption by remember { mutableStateOf(selectedUserInfoOption) }
+
+    var defaultAgeInput by remember { mutableStateOf("") }
+    var lastDefaultAgeInput by remember { mutableStateOf("") }
+
+    val skipOnboardingOptions = listOf("Hide", "Show")
+    var selectedSkipOnboardingOption by remember { mutableStateOf(skipOnboardingOptions[0]) }
+
+
     LaunchedEffect(selectedOption) {
-        fcmToken = sdkPrefs.getString("acmo_tyrads_sdk_fcm_token", null)
         Tyrads.getInstance().init(
             context,
             apiKey = apiKeyInput.ifBlank { initialKeys.apiKey },
@@ -167,7 +180,12 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
             engagementId = engagementId,
             placementId = placementId,
-            config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+            config = TyradsConfig(
+                skipInitialPages = selectedOption == options[1],
+                skipUserInfo = selectedUserInfoOption == userInfoOptions[1],
+                defaultAge = defaultAgeInput.toIntOrNull(),
+                enableSkipOnboarding = selectedSkipOnboardingOption == skipOnboardingOptions[1],
+            ),
         )
         val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
         loggedIn = success
@@ -191,7 +209,12 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 encryptionKey = newKeys.encKey,
                 engagementId = engagementId,
                 placementId = placementId,
-                config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+                config = TyradsConfig(
+                    skipInitialPages = selectedOption == options[1],
+                    skipUserInfo = selectedUserInfoOption == userInfoOptions[1],
+                    defaultAge = defaultAgeInput.toIntOrNull(),
+                    enableSkipOnboarding = selectedSkipOnboardingOption == skipOnboardingOptions[1],
+                ),
             )
             val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
             if (success) {
@@ -206,6 +229,8 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 || placementId != lastInitializedPlacementId
                 || engagementId != lastInitializedEngagementId
                 || selectedOption != lastSelectedOption
+                || selectedUserInfoOption != lastSelectedUserInfoOption
+                || defaultAgeInput != lastDefaultAgeInput
 
         if (!needsReinit) {
             scope.launch {
@@ -233,7 +258,12 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 encryptionKey = encryptionKey.ifBlank { initialKeys.encKey },
                 engagementId = engagementId,
                 placementId = placementId,
-                config = TyradsConfig(skipInitialPages = selectedOption == options[1]),
+                config = TyradsConfig(
+                    skipInitialPages = selectedOption == options[1],
+                    skipUserInfo = selectedUserInfoOption == userInfoOptions[1],
+                    defaultAge = defaultAgeInput.toIntOrNull(),
+                    enableSkipOnboarding = selectedSkipOnboardingOption == skipOnboardingOptions[1],
+                ),
                 debugMode = false,
             )
 
@@ -245,28 +275,31 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             lastInitializedPlacementId = placementId
             lastInitializedEngagementId = engagementId
             lastSelectedOption = selectedOption
+            lastSelectedUserInfoOption = selectedUserInfoOption
+            lastDefaultAgeInput = defaultAgeInput
             widgetReloadKey++
         }
     }
 
-    if (!loggedIn) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            CircularProgressIndicator()
-        }
-    } else {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-                .wrapContentSize(Alignment.Center)
-                .padding(horizontal = 20.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        if (!loggedIn) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Column(
+                modifier = modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center)
+                    .padding(horizontal = 20.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
             Row {
                 Text(text = "Tyrads SDK Example", modifier = modifier)
             }
@@ -283,6 +316,35 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 options = options,
                 selectedOption = selectedOption,
                 onOptionSelected = { selectedOption = it },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            UserInfoDropdown(
+                options = userInfoOptions,
+                selectedOption = selectedUserInfoOption,
+                onOptionSelected = { selectedUserInfoOption = it },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SkipOnboardingDropdown(
+                options = skipOnboardingOptions,
+                selectedOption = selectedSkipOnboardingOption,
+                onOptionSelected = { selectedSkipOnboardingOption = it },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = defaultAgeInput,
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.toIntOrNull() != null) defaultAgeInput = input
+                },
+                label = { Text("Default Age (optional)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -343,19 +405,21 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             )
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (fcmToken != null)
-                TextField(
-                    value = fcmToken ?: "NA",
-                    onValueChange = {},
-                    enabled = false,
-                    label = { Text("FCM Token") },
-                    singleLine = false,
-                )
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            TextField(
+                modifier = Modifier.fillMaxWidth().height(120.dp),
+                value = updateUserInfoJson,
+                onValueChange = { updateUserInfoJson = it },
+                label = { Text("Update User Info JSON") },
+                maxLines = 5,
+            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
                 Button(
                     onClick = { handleButtonClick() },
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(8.dp),
                 ) {
                     if (isLoadingOffers) {
                         CircularProgressIndicator(
@@ -367,27 +431,40 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                     }
                     Text(text = "Show Offers")
                 }
-
-                if (fcmToken != null)
-                    Button(
-                        onClick = {
-                            scope.launch {
-                                val clipEntry = ClipEntry(ClipData.newPlainText("label", fcmToken))
-                                clipboard.setClipEntry(clipEntry)
+                Button(
+                    onClick = {
+                        scope.launch {
+                            isUpdatingAccount = true
+                            try {
+                                val info = Gson().fromJson(updateUserInfoJson, TyradsUpdateUserInfo::class.java)
+                                val success = Tyrads.getInstance().updateUserAccount(info)
+                                isUpdatingAccount = false
+                                snackbarHostState.showSnackbar(if (success) "Account Updated!" else "Update Failed")
+                            } catch (e: Exception) {
+                                isUpdatingAccount = false
+                                snackbarHostState.showSnackbar("Invalid JSON: ${e.message}")
                             }
-                            scope.launch {
-                                snackbarHostState.showSnackbar("Token copied!")
-                                snackbarHostState.showSnackbar(
-                                    "Token copied!",
-                                    duration = SnackbarDuration.Short,
-                                )
-                            }
-                        },
-                    ) {
-                        Text("Copy Token", fontWeight = FontWeight.SemiBold)
+                        }
+                    },
+                    modifier = Modifier.padding(8.dp),
+                ) {
+                    if (isUpdatingAccount) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp,
+                            color = Color.White,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                     }
+                    Text("Update Account")
+                }
+            }
             }
         }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
@@ -472,6 +549,84 @@ fun SimpleDropdown(
                 .fillMaxWidth(),
         )
 
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption) },
+                    onClick = {
+                        onOptionSelected(selectionOption)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun UserInfoDropdown(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+    ) {
+        TextField(
+            readOnly = true,
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text("Select Skip User Info Setting") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption) },
+                    onClick = {
+                        onOptionSelected(selectionOption)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SkipOnboardingDropdown(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+    ) {
+        TextField(
+            readOnly = true,
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text("Enable Skip Onboarding") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+        )
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },

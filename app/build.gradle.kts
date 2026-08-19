@@ -21,8 +21,8 @@ android {
         applicationId = "com.tyrads.sdk.example"
         minSdk = 24
         targetSdk = 35
-        versionCode = 24
-        versionName = "4.3"
+        versionCode = 32
+        versionName = "4.12"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -129,4 +129,5 @@ dependencies {
     implementation ("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.1")
     implementation ("com.google.android.material:material:1.9.0")
+    implementation ("com.google.code.gson:gson:2.10.1")
 }

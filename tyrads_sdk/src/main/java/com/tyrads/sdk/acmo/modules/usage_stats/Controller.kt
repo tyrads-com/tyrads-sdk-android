@@ -51,7 +51,8 @@ class AcmoUsageStatsController() {
 
 
     fun isUsagePermission(context: Context): Boolean {
-        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager
+            ?: return false
         val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             appOps.unsafeCheckOpNoThrow(
                 AppOpsManager.OPSTR_GET_USAGE_STATS,
@@ -75,7 +76,10 @@ class AcmoUsageStatsController() {
     }
 
     fun grantUsagePermission() {
-        val context = Tyrads.getInstance().context
+        val context = Tyrads.getInstance().safeContext ?: run {
+            Tyrads.getInstance().log("grantUsagePermission: Tyrads SDK not initialized", Log.ERROR)
+            return
+        }
         if (!isUsagePermission(context)) {
             try {
                 val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
@@ -83,21 +87,23 @@ class AcmoUsageStatsController() {
                 intent.data = Uri.parse("package:" + context.packageName);
                 context.startActivity(intent)
             } catch (e: Exception) {
-                val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-                intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                context.startActivity(intent)
+                try {
+                    val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    context.startActivity(intent)
+                } catch (e2: Exception) {
+                    Tyrads.getInstance().log("Usage access settings activity not found: ${e2.message}", Log.ERROR)
+                }
             }
         }
     }
     internal fun checkUsagePermission(): Boolean {
-        val appOps = getSystemService(
-            Tyrads.getInstance().context,
-            AppOpsManager::class.java
-        ) as AppOpsManager
+        val context = Tyrads.getInstance().safeContext ?: return false
+        val appOps = getSystemService(context, AppOpsManager::class.java) ?: return false
         val mode = appOps.checkOpNoThrow(
             AppOpsManager.OPSTR_GET_USAGE_STATS,
             Process.myUid(),
-            Tyrads.getInstance().context.packageName
+            context.packageName
         )
         return mode == AppOpsManager.MODE_ALLOWED
     }
@@ -111,13 +117,14 @@ class AcmoUsageStatsController() {
         saveUsage: Boolean = true
     ): List<Map<String, Any>> {
         return try {
+            val context = Tyrads.getInstance().safeContext ?: return emptyList()
 
             val endDate = System.currentTimeMillis()
             val startDate = endDate - (days * 24 * 60 * 60 * 1000L)
             val temp = mutableListOf<Map<String, Any>>()
 
             val aggregateUsageStats = UsageStats.queryAndAggregateUsageStats(
-                Tyrads.getInstance().context,
+                context,
                 startDate,
                 endDate
             )
@@ -157,7 +164,7 @@ class AcmoUsageStatsController() {
 
     fun getDeviceAgeTime(): Long? {
         return try {
-            val pm = Tyrads.getInstance().context.packageManager
+            val pm = (Tyrads.getInstance().safeContext ?: return null).packageManager
             val timestamp = Date().time
             val pkgs = pm.getInstalledPackages(PackageManager.GET_ACTIVITIES)
             val installTimeCount = mutableMapOf<Long, Int>()

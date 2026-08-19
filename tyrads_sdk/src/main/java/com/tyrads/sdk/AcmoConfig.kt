@@ -2,7 +2,7 @@ import android.graphics.Color
 
 object AcmoConfig {
     const val API_VERSION = "4.0";
-    const val BUILD_VERSION = "1";
+    const val BUILD_VERSION = "4";
     const val AV = "4";
 
     const val SDK_VERSION = "4.0.0-$BUILD_VERSION";
