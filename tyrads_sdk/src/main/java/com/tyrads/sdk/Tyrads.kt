@@ -45,6 +45,7 @@ import com.tyrads.sdk.acmo.modules.input_models.TyradsUpdateUserInfo
 import com.tyrads.sdk.acmo.modules.update_account.AcmoUpdateUserAccountController
 import com.tyrads.sdk.acmo.modules.notifications.FCMService
 import com.tyrads.sdk.acmo.modules.notifications.FCMNotifications
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +53,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import android.os.Bundle
 import androidx.core.net.toUri
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import kotlinx.coroutines.tasks.await
 
 interface TyradsCallback {
@@ -222,7 +224,7 @@ class Tyrads private constructor() {
                     ?: "en"
             }
         }
-        _currentLanguageCode.value = currentLanguage
+        _currentLanguageCode.value = currentLanguage ?: "en"
         log("Selected Language: ${currentLanguageCode.value}")
 
         localizationService.init(currentLanguageCode.value)
@@ -423,10 +425,16 @@ class Tyrads private constructor() {
                 }
             )
             .appendQueryParameter("token", token)
+            .appendQueryParameter("skipUserInfo", tyradsConfig.skipUserInfo.toString())
+            .appendQueryParameter("enableSkipOnboarding", tyradsConfig.enableSkipOnboarding.toString())
             .appendQueryParameter("lang", currentLanguageCode.value)
 
         if (!placementId.isNullOrBlank()) {
             builder.appendQueryParameter("placementId", placementId)
+        }
+
+        if (tyradsConfig.defaultAge != null) {
+            builder.appendQueryParameter("defaultAge", tyradsConfig.defaultAge.toString())
         }
 
         return builder.build().toString()
