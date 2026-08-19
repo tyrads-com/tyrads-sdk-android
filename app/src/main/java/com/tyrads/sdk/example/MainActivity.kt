@@ -60,6 +60,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.core.content.edit
 import com.tyrads.sdk.TyradsUserInfo
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 private const val DEFAULT_USER_ID = "acmo_user_01"
 private const val DEFAULT_CONFIG = "belanda1"
@@ -163,6 +165,12 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
     var selectedUserInfoOption by remember { mutableStateOf(userInfoOptions[0]) }
     var lastSelectedUserInfoOption by remember { mutableStateOf(selectedUserInfoOption) }
 
+    var defaultAgeInput by remember { mutableStateOf("") }
+    var lastDefaultAgeInput by remember { mutableStateOf("") }
+
+    val skipOnboardingOptions = listOf("Hide", "Show")
+    var selectedSkipOnboardingOption by remember { mutableStateOf(skipOnboardingOptions[0]) }
+
 
     LaunchedEffect(selectedOption) {
         Tyrads.getInstance().init(
@@ -174,7 +182,9 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             placementId = placementId,
             config = TyradsConfig(
                 skipInitialPages = selectedOption == options[1],
-                skipUserInfo = selectedUserInfoOption == userInfoOptions[1]
+                skipUserInfo = selectedUserInfoOption == userInfoOptions[1],
+                defaultAge = defaultAgeInput.toIntOrNull(),
+                enableSkipOnboarding = selectedSkipOnboardingOption == skipOnboardingOptions[1],
             ),
         )
         val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
@@ -201,7 +211,9 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 placementId = placementId,
                 config = TyradsConfig(
                     skipInitialPages = selectedOption == options[1],
-                    skipUserInfo = selectedUserInfoOption == userInfoOptions[1]
+                    skipUserInfo = selectedUserInfoOption == userInfoOptions[1],
+                    defaultAge = defaultAgeInput.toIntOrNull(),
+                    enableSkipOnboarding = selectedSkipOnboardingOption == skipOnboardingOptions[1],
                 ),
             )
             val success = Tyrads.getInstance().loginUser(userID = userIdInput.ifBlank { DEFAULT_USER_ID })
@@ -218,6 +230,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 || engagementId != lastInitializedEngagementId
                 || selectedOption != lastSelectedOption
                 || selectedUserInfoOption != lastSelectedUserInfoOption
+                || defaultAgeInput != lastDefaultAgeInput
 
         if (!needsReinit) {
             scope.launch {
@@ -248,6 +261,8 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
                 config = TyradsConfig(
                     skipInitialPages = selectedOption == options[1],
                     skipUserInfo = selectedUserInfoOption == userInfoOptions[1],
+                    defaultAge = defaultAgeInput.toIntOrNull(),
+                    enableSkipOnboarding = selectedSkipOnboardingOption == skipOnboardingOptions[1],
                 ),
                 debugMode = false,
             )
@@ -261,6 +276,7 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
             lastInitializedEngagementId = engagementId
             lastSelectedOption = selectedOption
             lastSelectedUserInfoOption = selectedUserInfoOption
+            lastDefaultAgeInput = defaultAgeInput
             widgetReloadKey++
         }
     }
@@ -304,10 +320,31 @@ fun Greeting(modifier: Modifier = Modifier, onReload: () -> Unit = {}) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-           UserInfoDropdown(
+            UserInfoDropdown(
                 options = userInfoOptions,
                 selectedOption = selectedUserInfoOption,
                 onOptionSelected = { selectedUserInfoOption = it },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            SkipOnboardingDropdown(
+                options = skipOnboardingOptions,
+                selectedOption = selectedSkipOnboardingOption,
+                onOptionSelected = { selectedSkipOnboardingOption = it },
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            TextField(
+                modifier = Modifier.fillMaxWidth(),
+                value = defaultAgeInput,
+                onValueChange = { input ->
+                    if (input.isEmpty() || input.toIntOrNull() != null) defaultAgeInput = input
+                },
+                label = { Text("Default Age (optional)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -558,6 +595,45 @@ fun UserInfoDropdown(
             value = selectedOption,
             onValueChange = {},
             label = { Text("Select Skip User Info Setting") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            options.forEach { selectionOption ->
+                DropdownMenuItem(
+                    text = { Text(selectionOption) },
+                    onClick = {
+                        onOptionSelected(selectionOption)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SkipOnboardingDropdown(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+    ) {
+        TextField(
+            readOnly = true,
+            value = selectedOption,
+            onValueChange = {},
+            label = { Text("Enable Skip Onboarding") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             modifier = Modifier
                 .menuAnchor()
