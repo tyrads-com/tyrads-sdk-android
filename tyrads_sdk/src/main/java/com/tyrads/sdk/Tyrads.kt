@@ -428,10 +428,15 @@ class Tyrads private constructor() {
             )
             .appendQueryParameter("token", token)
             .appendQueryParameter("skipUserInfo", tyradsConfig.skipUserInfo.toString())
+            .appendQueryParameter("enableSkipOnboarding", tyradsConfig.enableSkipOnboarding.toString())
             .appendQueryParameter("lang", currentLanguageCode.value)
 
         if (!placementId.isNullOrBlank()) {
             builder.appendQueryParameter("placementId", placementId)
+        }
+
+        if (tyradsConfig.defaultAge != null) {
+            builder.appendQueryParameter("defaultAge", tyradsConfig.defaultAge.toString())
         }
 
         return builder.build().toString()
