@@ -26,6 +26,7 @@ import com.tyrads.sdk.acmo.core.utils.getSystemClockInfo
 import com.tyrads.sdk.acmo.core.utils.isVpnActive
 import com.tyrads.sdk.acmo.core.utils.getTrackingInfo
 import com.tyrads.sdk.acmo.core.utils.ExtraDeviceDetails
+import java.util.Locale
 
 @Keep
 class AcmoDeviceDetailsController {
@@ -106,7 +107,7 @@ class AcmoDeviceDetailsController {
             "apiVersion" to AcmoConfig.API_VERSION,
             "installerPackageName" to installerPackageName,
             "installerStore" to installerPackageName,
-            "osLang" to context.resources.configuration.locales[0].language,
+            "osLang" to Locale.getDefault().toLanguageTag(),
             "rooted" to RootBeer(context).isRooted,
             "virtual" to acmoIsEmulator,
             "sdkVersion" to AcmoConfig.SDK_VERSION,
