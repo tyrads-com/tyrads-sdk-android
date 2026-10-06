@@ -39,6 +39,7 @@ import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.input_models.AcmoInitModel
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
@@ -182,13 +183,16 @@ class Tyrads private constructor() {
             var currentLanguage = preferences.getString(AcmoKeyNames.LANGUAGE, null)
 
             if (currentLanguage.isNullOrBlank()) {
-                currentLanguage = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    context.getSystemService(LocaleManager::class.java).applicationLocales[0]?.toLanguageTag()
-                        ?.split("-")?.first() ?: "en"
+                val perAppLocale = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    context.getSystemService(LocaleManager::class.java).applicationLocales[0]
+                        ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
                 } else {
-                    AppCompatDelegate.getApplicationLocales()[0]?.toLanguageTag()?.split("-")
-                        ?.first() ?: "en"
+                    AppCompatDelegate.getApplicationLocales()[0]
+                        ?.let { locale -> if (locale.language != "zh") locale.language else locale.toLanguageTag() }
                 }
+
+                currentLanguage = perAppLocale?.takeIf { it.isNotBlank() }
+                    ?: getFormattedLocaleCode()
             }
             _currentLanguageCode.value = currentLanguage
             log("Selected Language: ${currentLanguageCode.value}")
