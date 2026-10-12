@@ -101,7 +101,6 @@ class AcmoDeviceDetailsController {
             "apiVersion" to AcmoConfig.API_VERSION,
             "installerPackageName" to installerPackageName,
             "installerStore" to installerPackageName,
-            // "osLang" to getFormattedLocaleCode(), // old: language code only (e.g. "en")
             "osLang" to Locale.getDefault().toLanguageTag(),
             "rooted" to RootBeer(context).isRooted,
             "virtual" to acmoIsEmulator,
