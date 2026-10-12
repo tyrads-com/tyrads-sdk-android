@@ -26,6 +26,9 @@ import com.tyrads.sdk.acmo.core.utils.getSystemClockInfo
 import com.tyrads.sdk.acmo.core.utils.isVpnActive
 import com.tyrads.sdk.acmo.core.utils.getTrackingInfo
 import com.tyrads.sdk.acmo.core.utils.ExtraDeviceDetails
+import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
+import android.util.Log
+import java.util.Locale
 
 @Keep
 class AcmoDeviceDetailsController {
@@ -68,6 +71,8 @@ class AcmoDeviceDetailsController {
             // If AppSet library is not available or fails, set to null
         }
 
+        Log.d("TyradsSDK", "[DeviceDetails] osLang resolved: ${Locale.getDefault().toLanguageTag()}")
+
         var deviceDetails = mapOf(
             "deviceAge" to usageController.getDeviceAgeTime(),
             "deviceId" to androidId,
@@ -96,7 +101,7 @@ class AcmoDeviceDetailsController {
             "apiVersion" to AcmoConfig.API_VERSION,
             "installerPackageName" to installerPackageName,
             "installerStore" to installerPackageName,
-            "osLang" to context.resources.configuration.locales[0].language,
+            "osLang" to Locale.getDefault().toLanguageTag(),
             "rooted" to RootBeer(context).isRooted,
             "virtual" to acmoIsEmulator,
             "sdkVersion" to AcmoConfig.SDK_VERSION,
