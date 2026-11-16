@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -19,6 +20,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -32,14 +37,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.tyrads.sdk.Tyrads
+import com.tyrads.sdk.TyradsFlavors
 import com.tyrads.sdk.acmo.modules.input_models.TyradsConfig
 import com.tyrads.sdk.example.ui.theme.TyradsSdkTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+private fun getTyradsFlavor(env: String): TyradsFlavors =
+    if (env == "Staging") TyradsFlavors.STAGING else TyradsFlavors.PRODUCTION
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +69,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Greeting(modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -73,6 +86,9 @@ fun Greeting(modifier: Modifier = Modifier) {
     var userIdInput by remember { mutableStateOf(sharedPreferences.getString("userId", "1322") ?: "") }
     var engagementId by remember { mutableStateOf(sharedPreferences.getString("engagementId", "") ?: "") }
     var placementId by remember { mutableStateOf(sharedPreferences.getString("placementId", "") ?: "") }
+    var selectedEnvironment by remember {
+        mutableStateOf(sharedPreferences.getString("selectedEnvironment", "Production") ?: "Production")
+    }
 
     fun handleButtonClick() {
         isLoadingOffers = true
@@ -100,6 +116,7 @@ fun Greeting(modifier: Modifier = Modifier) {
                 debugMode = true,
                 engagementId = engagementId,
                 placementId = placementId,
+                flavors = getTyradsFlavor(selectedEnvironment),
                 config = TyradsConfig(
                     skipInitialPages = true
                 )
@@ -130,39 +147,47 @@ fun Greeting(modifier: Modifier = Modifier) {
             CircularProgressIndicator(modifier = Modifier.size(24.dp))
         }
         Spacer(modifier = Modifier.height(16.dp))
+        EnvironmentDropdown(
+            selectedEnvironment = selectedEnvironment,
+            onEnvironmentSelected = { newEnv ->
+                selectedEnvironment = newEnv
+                sharedPreferences.edit().putString("selectedEnvironment", newEnv).apply()
+            }
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = apiKeyInput,
             onValueChange = { apiKeyInput = it },
             label = { Text("Enter API Key") },
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = apiSecretInput,
             onValueChange = { apiSecretInput = it },
             label = { Text("Enter API Secret") },
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = engagementId,
             onValueChange = { engagementId = it },
             label = { Text("Engagement ID (optional)") },
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = placementId,
             onValueChange = { placementId = it },
             label = { Text("Placement ID (optional)") },
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
         )
         Spacer(modifier = Modifier.height(16.dp))
         TextField(
             value = userIdInput,
             onValueChange = { userIdInput = it },
             label = { Text("Enter User ID") },
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp)
         )
 
         Button(
@@ -182,6 +207,62 @@ fun Greeting(modifier: Modifier = Modifier) {
             Text(text = "Show Offers")
         }
 
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EnvironmentDropdown(
+    selectedEnvironment: String,
+    onEnvironmentSelected: (String) -> Unit,
+) {
+    val environments = listOf("Production", "Staging")
+    var expanded by remember { mutableStateOf(false) }
+
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(horizontal = 16.dp)) {
+        Text(
+            text = "Select Environment:",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = !expanded },
+        ) {
+            TextField(
+                readOnly = true,
+                value = selectedEnvironment,
+                onValueChange = {},
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                environments.forEach { env ->
+                    DropdownMenuItem(
+                        text = { Text(env) },
+                        onClick = {
+                            onEnvironmentSelected(env)
+                            expanded = false
+                        },
+                    )
+                }
+            }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = "API: ${if (selectedEnvironment == "Staging") "Staging" else "Production"}",
+            fontSize = 12.sp,
+            fontStyle = FontStyle.Italic,
+            color = Color(0xFF666666),
+        )
     }
 }
 
