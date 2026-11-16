@@ -39,6 +39,7 @@ import com.tyrads.sdk.acmo.core.AcmoOnboardingGate
 import com.tyrads.sdk.acmo.core.services.LocalizationService
 import com.tyrads.sdk.acmo.core.utils.getPlayIntegrityToken
 import com.tyrads.sdk.acmo.helpers.AcmoEncrypt
+import com.tyrads.sdk.acmo.helpers.BlockedUserHandler
 import com.tyrads.sdk.acmo.helpers.getFormattedLocaleCode
 import com.tyrads.sdk.acmo.helpers.models.ApiHeaders
 import com.tyrads.sdk.acmo.modules.input_models.AcmoInitModel
@@ -51,6 +52,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+
+enum class TyradsFlavors {
+    PRODUCTION,
+    STAGING
+}
 
 @Keep
 class Tyrads private constructor() {
@@ -69,7 +75,8 @@ class Tyrads private constructor() {
     var initWait: Job? = null
     var loginUserWait: Job? = null
     internal var debugMode: Boolean = false
-    
+    internal var flavor: TyradsFlavors = TyradsFlavors.PRODUCTION
+
     fun isInitialized(): Boolean = ::context.isInitialized && ::preferences.isInitialized
 
     val tyradScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -89,6 +96,7 @@ class Tyrads private constructor() {
     var premiumColor: String = "#1C90DF"
     var headerColor: String? = null
     var mainColor: String? = null
+    var isBlocked: Boolean = false
 
     private val _privacyAccepted = MutableStateFlow(false)
     val privacyAccepted: StateFlow<Boolean> = _privacyAccepted.asStateFlow()
@@ -147,6 +155,7 @@ class Tyrads private constructor() {
         engagementId: String? = null,
         placementId: String? = null,
         config: TyradsConfig = TyradsConfig(),
+        flavors: TyradsFlavors = TyradsFlavors.PRODUCTION,
         debugMode: Boolean = false
     ) = withContext(Dispatchers.Default) {
         if (isInitialized()) {
@@ -162,6 +171,7 @@ class Tyrads private constructor() {
         this@Tyrads.engagementId = engagementId
         this@Tyrads.placementId = placementId
         setTyradsConfig(config)
+        this@Tyrads.flavor = flavors
         this@Tyrads.debugMode = debugMode
 
         Log.i("Tyrads", "apiKey: $apiKey \n apiSecret: $apiSecret")
@@ -369,6 +379,32 @@ class Tyrads private constructor() {
                     val errorMessage = String(response.data)
                     log("Error: ${error.message}")
                     log("Server Message: $errorMessage")
+
+                    val isBlockedResponse = response.statusCode == 403 ||
+                        errorMessage.contains("ES1014") ||
+                        errorMessage.contains("\"accessStatus\":\"blocked\"")
+
+                    if (isBlockedResponse) {
+                        log("loginUser: blocked user detected, allowing entry to offerwall", Log.INFO, force = true)
+                        val handled = BlockedUserHandler.handle(errorMessage, userId)
+                        if (handled) {
+                            val apiKey = preferences.getString(AcmoKeyNames.API_KEY, null) ?: ""
+                            val apiSecret = preferences.getString(AcmoKeyNames.API_SECRET, null) ?: ""
+                            return@withContext ApiHeaders(
+                                xApiKey = apiKey,
+                                xApiSecret = apiSecret,
+                                xUserId = publisherUserID ?: userId,
+                                xSdkPlatform = AcmoConfig.SDK_PLATFORM,
+                                xSdkVersion = AcmoConfig.SDK_VERSION,
+                                userAgent = "Android",
+                                languageCode = currentLanguageCode.value,
+                                premiumColor = premiumColor,
+                                headerColor = headerColor ?: "",
+                                mainColor = mainColor ?: "",
+                            )
+                        }
+                    }
+
                     return@withContext null
                 }
             }
@@ -382,10 +418,11 @@ class Tyrads private constructor() {
     internal fun getWebUri(route: String? = null, campaignID: Int? = null): String {
         val skipUserInfo = getSkipUserInfo()
         val currentRoute = route ?: ""
+        val webAuthority = if (flavor == TyradsFlavors.STAGING) AcmoConfig.STAGING_WEB_URL else AcmoConfig.WEB_URL
 
         val builder = Uri.Builder()
             .scheme("https")
-            .authority("v4.sdk.tyrads.com")
+            .authority(webAuthority)
             .appendQueryParameter(
                 "to",
                 when {
@@ -410,7 +447,7 @@ class Tyrads private constructor() {
         withContext(Dispatchers.Default) {
             log("Preparing to show offers", Log.INFO)
             loginUserWait?.join()
-            if (!::loginData.isInitialized) {
+            if (!::loginData.isInitialized && !isBlocked) {
                 log("showOffers: User initialization error", Log.ERROR)
                 withContext(Dispatchers.Main) {
                     Toast.makeText(context, "Please try back later", Toast.LENGTH_LONG).show()
