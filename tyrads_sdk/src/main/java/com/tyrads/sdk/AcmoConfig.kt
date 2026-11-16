@@ -10,12 +10,15 @@ object AcmoConfig {
     // BUILD Version (0.0.0-X)
    const val MAJOR_VERSION = "4";
    const val MINOR_VERSION = "0";
-   const val BUILD_VERSION = "1";
+   const val BUILD_VERSION = "2";
    const val PATCH_VERSION = "0";
 
    var SDK_VERSION = "$MAJOR_VERSION.$MINOR_VERSION.$PATCH_VERSION-$BUILD_VERSION";
    const val SDK_PLATFORM = "React Native";
    const val BASE_URL = "https://api.tyrads.com/v$API_VERSION/";
+   const val STAGING_BASE_URL = "https://api.stage.tyrads.com/v$API_VERSION/";
+   const val WEB_URL = "v4.sdk.tyrads.com";
+   const val STAGING_WEB_URL = "staging.tyr-sdk-webapp-monorepo-v4.pages.dev";
     const val TAG = "TyrAds SDK"
 
     val PRIMARY_COLOR = Color.rgb(0, 36, 51)
