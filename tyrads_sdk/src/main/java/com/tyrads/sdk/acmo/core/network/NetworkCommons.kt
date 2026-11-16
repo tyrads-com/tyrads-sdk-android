@@ -32,7 +32,10 @@ class NetworkCommons {
             "Content-Type" to "application/json"
         )
         FuelManager.instance.baseParams = listOf()
-        FuelManager.instance.basePath = AcmoConfig.BASE_URL
+        FuelManager.instance.basePath = if (Tyrads.getInstance().flavor == TyradsFlavors.STAGING)
+            AcmoConfig.STAGING_BASE_URL
+        else
+            AcmoConfig.BASE_URL
         FuelManager.instance.timeoutInMillisecond = 300000 // 5 minutes
         FuelManager.instance.timeoutReadInMillisecond = 300000 // 5 minutes
 
@@ -69,6 +72,7 @@ class NetworkCommons {
                     Tyrads.getInstance().log("Response: ${response}")
                     when (response.statusCode) {
                         in 200..299 -> next(request, response)
+                        403 -> next(request, response)
                         else -> throw FuelError.wrap(Exception("Network error: ${response.statusCode}"))
                     }
                 } catch (e: Exception) {
