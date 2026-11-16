@@ -66,6 +66,7 @@ class AcmoApp : ComponentActivity() {
 
                 val initPath = when {
                     skipInitialPages -> "webview"
+                    tyrads.isBlocked -> "webview"
                     !privacyAccepted -> "privacy"
                     !isUsagePermissionGranted -> "usage-permissions"
                     else -> "webview"
